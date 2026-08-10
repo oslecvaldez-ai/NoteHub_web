@@ -1,0 +1,225 @@
+.selector-espacios {
+  color: var(--text-primary, #1C1C1E);
+  position: relative;
+  width: 100%;
+}
+
+.selector-espacios-trigger,
+.espacio-item,
+.selector-espacios-menu-actions button,
+.espacios-list-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.selector-espacios-trigger {
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: flex-start;
+  padding: 11px 12px;
+}
+
+.selector-espacios-trigger:hover {
+  background: color-mix(in srgb, var(--color-primary, #0077D6) 10%, transparent);
+}
+
+.selector-espacios-trigger span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selector-espacios-menu {
+  background: var(--bg-card, #F4F5F7);
+  border: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 24%, transparent);
+  border-radius: 8px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
+  left: 0;
+  margin-top: 6px;
+  min-width: 260px;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 500;
+}
+
+.selector-espacios-list {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.espacio-item {
+  border-radius: 6px;
+  font-size: 14px;
+  padding: 9px 10px;
+}
+
+.espacio-item-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.espacio-item-badge {
+  color: var(--text-secondary, #8E8E93);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.selector-espacios-menu-actions {
+  border-top: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 20%, transparent);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.selector-espacios-menu-actions button {
+  border-radius: 6px;
+  font-size: 13px;
+  padding: 9px 10px;
+}
+
+.selector-espacios-menu-actions button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary, #0077D6) 10%, transparent);
+}
+
+.selector-espacios-menu-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.espacios-modal-overlay {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 1100;
+}
+
+.espacios-modal {
+  background: var(--bg-card, #F4F5F7);
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  color: var(--text-primary, #1C1C1E);
+  max-width: 440px;
+  padding: 24px;
+  position: relative;
+  width: 100%;
+}
+
+.espacios-modal h2 {
+  font-size: 20px;
+  margin: 0 0 22px;
+}
+
+.espacios-modal label {
+  color: var(--text-secondary, #8E8E93);
+  display: block;
+  font-size: 13px;
+  margin-bottom: 7px;
+}
+
+.espacios-modal input:not([type="checkbox"]) {
+  background: var(--bg-app, #FFFFFF);
+  border: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 35%, transparent);
+  border-radius: 6px;
+  box-sizing: border-box;
+  color: var(--text-primary, #1C1C1E);
+  font: inherit;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.espacios-modal-close {
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary, #8E8E93);
+  cursor: pointer;
+  padding: 4px;
+  position: absolute;
+  right: 16px;
+  top: 16px;
+}
+
+.espacios-modal-option {
+  align-items: center;
+  color: var(--text-primary, #1C1C1E);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+}
+
+.espacios-modal-option small {
+  color: var(--text-secondary, #8E8E93);
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.espacios-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 26px;
+}
+
+.espacios-modal-actions button,
+.espacios-danger-action {
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font: inherit;
+  padding: 9px 15px;
+}
+
+.espacios-modal-actions button:last-child {
+  background: var(--color-primary, #0077D6);
+  color: #FFFFFF;
+}
+
+.espacios-modal-actions button:disabled,
+.espacios-danger-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.espacios-danger-action {
+  background: transparent;
+  color: #DC2626;
+  margin-top: 20px;
+  padding-left: 0;
+}
+
+.espacios-list {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.espacios-list-item {
+  border-radius: 6px;
+  justify-content: space-between;
+  padding: 11px 10px;
+}
+
+.espacios-list-item:hover:not(:disabled),
+.espacios-list-item.is-selected {
+  background: color-mix(in srgb, var(--color-primary, #0077D6) 12%, transparent);
+}
+
+.espacios-list-item:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
