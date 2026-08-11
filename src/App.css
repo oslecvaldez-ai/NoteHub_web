@@ -167,7 +167,7 @@
 
   &::before,
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -4.5px;
     border: 5px solid transparent;
@@ -180,5 +180,16 @@
   &::after {
     right: 0;
     border-right-color: var(--border);
+  }
+  /* Limitar el desbordamiento horizontal en el panel lateral */
+  .w-72 {
+    overflow-x: hidden !important;
+  }
+
+  /* Evitar que las tarjetas de notas excedan el ancho del panel central */
+  .nota-card,
+  [class*="nota-"] {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 }

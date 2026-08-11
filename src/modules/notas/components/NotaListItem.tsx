@@ -1,34 +1,47 @@
-import type { MouseEvent } from 'react'
-import { Check, Star } from '../../../core/components/Iconos'
-import type { Note } from '../notesApi'
-import { extractImage, extraerExtracto, formatNoteDate, getNoteTitle } from '../noteUtils'
+import type { MouseEvent } from "react";
+import { Check, Star } from "../../../core/components/Iconos";
+import type { Note } from "../notesApi";
+import {
+  extractImage,
+  extraerExtracto,
+  formatNoteDate,
+  getNoteTitle,
+} from "../noteUtils";
 
 export interface NotaListItemProps {
-  note: Note
-  isSelected: boolean
-  isSelectionMode: boolean
-  onSelect: (note: Note) => void
-  onContextMenu: (event: MouseEvent, note: Note) => void
+  note: Note;
+  isSelected: boolean;
+  isActive?: boolean;
+  isSelectionMode: boolean;
+  onSelect: (note: Note) => void;
+  onContextMenu: (event: MouseEvent, note: Note) => void;
 }
 
 export function NotaListItem({
   note,
   isSelected,
+  isActive,
   isSelectionMode,
   onSelect,
   onContextMenu,
 }: NotaListItemProps) {
-  const image = extractImage(note.content)
-  const excerpt = extraerExtracto(note.content)
+  const image = extractImage(note.content);
+  const excerpt = extraerExtracto(note.content);
 
   return (
     <article
-      className={`nota-list-item${isSelected ? ' is-selected' : ''}`}
+      className={`nota-list-item${isSelected ? " is-selected" : ""}${isActive ? " is-active" : ""}`}
       onClick={() => onSelect(note)}
-      onContextMenu={(event) => { event.preventDefault(); onContextMenu(event, note) }}
+      onContextMenu={(event) => {
+        event.preventDefault();
+        onContextMenu(event, note);
+      }}
     >
       {isSelectionMode && (
-        <span className={`nota-checkbox${isSelected ? ' is-checked' : ''}`} aria-hidden="true">
+        <span
+          className={`nota-checkbox${isSelected ? " is-checked" : ""}`}
+          aria-hidden="true"
+        >
           {isSelected && <Check size={14} />}
         </span>
       )}
@@ -37,10 +50,18 @@ export function NotaListItem({
           <h3>{getNoteTitle(note)}</h3>
           {note.is_pinned === 1 && <Star aria-label="Nota anclada" size={15} />}
         </div>
-        <p>{excerpt || 'Sin contenido todavía'}</p>
-        <time dateTime={note.updated_at}>{formatNoteDate(note.updated_at)}</time>
+        <p>{excerpt || "Sin contenido todavía"}</p>
+        <time dateTime={note.updated_at}>
+          {formatNoteDate(note.updated_at)}
+        </time>
       </div>
-      {image && <img alt="Miniatura de la nota" className="nota-list-thumbnail" src={image} />}
+      {image && (
+        <img
+          alt="Miniatura de la nota"
+          className="nota-list-thumbnail"
+          src={image}
+        />
+      )}
     </article>
-  )
+  );
 }
