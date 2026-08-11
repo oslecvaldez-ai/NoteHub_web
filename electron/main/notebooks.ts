@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { ipcMain } from 'electron'
 import { getDatabase } from './database'
 
@@ -8,16 +9,28 @@ export interface Notebook {
 	name: string
 	icon_type: string | null
 	icon_color: string | null
+	is_locked: number
+	password_hash: string | null
 	note_count: number
 	created_at: string
 }
 
 export interface NotebookInput {
-	name: string
+	name?: string
 	parentNotebookId?: number | null
 	iconType?: string | null
+	iconTypeValue?: string | null
+	icon?: string | null
+	icon_type?: string | null
 	iconColor?: string | null
+	isLocked?: boolean | number | null
+	password?: string | null
+	passwordHash?: string | null
 	workspaceId?: number
+}
+
+function hashPassword(password: string): string {
+	return createHash('sha256').update(password).digest('hex')
 }
 
 function getNotebook(id: number): Notebook | undefined {
@@ -32,10 +45,47 @@ function getNotebook(id: number): Notebook | undefined {
 		.get(id) as Notebook | undefined
 }
 
+function resolveNotebookIcon(input: NotebookInput): string {
+	return input.iconType ?? input.iconTypeValue ?? input.icon ?? input.icon_type ?? 'folder'
+}
+
+function buildNotebookPassword(input: NotebookInput): { isLocked: number; passwordHash: string | null } {
+	const isLocked = input.isLocked === true || input.isLocked === 1 ? 1 : 0
+	if (isLocked) {
+		const passwordHash = input.password
+			? hashPassword(input.password)
+			: input.passwordHash ?? null
+		if (!passwordHash) {
+			throw new Error('La contraseña es obligatoria para bloquear el cuaderno')
+		}
+		return { isLocked, passwordHash }
+	}
+
+	return { isLocked: 0, passwordHash: null }
+}
+
 function logNotebookError(context: string, error: unknown): void {
 	console.error(`[notebooks] ${context} failed`, error instanceof Error ? error.message : error)
 	if (error instanceof Error && error.stack) {
 		console.error(error.stack)
+	}
+}
+
+function ensureUniqueNotebookName(workspaceId: number, name: string, parentNotebookId: number | null): void {
+	const existing = getDatabase()
+		.prepare(
+			`SELECT id FROM notebooks
+			 WHERE workspace_id = ?
+			   AND name = ?
+			   AND (
+					(? IS NULL AND parent_notebook_id IS NULL)
+					OR (? IS NOT NULL AND parent_notebook_id = ?)
+				)`,
+		)
+		.get(workspaceId, name, parentNotebookId, parentNotebookId, parentNotebookId) as { id: number } | undefined
+
+	if (existing) {
+		throw new Error('Ya existe un cuaderno con este nombre en esta ubicación')
 	}
 }
 
@@ -63,20 +113,26 @@ export function registerNotebooksIpc(): void {
 		(_event, workspaceId: number, input: NotebookInput) => {
 			try {
 				console.log('[notebooks] create request', { workspaceId, input })
-				const name = input.name.trim()
+				const name = input.name?.trim()
 				if (!name) throw new Error('El nombre del cuaderno es obligatorio')
+				const parentNotebookId = input.parentNotebookId ?? null
+				ensureUniqueNotebookName(workspaceId, name, parentNotebookId)
+				const iconType = resolveNotebookIcon(input)
+				const { isLocked, passwordHash } = buildNotebookPassword(input)
 				const result = getDatabase()
 					.prepare(
 						`INSERT INTO notebooks
-						 (workspace_id, parent_notebook_id, name, icon_type, icon_color)
-						 VALUES (?, ?, ?, ?, ?)`,
+						 (workspace_id, parent_notebook_id, name, icon_type, icon_color, is_locked, password_hash)
+						 VALUES (?, ?, ?, ?, ?, ?, ?)`,
 					)
 					.run(
 						workspaceId,
-						input.parentNotebookId ?? null,
+						parentNotebookId,
 						name,
-						input.iconType ?? 'folder',
+						iconType,
 						input.iconColor ?? null,
+						isLocked,
+						passwordHash,
 					)
 				return getNotebook(Number(result.lastInsertRowid))
 			} catch (error) {
@@ -90,19 +146,23 @@ export function registerNotebooksIpc(): void {
 		'notebooks:update',
 		(_event, id: number, input: NotebookInput) => {
 			try {
-				const name = input.name.trim()
+				const name = input.name?.trim()
 				if (!name) throw new Error('El nombre del cuaderno es obligatorio')
+				const iconType = resolveNotebookIcon(input)
+				const { isLocked, passwordHash } = buildNotebookPassword(input)
 				const result = getDatabase()
 					.prepare(
 						`UPDATE notebooks
-						 SET name = ?, parent_notebook_id = ?, icon_type = ?, icon_color = ?
+						 SET name = ?, parent_notebook_id = ?, icon_type = ?, icon_color = ?, is_locked = ?, password_hash = ?
 						 WHERE id = ?`,
 					)
 					.run(
 						name,
 						input.parentNotebookId ?? null,
-						input.iconType ?? 'folder',
+						iconType,
 						input.iconColor ?? null,
+						isLocked,
+						passwordHash,
 						id,
 					)
 				if (result.changes === 0) throw new Error('El cuaderno no existe')

@@ -24,6 +24,7 @@
 .arbol-cuaderno-select { align-items: center; background: transparent; border: 0; color: var(--text-primary, #1C1C1E); cursor: pointer; display: flex; flex: 1; font: inherit; font-size: 13px; gap: 8px; min-width: 0; padding: 7px 6px; text-align: left; }
 .arbol-cuaderno-select span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .arbol-cuaderno-select small { color: var(--text-secondary, #8E8E93); font-size: 11px; }
+.arbol-cuaderno-cover { border-radius: 6px; height: 20px; object-fit: cover; width: 20px; }
 .panel-central-notas { background: var(--bg-app, #FFFFFF); color: var(--text-primary, #1C1C1E); display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .panel-notas-header { align-items: center; border-bottom: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 18%, transparent); display: flex; gap: 20px; justify-content: space-between; padding: 22px 30px 18px; }
 .panel-notas-eyebrow { color: var(--text-secondary, #8E8E93); font-size: 11px; font-weight: 700; letter-spacing: .1em; margin: 0 0 4px; text-transform: uppercase; }
@@ -67,9 +68,22 @@
 .notas-modal-actions { display: flex; gap: 9px; justify-content: flex-end; margin-top: 22px; }
 .notas-modal-actions button:last-child { background: var(--color-primary, #0077D6); border-color: var(--color-primary, #0077D6); color: #FFFFFF; }
 .notas-modal-actions button:disabled { cursor: not-allowed; opacity: .5; }
-.notas-modal-icon-grid { display: flex; gap: 7px; margin-top: 16px; }
-.notas-modal-icon-grid button { background: transparent; border: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 28%, transparent); border-radius: 5px; color: var(--text-secondary, #8E8E93); cursor: pointer; font-size: 11px; padding: 7px; }
-.notas-modal-icon-grid button.is-selected { border-color: var(--color-primary, #0077D6); color: var(--color-primary, #0077D6); }
+.notas-modal-field { display: grid; gap: 7px; margin-bottom: 14px; }
+.notas-modal-field select { background: var(--bg-app, #FFFFFF); border: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 35%, transparent); border-radius: 6px; box-sizing: border-box; color: var(--text-primary, #1C1C1E); font: inherit; padding: 10px 12px; width: 100%; }
+.notas-modal-icon-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
+.notas-modal-icon-grid button { align-items: center; background: transparent; border: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 28%, transparent); border-radius: 8px; color: var(--text-secondary, #8E8E93); cursor: pointer; display: inline-flex; font-size: 11px; gap: 6px; padding: 7px 9px; position: relative; }
+.notas-modal-icon-grid button.is-selected { border-color: var(--color-primary, #0077D6); color: var(--color-primary, #0077D6); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary, #0077D6) 24%, transparent); }
+.notas-modal-cover-preview { align-items: center; background: color-mix(in srgb, var(--color-primary, #0077D6) 10%, transparent); border-radius: 6px; display: inline-flex; height: 28px; justify-content: center; overflow: hidden; width: 28px; }
+.notas-modal-cover-preview img { height: 100%; object-fit: cover; width: 100%; }
+.notas-modal-cover-label { font-size: 11px; }
+.notas-modal-cover-check { align-items: center; background: var(--color-primary, #0077D6); border-radius: 50%; color: #FFFFFF; display: inline-flex; height: 16px; justify-content: center; position: absolute; right: -4px; top: -4px; width: 16px; }
+.notas-modal-cover-add { justify-content: center; min-width: 42px; }
+.notas-modal-switch { align-items: center; display: flex; gap: 10px; margin: 6px 0 14px; }
+.notas-modal-switch input { display: none; }
+.notas-modal-switch-slider { background: color-mix(in srgb, var(--text-secondary, #8E8E93) 35%, transparent); border-radius: 999px; display: inline-flex; height: 20px; position: relative; width: 38px; }
+.notas-modal-switch-slider::after { background: #FFFFFF; border-radius: 50%; content: ''; height: 14px; left: 3px; position: absolute; top: 3px; transition: transform .2s ease; width: 14px; }
+.notas-modal-switch input:checked + .notas-modal-switch-slider { background: var(--color-primary, #0077D6); }
+.notas-modal-switch input:checked + .notas-modal-switch-slider::after { transform: translateX(18px); }
 .seleccion-cuaderno-list { max-height: 280px; overflow-y: auto; }
 .seleccion-cuaderno-list > button, .seleccion-cuaderno-row button { align-items: center; background: transparent; border: 0; color: var(--text-primary, #1C1C1E); cursor: pointer; display: flex; font: inherit; font-size: 13px; gap: 7px; padding: 8px; text-align: left; width: 100%; }
 .seleccion-cuaderno-row { align-items: center; display: flex; }

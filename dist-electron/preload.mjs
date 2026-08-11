@@ -8,7 +8,19 @@ electron.contextBridge.exposeInMainWorld("electron", {
 		getSetting: (key) => electron.ipcRenderer.invoke("db:get-setting", key),
 		setSetting: (key, value) => electron.ipcRenderer.invoke("db:set-setting", key, value)
 	},
-	files: { copyImage: (sourcePath) => electron.ipcRenderer.invoke("files:copy-image", sourcePath) },
+	files: {
+		copyImage: (sourcePath) => electron.ipcRenderer.invoke("files:copy-image", sourcePath ?? null),
+		saveImage: (sourcePath) => electron.ipcRenderer.invoke("files:save-image", sourcePath ?? null)
+	},
+	editor: { saveContent: (noteId, content, notebookId) => electron.ipcRenderer.invoke("notes:save-content", noteId, content, notebookId) },
+	export: {
+		toTXT: (title, content) => electron.ipcRenderer.invoke("export:toTXT", title, content),
+		toMD: (title, content) => electron.ipcRenderer.invoke("export:toMD", title, content),
+		toHTML: (title, content) => electron.ipcRenderer.invoke("export:toHTML", title, content),
+		toPDF: (title, content) => electron.ipcRenderer.invoke("export:toPDF", title, content),
+		toNoteHub: (note) => electron.ipcRenderer.invoke("export:toNoteHub", note),
+		fromNoteHub: () => electron.ipcRenderer.invoke("import:fromNoteHub")
+	},
 	workspaces: {
 		getAll: () => electron.ipcRenderer.invoke("workspaces:get-all"),
 		create: (name) => electron.ipcRenderer.invoke("workspaces:create", name),

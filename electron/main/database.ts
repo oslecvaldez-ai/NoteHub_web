@@ -38,6 +38,31 @@ function ensureWorkspaceColumns(connection: Database.Database): void {
 	}
 }
 
+function ensureNotebookColumns(connection: Database.Database): void {
+	const columns = connection.prepare('PRAGMA table_info(notebooks)').all() as Array<{ name: string }>
+	const existingColumns = new Set(columns.map((column) => column.name))
+
+	if (!existingColumns.has('parent_notebook_id')) {
+		connection.exec('ALTER TABLE notebooks ADD COLUMN parent_notebook_id INTEGER REFERENCES notebooks(id) ON DELETE CASCADE')
+	}
+
+	if (!existingColumns.has('icon_type')) {
+		connection.exec('ALTER TABLE notebooks ADD COLUMN icon_type TEXT')
+	}
+
+	if (!existingColumns.has('icon_color')) {
+		connection.exec('ALTER TABLE notebooks ADD COLUMN icon_color TEXT')
+	}
+
+	if (!existingColumns.has('is_locked')) {
+		connection.exec('ALTER TABLE notebooks ADD COLUMN is_locked INTEGER NOT NULL DEFAULT 0')
+	}
+
+	if (!existingColumns.has('password_hash')) {
+		connection.exec('ALTER TABLE notebooks ADD COLUMN password_hash TEXT')
+	}
+}
+
 function createSchema(connection: Database.Database): void {
 	connection.pragma('foreign_keys = ON')
 	connection.exec(`
@@ -60,6 +85,8 @@ function createSchema(connection: Database.Database): void {
 			name TEXT NOT NULL,
 			icon_type TEXT,
 			icon_color TEXT,
+			is_locked INTEGER NOT NULL DEFAULT 0 CHECK (is_locked IN (0, 1)),
+			password_hash TEXT,
 			note_count INTEGER NOT NULL DEFAULT 0,
 			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -119,6 +146,7 @@ function createSchema(connection: Database.Database): void {
 		CREATE INDEX IF NOT EXISTS idx_templates_workspace_id ON templates(workspace_id);
 	`)
 	ensureWorkspaceColumns(connection)
+	ensureNotebookColumns(connection)
 }
 
 function seedDatabase(connection: Database.Database): void {

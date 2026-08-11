@@ -13,8 +13,22 @@ const electronApi = {
 			ipcRenderer.invoke('db:set-setting', key, value),
 	},
 	files: {
-		copyImage: (sourcePath: string) =>
-			ipcRenderer.invoke('files:copy-image', sourcePath),
+		copyImage: (sourcePath?: string | null) =>
+			ipcRenderer.invoke('files:copy-image', sourcePath ?? null),
+		saveImage: (sourcePath?: string | { name: string; mimeType: string; data: Uint8Array } | null) =>
+			ipcRenderer.invoke('files:save-image', sourcePath ?? null),
+	},
+	editor: {
+		saveContent: (noteId: number, content: string, notebookId?: number | null) =>
+			ipcRenderer.invoke('notes:save-content', noteId, content, notebookId),
+	},
+	export: {
+		toTXT: (title: string, content: string) => ipcRenderer.invoke('export:toTXT', title, content),
+		toMD: (title: string, content: string) => ipcRenderer.invoke('export:toMD', title, content),
+		toHTML: (title: string, content: string) => ipcRenderer.invoke('export:toHTML', title, content),
+		toPDF: (title: string, content: string) => ipcRenderer.invoke('export:toPDF', title, content),
+		toNoteHub: (note: unknown) => ipcRenderer.invoke('export:toNoteHub', note),
+		fromNoteHub: () => ipcRenderer.invoke('import:fromNoteHub'),
 	},
 	workspaces: {
 		getAll: () => ipcRenderer.invoke('workspaces:get-all'),

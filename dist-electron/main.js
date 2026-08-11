@@ -1,8 +1,9 @@
-import { BrowserWindow, app, ipcMain } from "electron";
+import { BrowserWindow, app, dialog, ipcMain, net, protocol } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import Database from "better-sqlite3";
+import { createHash } from "node:crypto";
 //#region electron/main/database.ts
 var database = null;
 var initialSettings = {
@@ -22,6 +23,15 @@ function ensureWorkspaceColumns(connection) {
 	if (!existingColumns.has("description")) connection.exec("ALTER TABLE workspaces ADD COLUMN description TEXT NOT NULL DEFAULT \"\"");
 	if (!existingColumns.has("icon_name")) connection.exec("ALTER TABLE workspaces ADD COLUMN icon_name TEXT NOT NULL DEFAULT \"layers\"");
 	if (!existingColumns.has("updated_at")) connection.exec("ALTER TABLE workspaces ADD COLUMN updated_at TEXT");
+}
+function ensureNotebookColumns(connection) {
+	const columns = connection.prepare("PRAGMA table_info(notebooks)").all();
+	const existingColumns = new Set(columns.map((column) => column.name));
+	if (!existingColumns.has("parent_notebook_id")) connection.exec("ALTER TABLE notebooks ADD COLUMN parent_notebook_id INTEGER REFERENCES notebooks(id) ON DELETE CASCADE");
+	if (!existingColumns.has("icon_type")) connection.exec("ALTER TABLE notebooks ADD COLUMN icon_type TEXT");
+	if (!existingColumns.has("icon_color")) connection.exec("ALTER TABLE notebooks ADD COLUMN icon_color TEXT");
+	if (!existingColumns.has("is_locked")) connection.exec("ALTER TABLE notebooks ADD COLUMN is_locked INTEGER NOT NULL DEFAULT 0");
+	if (!existingColumns.has("password_hash")) connection.exec("ALTER TABLE notebooks ADD COLUMN password_hash TEXT");
 }
 function createSchema(connection) {
 	connection.pragma("foreign_keys = ON");
@@ -45,6 +55,8 @@ function createSchema(connection) {
 			name TEXT NOT NULL,
 			icon_type TEXT,
 			icon_color TEXT,
+			is_locked INTEGER NOT NULL DEFAULT 0 CHECK (is_locked IN (0, 1)),
+			password_hash TEXT,
 			note_count INTEGER NOT NULL DEFAULT 0,
 			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -104,6 +116,7 @@ function createSchema(connection) {
 		CREATE INDEX IF NOT EXISTS idx_templates_workspace_id ON templates(workspace_id);
 	`);
 	ensureWorkspaceColumns(connection);
+	ensureNotebookColumns(connection);
 }
 function seedDatabase(connection) {
 	connection.transaction(() => {
@@ -151,7 +164,228 @@ function registerDatabaseIpc() {
 	});
 }
 //#endregion
+//#region electron/main/export.ts
+function sanitizeFileName$1(value) {
+	return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9-_\. ]+/g, "_").replace(/\s+/g, "_").replace(/^_+|_+$/g, "").substring(0, 120);
+}
+function htmlToPlainText(html) {
+	return html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n").replace(/<li[^>]*>/gi, "- ").replace(/<\/li>/gi, "\n").replace(/<h([1-6])[^>]*>(.*?)<\/h\1>/gi, (_match, level, content) => {
+		return "#".repeat(Number(level)) + " " + content + "\n\n";
+	}).replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, "[$2]($1)").replace(/<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*>/gi, "![$1]($2)").replace(/<strong>|<b>/gi, "**").replace(/<\/strong>|<\/b>/gi, "**").replace(/<em>|<i>/gi, "*").replace(/<\/em>|<\/i>/gi, "*").replace(/<u>/gi, "_").replace(/<\/u>/gi, "_").replace(/<[^>]+>/g, "").replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;|&#34;/g, "\"").replace(/&#39;|&#x27;/g, "'").replace(/\n{3,}/g, "\n\n").trim();
+}
+function buildHtmlDocument(title, content) {
+	return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>${title}</title>
+<style>
+body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; color: #111827; background: #fff; }
+img { max-width: 100%; height: auto; }
+pre { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+${content}
+</body>
+</html>`;
+}
+function getSaveFileName(title, extension) {
+	return `${sanitizeFileName$1(title) || "Nota"}.${extension}`;
+}
+function writeFile(filePath, contents) {
+	fs.writeFileSync(filePath, contents, "utf8");
+	return filePath;
+}
+async function createHiddenWindow(html) {
+	const exportWindow = new BrowserWindow({
+		show: false,
+		webPreferences: {
+			contextIsolation: true,
+			sandbox: false
+		}
+	});
+	await exportWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+	return exportWindow;
+}
+function registerExportIpc() {
+	ipcMain.handle("export:toTXT", async (_event, title, content) => {
+		const defaultPath = getSaveFileName(title, "txt");
+		const { canceled, filePath } = await dialog.showSaveDialog({
+			title: "Exportar nota como TXT",
+			defaultPath,
+			filters: [{
+				name: "Texto",
+				extensions: ["txt"]
+			}]
+		});
+		if (canceled || !filePath) return null;
+		return writeFile(filePath, htmlToPlainText(content));
+	});
+	ipcMain.handle("export:toMD", async (_event, title, content) => {
+		const defaultPath = getSaveFileName(title, "md");
+		const { canceled, filePath } = await dialog.showSaveDialog({
+			title: "Exportar nota como Markdown",
+			defaultPath,
+			filters: [{
+				name: "Markdown",
+				extensions: ["md", "markdown"]
+			}]
+		});
+		if (canceled || !filePath) return null;
+		return writeFile(filePath, htmlToPlainText(content));
+	});
+	ipcMain.handle("export:toHTML", async (_event, title, content) => {
+		const defaultPath = getSaveFileName(title, "html");
+		const { canceled, filePath } = await dialog.showSaveDialog({
+			title: "Exportar nota como HTML",
+			defaultPath,
+			filters: [{
+				name: "HTML",
+				extensions: ["html", "htm"]
+			}]
+		});
+		if (canceled || !filePath) return null;
+		return writeFile(filePath, buildHtmlDocument(title, content));
+	});
+	ipcMain.handle("export:toPDF", async (_event, title, content) => {
+		const defaultPath = getSaveFileName(title, "pdf");
+		const { canceled, filePath } = await dialog.showSaveDialog({
+			title: "Exportar nota como PDF",
+			defaultPath,
+			filters: [{
+				name: "PDF",
+				extensions: ["pdf"]
+			}]
+		});
+		if (canceled || !filePath) return null;
+		const printWindow = await createHiddenWindow(buildHtmlDocument(title, content));
+		try {
+			const data = await printWindow.webContents.printToPDF({
+				printBackground: true,
+				pageSize: "A4",
+				marginsType: 1
+			});
+			fs.writeFileSync(filePath, data);
+			return filePath;
+		} finally {
+			printWindow.close();
+		}
+	});
+	ipcMain.handle("export:toNoteHub", async (_event, note) => {
+		const defaultPath = getSaveFileName(typeof note.title === "string" ? note.title : "Nota", "notehub");
+		const { canceled, filePath } = await dialog.showSaveDialog({
+			title: "Exportar nota como archivo NoteHub",
+			defaultPath,
+			filters: [{
+				name: "NoteHub",
+				extensions: ["notehub", "json"]
+			}]
+		});
+		if (canceled || !filePath) return null;
+		const payload = {
+			version: "1.0.0",
+			exported_at: (/* @__PURE__ */ new Date()).toISOString(),
+			note
+		};
+		return writeFile(filePath, JSON.stringify(payload, null, 2));
+	});
+	ipcMain.handle("import:fromNoteHub", async () => {
+		const { canceled, filePaths } = await dialog.showOpenDialog({
+			title: "Importar nota desde archivo NoteHub",
+			properties: ["openFile"],
+			filters: [{
+				name: "NoteHub",
+				extensions: ["notehub", "json"]
+			}]
+		});
+		if (canceled || filePaths.length === 0) return null;
+		const filePath = filePaths[0];
+		const content = fs.readFileSync(filePath, "utf8");
+		const parsed = JSON.parse(content);
+		if (!parsed || typeof parsed !== "object" || !parsed.note) throw new Error("Formato de archivo NoteHub no válido");
+		return parsed.note;
+	});
+}
+//#endregion
+//#region electron/main/files.ts
+function sanitizeFileName(value) {
+	return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9-_\. ]+/g, "_").replace(/\s+/g, "_").replace(/^_+|_+$/g, "");
+}
+function buildDestinationName(sourceName, sourceType) {
+	const extension = path.extname(sourceName).toLowerCase() || (sourceType?.startsWith("image/") ? `.${sourceType.split("/")[1]}` : ".png");
+	const sanitizedBaseName = sanitizeFileName(path.basename(sourceName, path.extname(sourceName))) || "imagen";
+	return `${Date.now()}-${sanitizedBaseName}${extension}`;
+}
+function writeImageToUserData(payload) {
+	const imagesDirectory = path.join(app.getPath("userData"), "images");
+	fs.mkdirSync(imagesDirectory, { recursive: true });
+	let fileName;
+	let destinationPath;
+	if (typeof payload === "string") {
+		const absoluteSourcePath = path.resolve(payload);
+		if (!fs.existsSync(absoluteSourcePath)) throw new Error("No se encontró el archivo seleccionado");
+		fileName = buildDestinationName(absoluteSourcePath);
+		destinationPath = path.join(imagesDirectory, fileName);
+		fs.copyFileSync(absoluteSourcePath, destinationPath);
+		return fileName;
+	}
+	fileName = buildDestinationName(payload.name, payload.mimeType);
+	destinationPath = path.join(imagesDirectory, fileName);
+	fs.writeFileSync(destinationPath, Buffer.from(payload.data));
+	return fileName;
+}
+function registerFilesIpc() {
+	ipcMain.handle("files:copy-image", async (_event, sourcePath) => {
+		let selectedPath = sourcePath?.trim() ?? "";
+		if (!selectedPath) {
+			const { canceled, filePaths } = await dialog.showOpenDialog({
+				title: "Selecciona una imagen",
+				properties: ["openFile"],
+				filters: [{
+					name: "Imágenes",
+					extensions: [
+						"png",
+						"jpg",
+						"jpeg",
+						"webp",
+						"gif"
+					]
+				}]
+			});
+			if (canceled || filePaths.length === 0) return null;
+			selectedPath = filePaths[0];
+		}
+		return writeImageToUserData(selectedPath);
+	});
+	ipcMain.handle("files:save-image", async (_event, source) => {
+		if (!source) {
+			const { canceled, filePaths } = await dialog.showOpenDialog({
+				title: "Selecciona una imagen",
+				properties: ["openFile"],
+				filters: [{
+					name: "Imágenes",
+					extensions: [
+						"png",
+						"jpg",
+						"jpeg",
+						"webp",
+						"gif"
+					]
+				}]
+			});
+			if (canceled || filePaths.length === 0) return null;
+			return writeImageToUserData(filePaths[0]);
+		}
+		return writeImageToUserData(source);
+	});
+}
+//#endregion
 //#region electron/main/notebooks.ts
+function hashPassword(password) {
+	return createHash("sha256").update(password).digest("hex");
+}
 function getNotebook(id) {
 	return getDatabase().prepare(`SELECT notebooks.*, COUNT(notes.id) AS note_count
 			 FROM notebooks
@@ -159,9 +393,36 @@ function getNotebook(id) {
 			 WHERE notebooks.id = ?
 			 GROUP BY notebooks.id`).get(id);
 }
+function resolveNotebookIcon(input) {
+	return input.iconType ?? input.iconTypeValue ?? input.icon ?? input.icon_type ?? "folder";
+}
+function buildNotebookPassword(input) {
+	const isLocked = input.isLocked === true || input.isLocked === 1 ? 1 : 0;
+	if (isLocked) {
+		const passwordHash = input.password ? hashPassword(input.password) : input.passwordHash ?? null;
+		if (!passwordHash) throw new Error("La contraseña es obligatoria para bloquear el cuaderno");
+		return {
+			isLocked,
+			passwordHash
+		};
+	}
+	return {
+		isLocked: 0,
+		passwordHash: null
+	};
+}
 function logNotebookError(context, error) {
 	console.error(`[notebooks] ${context} failed`, error instanceof Error ? error.message : error);
 	if (error instanceof Error && error.stack) console.error(error.stack);
+}
+function ensureUniqueNotebookName(workspaceId, name, parentNotebookId) {
+	if (getDatabase().prepare(`SELECT id FROM notebooks
+			 WHERE workspace_id = ?
+			   AND name = ?
+			   AND (
+					(? IS NULL AND parent_notebook_id IS NULL)
+					OR (? IS NOT NULL AND parent_notebook_id = ?)
+				)`).get(workspaceId, name, parentNotebookId, parentNotebookId, parentNotebookId)) throw new Error("Ya existe un cuaderno con este nombre en esta ubicación");
 }
 function registerNotebooksIpc() {
 	ipcMain.handle("notebooks:get-all", (_event, workspaceId) => {
@@ -183,11 +444,15 @@ function registerNotebooksIpc() {
 				workspaceId,
 				input
 			});
-			const name = input.name.trim();
+			const name = input.name?.trim();
 			if (!name) throw new Error("El nombre del cuaderno es obligatorio");
+			const parentNotebookId = input.parentNotebookId ?? null;
+			ensureUniqueNotebookName(workspaceId, name, parentNotebookId);
+			const iconType = resolveNotebookIcon(input);
+			const { isLocked, passwordHash } = buildNotebookPassword(input);
 			const result = getDatabase().prepare(`INSERT INTO notebooks
-						 (workspace_id, parent_notebook_id, name, icon_type, icon_color)
-						 VALUES (?, ?, ?, ?, ?)`).run(workspaceId, input.parentNotebookId ?? null, name, input.iconType ?? "folder", input.iconColor ?? null);
+						 (workspace_id, parent_notebook_id, name, icon_type, icon_color, is_locked, password_hash)
+						 VALUES (?, ?, ?, ?, ?, ?, ?)`).run(workspaceId, parentNotebookId, name, iconType, input.iconColor ?? null, isLocked, passwordHash);
 			return getNotebook(Number(result.lastInsertRowid));
 		} catch (error) {
 			logNotebookError("notebooks:create", error);
@@ -196,11 +461,13 @@ function registerNotebooksIpc() {
 	});
 	ipcMain.handle("notebooks:update", (_event, id, input) => {
 		try {
-			const name = input.name.trim();
+			const name = input.name?.trim();
 			if (!name) throw new Error("El nombre del cuaderno es obligatorio");
+			const iconType = resolveNotebookIcon(input);
+			const { isLocked, passwordHash } = buildNotebookPassword(input);
 			if (getDatabase().prepare(`UPDATE notebooks
-						 SET name = ?, parent_notebook_id = ?, icon_type = ?, icon_color = ?
-						 WHERE id = ?`).run(name, input.parentNotebookId ?? null, input.iconType ?? "folder", input.iconColor ?? null, id).changes === 0) throw new Error("El cuaderno no existe");
+						 SET name = ?, parent_notebook_id = ?, icon_type = ?, icon_color = ?, is_locked = ?, password_hash = ?
+						 WHERE id = ?`).run(name, input.parentNotebookId ?? null, iconType, input.iconColor ?? null, isLocked, passwordHash, id).changes === 0) throw new Error("El cuaderno no existe");
 			return getNotebook(id);
 		} catch (error) {
 			logNotebookError("notebooks:update", error);
@@ -340,6 +607,30 @@ function registerWorkspacesIpc() {
 	});
 }
 //#endregion
+//#region electron/main/editor.ts
+function getNoteById(id) {
+	return getDatabase().prepare("SELECT id, title, content, notebook_id FROM notes WHERE id = ?").get(id);
+}
+function normalizeHtmlText(value) {
+	return value.replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;|&#34;/g, "\"").replace(/&#39;|&#x27;/g, "'").replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+}
+function extractTitleFromContent(content) {
+	const headingMatch = content.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);
+	return ((headingMatch?.[1] ? normalizeHtmlText(headingMatch[1]) : normalizeHtmlText(content)).split("\n").map((line) => line.trim()).find(Boolean) ?? "").slice(0, 120) || "Nota sin título";
+}
+function registerEditorIpc() {
+	ipcMain.handle("notes:save-content", (_event, noteId, content, notebookId) => {
+		const note = getNoteById(noteId);
+		if (!note) throw new Error("La nota no existe");
+		const title = extractTitleFromContent(content) || note.title || "Nota sin título";
+		const targetNotebookId = notebookId === void 0 ? note.notebook_id : notebookId;
+		getDatabase().prepare(`UPDATE notes
+				 SET title = ?, content = ?, notebook_id = ?, updated_at = CURRENT_TIMESTAMP
+				 WHERE id = ?`).run(title, content, targetNotebookId, noteId);
+		return getNoteById(noteId);
+	});
+}
+//#endregion
 //#region electron/main.ts
 var currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 var mainWindow = null;
@@ -352,12 +643,32 @@ function createWindow() {
 	];
 	const preloadPath = possiblePaths.find((p) => fs.existsSync(p)) || possiblePaths[0];
 	console.log("👉 Archivo preload inyectado desde:", preloadPath);
+	const publicPath = app.isPackaged ? path.join(currentDirectory, "..", "dist") : path.join(currentDirectory, "..", "public");
+	const iconCandidates = [
+		"notehub.png",
+		"notehub.ico",
+		"notehub.svg"
+	];
+	let resolvedIcon;
+	for (const candidate of iconCandidates) {
+		const candidatePath = path.join(publicPath, candidate);
+		if (fs.existsSync(candidatePath)) {
+			resolvedIcon = candidatePath;
+			break;
+		}
+	}
+	if (!resolvedIcon) {
+		const fallback = path.join(currentDirectory, "..", "public", "notehub.svg");
+		if (fs.existsSync(fallback)) resolvedIcon = fallback;
+	}
 	mainWindow = new BrowserWindow({
 		height: 820,
 		minHeight: 600,
 		minWidth: 960,
 		show: false,
-		title: "NoteHub Desktop",
+		autoHideMenuBar: true,
+		...resolvedIcon ? { icon: resolvedIcon } : {},
+		title: "NoteHub",
 		webPreferences: {
 			contextIsolation: true,
 			preload: preloadPath
@@ -372,11 +683,27 @@ function createWindow() {
 	else mainWindow.loadFile(path.join(currentDirectory, "..", "dist", "index.html"));
 }
 app.whenReady().then(() => {
+	protocol.handle("notehub", async (request) => {
+		const requestedPath = request.url.replace("notehub://", "");
+		const segments = requestedPath.split("/");
+		let resolvedPath;
+		if (segments[0] === "images") resolvedPath = path.join(app.getPath("userData"), "images", ...segments.slice(1));
+		else if (segments[0] === "covers") resolvedPath = path.join(app.getPath("userData"), "covers", ...segments.slice(1));
+		else resolvedPath = path.join(app.getPath("userData"), "covers", requestedPath);
+		if (!fs.existsSync(resolvedPath)) return new Response("Archivo no encontrado", {
+			status: 404,
+			headers: { "content-type": "text/plain" }
+		});
+		return net.fetch(`file://${resolvedPath}`);
+	});
 	getDatabase();
 	registerDatabaseIpc();
 	registerWorkspacesIpc();
 	registerNotebooksIpc();
 	registerNotesIpc();
+	registerEditorIpc();
+	registerFilesIpc();
+	registerExportIpc();
 	createWindow();
 	app.on("activate", () => {
 		if (BrowserWindow.getAllWindows().length === 0) createWindow();

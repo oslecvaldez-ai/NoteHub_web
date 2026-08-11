@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react'
-import { ChevronDown, ChevronRight, Folder, Plus } from '../../../core/components/Iconos'
+import { BookOpen, Folder as FolderIcon, Sparkles, Star } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus } from '../../../core/components/Iconos'
+
+function resolveNotebookCoverUrl(value: string | null | undefined): string | null {
+  if (!value) return null
+  if (/^(data:|https?:|blob:|file:)/i.test(value)) return value
+  if (/\.(png|jpe?g|webp|gif)$/i.test(value)) {
+    return `notehub://${value}`
+  }
+  return null
+}
 import { ConfirmacionEliminacionModal } from '../../../core/components/ConfirmacionEliminacionModal'
 import { useNotifications } from '../../../core/components/useNotifications'
 import { MenuContextual, type ContextMenuItem } from './MenuContextual'
@@ -115,7 +125,23 @@ export function ArbolCuadernos({ workspaceId, selectedNotebookId, onSelectNotebo
             </button>
           ) : <span className="arbol-cuaderno-spacer" />}
           <button className="arbol-cuaderno-select" onClick={() => onSelectNotebook(node.id)} type="button">
-            <Folder aria-hidden="true" size={17} />
+            {(() => {
+              const coverUrl = resolveNotebookCoverUrl(node.icon_type)
+              const isLocalCover = Boolean(coverUrl)
+              if (isLocalCover && coverUrl) {
+                return <img alt={node.name} className="arbol-cuaderno-cover" src={coverUrl} />
+              }
+              switch (node.icon_type) {
+                case 'book':
+                  return <BookOpen aria-hidden="true" size={17} />
+                case 'sparkles':
+                  return <Sparkles aria-hidden="true" size={17} />
+                case 'star':
+                  return <Star aria-hidden="true" size={17} />
+                default:
+                  return <FolderIcon aria-hidden="true" size={17} />
+              }
+            })()}
             <span>{node.name}</span>
             <small>{node.note_count}</small>
           </button>

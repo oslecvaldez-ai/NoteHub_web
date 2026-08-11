@@ -7,6 +7,12 @@ export interface DatabaseRunResult {
 	lastInsertRowid: number | bigint
 }
 
+export interface ImagePayload {
+	name: string
+	mimeType: string
+	data: Uint8Array
+}
+
 export interface ElectronApi {
 	db: {
 		query<T extends DatabaseRow = DatabaseRow>(
@@ -18,7 +24,19 @@ export interface ElectronApi {
 		setSetting(key: string, value: string): Promise<string>
 	}
 	files: {
-		copyImage(sourcePath: string): Promise<string>
+		copyImage(sourcePath?: string | null): Promise<string>
+		saveImage(sourcePath?: string | File | ImagePayload | null): Promise<string>
+	}
+	editor: {
+		saveContent(noteId: number, content: string, notebookId?: number | null): Promise<unknown>
+	}
+	export: {
+		toTXT(title: string, content: string): Promise<string | null>
+		toMD(title: string, content: string): Promise<string | null>
+		toHTML(title: string, content: string): Promise<string | null>
+		toPDF(title: string, content: string): Promise<string | null>
+		toNoteHub(note: unknown): Promise<string | null>
+		fromNoteHub(): Promise<unknown | null>
 	}
 }
 
@@ -62,8 +80,70 @@ export const db = {
 }
 
 export const files = {
-	copyImage(sourcePath: string): Promise<string> {
+	copyImage(sourcePath?: string | null): Promise<string> {
 		const api = getElectronApi()
-		return api ? api.files.copyImage(sourcePath) : Promise.resolve(sourcePath)
+		return api ? api.files.copyImage(sourcePath) : Promise.resolve(sourcePath ?? '')
+	},
+	saveImage(sourcePath?: string | File | ImagePayload | null): Promise<string> {
+		const api = getElectronApi()
+		if (!api) {
+			return Promise.resolve(
+				typeof sourcePath === 'string' ? sourcePath ?? '' : sourcePath?.name ?? '',
+			)
+		}
+
+		if (!sourcePath) {
+			return api.files.saveImage(null)
+		}
+
+		if (typeof sourcePath === 'string') {
+			return api.files.saveImage(sourcePath)
+		}
+
+		if (sourcePath instanceof File) {
+			return sourcePath.arrayBuffer().then((buffer) =>
+				api.files.saveImage({
+					name: sourcePath.name,
+					mimeType: sourcePath.type || 'application/octet-stream',
+					data: new Uint8Array(buffer),
+				}),
+			)
+		}
+
+		return api.files.saveImage(sourcePath)
+	},
+}
+
+export const editor = {
+	saveContent(noteId: number, content: string, notebookId?: number | null): Promise<unknown> {
+		const api = getElectronApi()
+		return api ? api.editor.saveContent(noteId, content, notebookId) : Promise.resolve(null)
+	},
+}
+
+export const exporter = {
+	toTXT(title: string, content: string): Promise<string | null> {
+		const api = getElectronApi()
+		return api ? api.export.toTXT(title, content) : Promise.resolve(null)
+	},
+	toMD(title: string, content: string): Promise<string | null> {
+		const api = getElectronApi()
+		return api ? api.export.toMD(title, content) : Promise.resolve(null)
+	},
+	toHTML(title: string, content: string): Promise<string | null> {
+		const api = getElectronApi()
+		return api ? api.export.toHTML(title, content) : Promise.resolve(null)
+	},
+	toPDF(title: string, content: string): Promise<string | null> {
+		const api = getElectronApi()
+		return api ? api.export.toPDF(title, content) : Promise.resolve(null)
+	},
+	toNoteHub(note: unknown): Promise<string | null> {
+		const api = getElectronApi()
+		return api ? api.export.toNoteHub(note) : Promise.resolve(null)
+	},
+	fromNoteHub(): Promise<unknown | null> {
+		const api = getElectronApi()
+		return api ? api.export.fromNoteHub() : Promise.resolve(null)
 	},
 }

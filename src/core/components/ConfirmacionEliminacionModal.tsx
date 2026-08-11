@@ -68,62 +68,45 @@ export function ConfirmacionEliminacionModal({
 				}
 			}}
 			role="dialog"
-			style={{
-				alignItems: 'center',
-				background: 'rgba(0, 0, 0, 0.5)',
-				display: 'flex',
-				inset: 0,
-				justifyContent: 'center',
-				padding: 24,
-				position: 'fixed',
-				zIndex: 1100,
-			}}
+			className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 p-6"
 		>
 			<section
 				aria-labelledby="confirmacion-eliminacion-titulo"
-				style={{
-					background: 'var(--bg-card, #F4F5F7)',
-					borderRadius: 8,
-					boxShadow: '0 20px 50px rgba(0, 0, 0, 0.25)',
-					color: 'var(--text-primary, #1C1C1E)',
-					maxWidth: 440,
-					padding: 24,
-					position: 'relative',
-					width: '100%',
-				}}
+				className="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_20px_45px_rgba(0,0,0,0.22)] dark:border-slate-700 dark:bg-slate-800"
 			>
 				<button
 					aria-label="Cerrar modal"
 					onClick={onCancel}
-					style={{
-						background: 'transparent',
-						border: 0,
-						color: 'var(--text-secondary, #8E8E93)',
-						cursor: 'pointer',
-						padding: 4,
-						position: 'absolute',
-						right: 16,
-						top: 16,
-					}}
 					type="button"
+					className="absolute right-4 top-4 rounded-full p-2 text-text-secondary transition hover:bg-black/5 hover:text-text-primary dark:hover:bg-white/10"
 				>
 					<X aria-hidden="true" size={20} />
 				</button>
-				<AlertTriangle aria-hidden="true" color="#F97316" size={28} />
-				<h2 id="confirmacion-eliminacion-titulo" style={{ fontSize: 20, margin: '16px 0 8px' }}>
-					{title}
-				</h2>
-				<p style={{ color: 'var(--text-secondary, #8E8E93)', lineHeight: 1.5, margin: 0 }}>
-					{message}
-				</p>
-				<div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 24 }}>
-					<button onClick={onCancel} type="button">
+				<div className="flex items-center gap-3">
+					<div className="flex h-11 w-11 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+						<AlertTriangle aria-hidden="true" size={24} />
+					</div>
+					<div>
+						<h2 id="confirmacion-eliminacion-titulo" className="text-lg font-semibold text-text-primary">
+							{title}
+						</h2>
+						<p className="mt-1 text-sm leading-6 text-text-secondary">
+							{message}
+						</p>
+					</div>
+				</div>
+				<div className="mt-6 flex justify-end gap-3">
+					<button
+						onClick={onCancel}
+						type="button"
+						className="min-w-[110px] rounded-xl border border-black/10 bg-secondary px-4 py-2.5 text-sm font-medium text-text-primary transition hover:bg-black/5 dark:border-white/10 dark:bg-secondary dark:hover:bg-white/10"
+					>
 						{cancelLabel}
 					</button>
 					<button
 						onClick={onConfirm}
-						style={{ background: '#DC2626', border: 0, color: '#FFFFFF' }}
 						type="button"
+						className="min-w-[110px] rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
 					>
 						{confirmLabel}
 					</button>

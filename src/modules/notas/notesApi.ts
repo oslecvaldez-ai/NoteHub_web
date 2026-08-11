@@ -5,6 +5,8 @@ export interface Notebook {
   name: string
   icon_type: string | null
   icon_color: string | null
+  is_locked: number
+  password_hash: string | null
   note_count: number
   created_at: string
 }
@@ -27,6 +29,9 @@ export interface NotebookInput {
   parentNotebookId?: number | null
   iconType?: string | null
   iconColor?: string | null
+  isLocked?: boolean | number | null
+  password?: string | null
+  passwordHash?: string | null
 }
 
 export interface NoteInput {
