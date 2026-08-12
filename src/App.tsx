@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppWrapper } from "./core";
 import { GlobalHeader } from "./core/components/GlobalHeader";
 import {
@@ -10,7 +10,10 @@ import {
   SidebarNavegacion,
   type Note,
 } from "./modules/notas";
-import { PanelEditor } from "./modules/editor/components/PanelEditor";
+import {
+  PanelEditor,
+  type PanelEditorHandle,
+} from "./modules/editor/components/PanelEditor";
 
 function WorkspaceShell() {
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
@@ -25,6 +28,8 @@ function WorkspaceShell() {
     () => () => {},
   );
   const [reloadAction, setReloadAction] = useState<() => void>(() => () => {});
+
+  const panelEditorRef = useRef<PanelEditorHandle | null>(null);
 
   const handleCreateNoteReady = useCallback((createNote: () => void) => {
     setCreateNoteAction(() => createNote);
@@ -81,6 +86,16 @@ function WorkspaceShell() {
     setSelectedNote(note);
   }, []);
 
+  const handleSaveAndCloseNote = useCallback(async () => {
+    if (selectedNote) {
+      if (panelEditorRef.current) {
+        await panelEditorRef.current.saveNow();
+      }
+      setSelectedNote(null);
+      reloadAction();
+    }
+  }, [selectedNote, reloadAction]);
+
   return (
     <main className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--bg-app)] text-[var(--text-primary)]">
       {/* Cabecera Global Fija */}
@@ -89,6 +104,7 @@ function WorkspaceShell() {
           searchQuery={searchQuery}
           onSearch={setSearchQuery}
           onCreateNote={createNoteAction}
+          onSaveNote={handleSaveAndCloseNote}
           onReload={reloadAction}
         />
       </div>
@@ -126,6 +142,7 @@ function WorkspaceShell() {
         <div className="flex-1 h-full min-w-0 flex flex-col bg-white overflow-hidden">
           {selectedNote ? (
             <PanelEditor
+              ref={panelEditorRef}
               noteId={selectedNote.id}
               notebookId={selectedNote.notebook_id}
               noteTitle={selectedNote.title}

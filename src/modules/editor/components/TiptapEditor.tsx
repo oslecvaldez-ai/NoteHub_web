@@ -8,6 +8,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import {
   Callout,
   Collapsible,
+  CustomQuote,
   EditorHighlight,
   SearchHighlight,
   Checklist,
@@ -95,10 +96,7 @@ function TiptapEditorComponent(
       },
     },
     extensions: [
-      StarterKit.configure({
-        bulletList: false,
-        orderedList: false,
-      }),
+      StarterKit,
       Color,
       TextStyle,
       Highlight.configure({ multicolor: true }),
@@ -107,6 +105,7 @@ function TiptapEditorComponent(
       ChecklistItem,
       Callout,
       Collapsible,
+      CustomQuote,
       EditorHighlight,
       SearchHighlight,
       TextTransform,
@@ -125,7 +124,17 @@ function TiptapEditorComponent(
   }, [editor]);
 
   useEffect(() => {
-    if (editor && typeof initialHTML === "string") {
+    if (!editor || typeof initialHTML !== "string") {
+      return;
+    }
+
+    const currentHTML = editor.getHTML();
+    const isFocused =
+      typeof (editor as any).isFocused === "function"
+        ? (editor as any).isFocused()
+        : (editor as any).isFocused;
+
+    if (currentHTML !== initialHTML && !isFocused) {
       editor.commands.setContent(initialHTML);
       setIsEmpty(isEditorEmpty(editor));
     }

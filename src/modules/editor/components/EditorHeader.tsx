@@ -22,7 +22,6 @@ export interface EditorHeaderProps {
 }
 
 export function EditorHeader({
-  title,
   onPin,
   onStar,
   onShare,
@@ -38,7 +37,9 @@ export function EditorHeader({
           <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
             Editor
           </p>
-          <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100"></h1>
+          {/* <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+            {title}
+          </h1> */}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button

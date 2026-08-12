@@ -20,7 +20,9 @@ import {
   Italic,
   List,
   ListOrdered,
+  Minus,
   Palette,
+  Quote,
   Slash,
   Subscript,
   Superscript,
@@ -35,32 +37,61 @@ export interface EditorToolbarProps {
   onInsertDate: () => void;
   onInsertSubscript: () => void;
   onInsertSuperscript: () => void;
-  onInsertFunction: () => void;
 }
 
+type ColorOption = {
+  name: string;
+  color: string;
+  shortcut?: string;
+};
+
 // Paleta de Colores para TEXTO (Oscuros / Fuerte)
-const TEXT_COLORS = [
-  { name: "Roja", color: "#EF4444", shortcut: "Alt+Ctrl+1" },
-  { name: "Naranja", color: "#F97316", shortcut: "Alt+Ctrl+2" },
-  { name: "Amarillo", color: "#EAB308", shortcut: "Alt+Ctrl+3" },
-  { name: "Verde", color: "#22C55E", shortcut: "Alt+Ctrl+4" },
-  { name: "Azul", color: "#3B82F6", shortcut: "Alt+Ctrl+5" },
-  { name: "Rosa", color: "#EC4899", shortcut: "Alt+Ctrl+6" },
-  { name: "Púrpura", color: "#A855F7", shortcut: "Alt+Ctrl+7" },
-  { name: "Gris", color: "#6B7280", shortcut: "Alt+Ctrl+8" },
+const TEXT_COLORS: ColorOption[] = [
+  { name: "Rojo", color: "#EE2C2C" },
+  { name: "Naranja", color: "#FF7A00" },
+  { name: "Amarillo", color: "#FFC72C" },
+  { name: "Verde", color: "#51B837" },
+  { name: "Azul", color: "#478AF6" },
+  { name: "Rosa", color: "#F86BD7" },
+  { name: "Púrpura", color: "#9B51E0" },
+  { name: "Gris", color: "#707070" },
 ];
 
 // Paleta de Colores para FONDO (Claros / Pastel)
-const BG_COLORS = [
-  { name: "Roja", color: "#FCA5A5", shortcut: "Alt+Ctrl+Shift+1" },
-  { name: "Naranja", color: "#FDBA74", shortcut: "Alt+Ctrl+Shift+2" },
-  { name: "Amarillo", color: "#FDE047", shortcut: "Alt+Ctrl+Shift+3" },
-  { name: "Verde", color: "#BEF264", shortcut: "Alt+Ctrl+Shift+4" },
-  { name: "Azul", color: "#93C5FD", shortcut: "Alt+Ctrl+Shift+5" },
-  { name: "Rosa", color: "#F472B6", shortcut: "Alt+Ctrl+Shift+6" },
-  { name: "Púrpura", color: "#C084FC", shortcut: "Alt+Ctrl+Shift+7" },
-  { name: "Gris", color: "#CBD5E1", shortcut: "Alt+Ctrl+Shift+8" },
+const BG_COLORS: ColorOption[] = [
+  { name: "Rojo", color: "#FF8B8B" },
+  { name: "Naranja", color: "#FFC085" },
+  { name: "Amarillo", color: "#FFE285" },
+  { name: "Verde", color: "#C2F18E" },
+  { name: "Azul", color: "#85C8FF" },
+  { name: "Rosa", color: "#FFB2E6" },
+  { name: "Púrpura", color: "#CFA5FF" },
+  { name: "Gris", color: "#CCCCCC" },
 ];
+
+const BG_TO_BORDER_MAP: Record<string, string> = {
+  "#FF8B8B": "#EE2C2C",
+  "#FFC085": "#FF7A00",
+  "#FFE285": "#FFC72C",
+  "#C2F18E": "#51B837",
+  "#85C8FF": "#478AF6",
+  "#FFB2E6": "#F86BD7",
+  "#CFA5FF": "#9B51E0",
+  "#CCCCCC": "#707070",
+};
+
+const QUOTE_COLORS = [
+  { name: "Azul", bgColor: "#E0F2FE", borderColor: "#0284C7" },
+  { name: "Verde", bgColor: "#DCFCE7", borderColor: "#16A34A" },
+  { name: "Amarillo", bgColor: "#FEF9C3", borderColor: "#CA8A04" },
+  { name: "Naranja", bgColor: "#FFEDD5", borderColor: "#EA580C" },
+  { name: "Rojo", bgColor: "#FEE2E2", borderColor: "#DC2626" },
+  { name: "Rosa", bgColor: "#FCE7F3", borderColor: "#DB2777" },
+  { name: "Púrpura", bgColor: "#F3E8FF", borderColor: "#9333EA" },
+  { name: "Gris", bgColor: "#F1F5F9", borderColor: "#64748B" },
+];
+
+const QUOTE_COLOR_NAMES = QUOTE_COLORS.map((item) => item.name).join(", ");
 
 function toolbarButton(
   icon: ElementType,
@@ -94,7 +125,6 @@ export function EditorToolbar({
   onInsertDate,
   onInsertSubscript,
   onInsertSuperscript,
-  onInsertFunction,
 }: EditorToolbarProps) {
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
@@ -129,7 +159,6 @@ export function EditorToolbar({
         <select
           aria-label="Formato de encabezado"
           className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer px-1 py-0.5"
-          onMouseDown={(e) => e.preventDefault()}
           onChange={(e) => {
             const val = e.target.value;
             if (val === "p") {
@@ -146,7 +175,7 @@ export function EditorToolbar({
                 ed
                   .chain()
                   .focus(undefined, { scrollIntoView: false })
-                  .toggleHeading({ level })
+                  .setNode("heading", { level })
                   .run(),
               );
             }
@@ -229,9 +258,11 @@ export function EditorToolbar({
                       />
                       <span className="font-medium">{item.name}</span>
                     </div>
-                    <span className="text-[10px] text-slate-400">
-                      {item.shortcut}
-                    </span>
+                    {item.shortcut ? (
+                      <span className="text-[10px] text-slate-400">
+                        {item.shortcut}
+                      </span>
+                    ) : null}
                   </button>
                 ))}
               </div>
@@ -283,13 +314,28 @@ export function EditorToolbar({
                     className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
-                      editor?.runEditorCommand((ed) =>
-                        ed
-                          .chain()
-                          .focus(undefined, { scrollIntoView: false })
-                          .toggleHighlight({ color: item.color })
-                          .run(),
-                      );
+                      editor?.runEditorCommand((ed) => {
+                        const { selection } = ed.state;
+                        const colorHex = item.color;
+                        const isInsideCallout = ed.isActive("customQuote");
+                        const accentColor =
+                          BG_TO_BORDER_MAP[colorHex.toUpperCase()] || "#6200ee";
+
+                        if (isInsideCallout && selection.empty) {
+                          ed.chain()
+                            .focus(undefined, { scrollIntoView: false })
+                            .updateAttributes("customQuote", {
+                              bgColor: colorHex,
+                              borderColor: accentColor,
+                            })
+                            .run();
+                        } else {
+                          ed.chain()
+                            .focus(undefined, { scrollIntoView: false })
+                            .toggleHighlight({ color: colorHex })
+                            .run();
+                        }
+                      });
                       setShowBgColorMenu(false);
                     }}
                   >
@@ -300,9 +346,11 @@ export function EditorToolbar({
                       />
                       <span className="font-medium">{item.name}</span>
                     </div>
-                    <span className="text-[10px] text-slate-400">
-                      {item.shortcut}
-                    </span>
+                    {item.shortcut ? (
+                      <span className="text-[10px] text-slate-400">
+                        {item.shortcut}
+                      </span>
+                    ) : null}
                   </button>
                 ))}
               </div>
@@ -312,13 +360,23 @@ export function EditorToolbar({
                   className="w-full rounded-xl px-3 py-1.5 text-left text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    editor?.runEditorCommand((ed) =>
-                      ed
-                        .chain()
-                        .focus(undefined, { scrollIntoView: false })
-                        .unsetHighlight()
-                        .run(),
-                    );
+                    editor?.runEditorCommand((ed) => {
+                      const { selection } = ed.state;
+                      if (ed.isActive("customQuote") && selection.empty) {
+                        ed.chain()
+                          .focus(undefined, { scrollIntoView: false })
+                          .updateAttributes("customQuote", {
+                            bgColor: "#F1F5F9",
+                            borderColor: "#64748B",
+                          })
+                          .run();
+                      } else {
+                        ed.chain()
+                          .focus(undefined, { scrollIntoView: false })
+                          .unsetHighlight()
+                          .run();
+                      }
+                    });
                     setShowBgColorMenu(false);
                   }}
                 >
@@ -335,13 +393,35 @@ export function EditorToolbar({
         <select
           aria-label="Transformar texto"
           className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer px-1 py-0.5"
-          onMouseDown={(e) => e.preventDefault()}
           onChange={(e) => {
             const val = e.target.value as
               | "uppercase"
               | "lowercase"
               | "capitalize"
-              | "none";
+              | "none"
+              | "highlight_combo";
+
+            if (val === "highlight_combo") {
+              const randomTextColor =
+                TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)]
+                  .color;
+              const randomBgColor =
+                BG_COLORS[Math.floor(Math.random() * BG_COLORS.length)].color;
+
+              editor?.runEditorCommand((ed) => {
+                (ed.commands as any).setTextTransform("uppercase");
+                ed.chain()
+                  .focus(undefined, { scrollIntoView: false })
+                  .setBold()
+                  .setColor(randomTextColor)
+                  .toggleHighlight({ color: randomBgColor })
+                  .run();
+              });
+
+              (e.target as HTMLSelectElement).value = "none";
+              return;
+            }
+
             editor?.runEditorCommand((ed) =>
               (ed.commands as any).setTextTransform(val),
             );
@@ -352,6 +432,7 @@ export function EditorToolbar({
           <option value="uppercase">MAYÚSCULAS</option>
           <option value="lowercase">minúsculas</option>
           <option value="capitalize">Capitalizar Palabras</option>
+          <option value="highlight_combo">✨ Destacar</option>
         </select>
       </div>
 
@@ -443,6 +524,24 @@ export function EditorToolbar({
 
       {/* Inserción de Objetos */}
       <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 dark:border-slate-800">
+        {toolbarButton(Minus, "Línea horizontal separadora", () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .setHorizontalRule()
+              .run(),
+          ),
+        )}
+        {toolbarButton(Quote, `Cita destacada (${QUOTE_COLOR_NAMES})`, () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleWrap("customQuote")
+              .run(),
+          ),
+        )}
         {toolbarButton(Image, "Insertar imagen", onInsertImage)}
         {toolbarButton(Calendar, "Insertar fecha", onInsertDate)}
         {toolbarButton(Table, "Insertar tabla", onInsertTable)}

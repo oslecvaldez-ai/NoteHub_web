@@ -2,6 +2,88 @@ import { mergeAttributes, Mark, Node, Extension } from "@tiptap/core";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 
+export interface CustomQuoteOptions {
+  HTMLAttributes: Record<string, any>;
+}
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    customQuote: {
+      setCustomQuote: (bgColor?: string, borderColor?: string) => ReturnType;
+      toggleCustomQuote: () => ReturnType;
+    };
+  }
+}
+
+export const CustomQuote = Node.create<CustomQuoteOptions>({
+  name: "customQuote",
+  group: "block",
+  content: "block+",
+  defining: true,
+
+  addAttributes() {
+    return {
+      bgColor: {
+        default: "#f5f5f5",
+        parseHTML: (element) =>
+          (element as HTMLElement).style.backgroundColor || "#f5f5f5",
+        renderHTML: (attributes) => ({
+          style: `background-color: ${attributes.bgColor}`,
+        }),
+      },
+      borderColor: {
+        default: "#6200ee",
+        parseHTML: (element) =>
+          (element as HTMLElement).style.borderLeftColor || "#6200ee",
+        renderHTML: (attributes) => ({
+          style: `border-left-color: ${attributes.borderColor}`,
+        }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      { tag: "div.editor-callout" },
+      { tag: 'div[data-type="custom-quote"]' },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes, node }) {
+    const bg = node.attrs.bgColor || "#f5f5f5";
+    const border = node.attrs.borderColor || "#6200ee";
+
+    return [
+      "div",
+      mergeAttributes(HTMLAttributes, {
+        "data-type": "custom-quote",
+        class: "editor-callout my-3 p-4 rounded-r-md relative transition-all",
+        style: `background-color: ${bg}; border-left: 4px solid ${border} !important; border-radius: 6px;`,
+      }),
+      0,
+    ];
+  },
+
+  addCommands() {
+    return {
+      setCustomQuote:
+        (bgColor = "#f5f5f5", borderColor = "#6200ee") =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: { bgColor, borderColor },
+            content: [{ type: "paragraph" }],
+          });
+        },
+      toggleCustomQuote:
+        () =>
+        ({ commands }) => {
+          return commands.toggleWrap(this.name);
+        },
+    };
+  },
+});
+
 export const Callout = Node.create({
   name: "callout",
   group: "block",
