@@ -16,6 +16,7 @@ export interface SidebarNavegacionProps {
   selectedNotebookId: number | null;
   onWorkspaceChange: (workspace: Workspace) => void;
   onSelectNotebook: (notebookId: number | null) => void;
+  onSelectAllNotes?: () => void;
 }
 
 export function SidebarNavegacion({
@@ -23,6 +24,7 @@ export function SidebarNavegacion({
   selectedNotebookId,
   onWorkspaceChange,
   onSelectNotebook,
+  onSelectAllNotes,
 }: SidebarNavegacionProps): ReactElement {
   const [resolvedWorkspace, setResolvedWorkspace] = useState<Workspace | null>(
     activeWorkspace,
@@ -65,7 +67,14 @@ export function SidebarNavegacion({
     <aside className="notas-sidebar">
       <SelectorEspacios onWorkspaceChange={onWorkspaceChange} />
       <nav aria-label="Navegación principal" className="notas-sidebar-nav">
-        <button className="is-active" type="button">
+        <button
+          className="is-active"
+          type="button"
+          onClick={() => {
+            if (onSelectAllNotes) onSelectAllNotes();
+            else onSelectNotebook(null);
+          }}
+        >
           <FileText size={17} /> Todas las notas
         </button>
         <button type="button">

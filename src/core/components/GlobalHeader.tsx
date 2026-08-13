@@ -17,6 +17,7 @@ interface GlobalHeaderProps {
   onCreateNote: () => void;
   onSaveNote?: () => void;
   onReload: () => void;
+  onToggleSidebar?: () => void;
 }
 
 export function GlobalHeader({
@@ -25,6 +26,7 @@ export function GlobalHeader({
   onCreateNote,
   onSaveNote,
   onReload,
+  onToggleSidebar,
 }: GlobalHeaderProps): ReactElement {
   return (
     <header className="flex h-14 w-full items-center justify-between gap-4 border-b border-gray-200 bg-white px-4">
@@ -32,6 +34,7 @@ export function GlobalHeader({
         <button
           type="button"
           aria-label="Abrir menú"
+          onClick={onToggleSidebar}
           className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
         >
           <Menu size={18} />

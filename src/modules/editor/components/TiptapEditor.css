@@ -4,7 +4,7 @@
   box-sizing: border-box;
   padding: 16px;
   border-radius: 6px;
-  border-left: 0px solid #6200ee;
+  border-left: 4px solid #6200ee;
   background-color: #f5f5f5;
   color: #333333;
   position: relative;
@@ -61,7 +61,7 @@
   margin-bottom: 0.1rem;
   padding: 0.25rem 0.5rem;
   border-radius: 0 0.9rem 0.75rem 0;
-  border-left-width: 0px;
+  border-left-width: 4px;
   border-left-style: solid;
   font-size: 1.1em;
 }
@@ -133,4 +133,132 @@
   z-index: 1;
   pointer-events: none;
   color: #94a3b8;
+}
+
+/* Estilos para tablas en el editor TipTap */
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 12px 0;
+  overflow: hidden;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  min-width: 1em;
+  border: 1px solid #d1d5db;
+  padding: 8px 10px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ProseMirror th {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f3f4f6;
+}
+
+.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(200, 200, 255, 0.4);
+  pointer-events: none;
+}
+
+/* Estilos para listas en TipTap */
+.ProseMirror ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.ProseMirror li {
+  margin-bottom: 0.25rem !important;
+}
+
+.ProseMirror li p {
+  margin: 0 !important;
+  display: inline;
+}
+
+/* Remover puntos de viñeta y márgenes de TaskList */
+.ProseMirror ul[data-type="taskList"],
+ul.checklist {
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* Forzar alineación horizontal sin salto de línea */
+.ProseMirror li[data-type="taskItem"],
+li.checklist-item {
+  display: flex !important;
+  align-items: center !important;
+  list-style-type: none !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* Estilo y espaciado de la casilla de verificación */
+.ProseMirror li[data-type="taskItem"] > label,
+li.checklist-item input[type="checkbox"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-right: 0.5rem !important;
+  user-select: none !important;
+  cursor: pointer !important;
+  margin-top: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  height: 18px !important;
+}
+
+/* Forzar que el input checkbox no provoque salto de línea y se alinee centrado */
+.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
+li.checklist-item input[type="checkbox"] {
+  margin: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+  vertical-align: middle !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Forzar que el párrafo no rompa la línea */
+.ProseMirror li[data-type="taskItem"] > div,
+.ProseMirror li[data-type="taskItem"] p {
+  display: inline-block !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+  vertical-align: middle !important;
+}
+
+/* Force label to keep checkbox on the left and content to flex */
+.ProseMirror li[data-type="taskItem"] > label {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.ProseMirror li[data-type="taskItem"] > div {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* extra: reduce top/bottom padding inside paragraph to avoid misalignment */
+.ProseMirror li[data-type="taskItem"] p {
+  padding: 0 !important;
+  margin: 0 !important;
 }

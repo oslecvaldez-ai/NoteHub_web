@@ -1,20 +1,33 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import ListItem from "@tiptap/extension-list-item";
 import Color from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
+import Underline from "@tiptap/extension-underline";
+import Strike from "@tiptap/extension-strike";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import ImageExtension from "@tiptap/extension-image";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
 import {
-  Callout,
   Collapsible,
   CustomQuote,
   EditorHighlight,
   SearchHighlight,
-  Checklist,
-  ChecklistItem,
   TextTransform,
 } from "./CustomExtensions";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+
+// keep CustomExtensions imports that remain
 import "./TiptapEditor.css";
 
 export interface TiptapEditorHandle {
@@ -24,6 +37,7 @@ export interface TiptapEditorHandle {
   clearFormat: () => void;
   insertContent: (html: string) => void;
   runEditorCommand: (callback: (editor: Editor) => void) => void;
+  isActive: (name: string, attrs?: Record<string, any>) => boolean;
 }
 
 export interface TiptapEditorProps {
@@ -68,9 +82,7 @@ function TiptapEditorComponent(
         void (async () => {
           const src = await onImageDrop?.(imageFile);
           if (src && editor) {
-            editor.commands.insertContent(
-              `<img src="${src}" alt="${imageFile.name}" />`,
-            );
+            editor.chain().focus().setImage({ src }).run();
           }
         })();
         return true;
@@ -87,23 +99,42 @@ function TiptapEditorComponent(
         void (async () => {
           const src = await onImageDrop?.(file);
           if (src && editor) {
-            editor.commands.insertContent(
-              `<img src="${src}" alt="${file.name}" />`,
-            );
+            editor.chain().focus().setImage({ src }).run();
           }
         })();
         return true;
       },
     },
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        strike: false,
+      }),
+      BulletList,
+      OrderedList,
+      ListItem,
+      Underline,
+      Strike,
+      ImageExtension,
+      Subscript,
+      Superscript,
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: "editor-table",
+        },
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
       Color,
       TextStyle,
       Highlight.configure({ multicolor: true }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
-      Checklist,
-      ChecklistItem,
-      Callout,
+      TaskList,
+      TaskItem.configure({ nested: true }),
       Collapsible,
       CustomQuote,
       EditorHighlight,
@@ -164,6 +195,13 @@ function TiptapEditorComponent(
       },
       runEditorCommand: (callback: (editor: Editor) => void) => {
         if (editor) callback(editor);
+      },
+      isActive: (name: string, attrs?: Record<string, any>) => {
+        try {
+          return !!editor && editor.isActive(name, attrs);
+        } catch {
+          return false;
+        }
       },
     }),
     [editor],

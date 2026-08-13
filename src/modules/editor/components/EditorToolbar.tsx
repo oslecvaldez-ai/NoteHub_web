@@ -23,29 +23,25 @@ import {
   Minus,
   Palette,
   Quote,
+  Plus,
   Slash,
   Subscript,
   Superscript,
   Table,
+  Star,
+  RotateCcw,
+  RotateCw,
 } from "lucide-react";
 
 export interface EditorToolbarProps {
   editor?: TiptapEditorHandle | null;
-  onInsertEmoji: (emoji: string) => void;
-  onInsertTable: () => void;
+  onInsertTable: (rows?: number, cols?: number) => void;
   onInsertImage: () => void;
-  onInsertDate: () => void;
-  onInsertSubscript: () => void;
-  onInsertSuperscript: () => void;
+  onInsertDate: (format?: string) => void;
 }
 
-type ColorOption = {
-  name: string;
-  color: string;
-  shortcut?: string;
-};
+type ColorOption = { name: string; color: string; shortcut?: string };
 
-// Paleta de Colores para TEXTO (Oscuros / Fuerte)
 const TEXT_COLORS: ColorOption[] = [
   { name: "Rojo", color: "#EE2C2C" },
   { name: "Naranja", color: "#FF7A00" },
@@ -57,7 +53,6 @@ const TEXT_COLORS: ColorOption[] = [
   { name: "Gris", color: "#707070" },
 ];
 
-// Paleta de Colores para FONDO (Claros / Pastel)
 const BG_COLORS: ColorOption[] = [
   { name: "Rojo", color: "#FF8B8B" },
   { name: "Naranja", color: "#FFC085" },
@@ -80,85 +75,304 @@ const BG_TO_BORDER_MAP: Record<string, string> = {
   "#CCCCCC": "#707070",
 };
 
-const QUOTE_COLORS = [
-  { name: "Azul", bgColor: "#E0F2FE", borderColor: "#0284C7" },
-  { name: "Verde", bgColor: "#DCFCE7", borderColor: "#16A34A" },
-  { name: "Amarillo", bgColor: "#FEF9C3", borderColor: "#CA8A04" },
-  { name: "Naranja", bgColor: "#FFEDD5", borderColor: "#EA580C" },
-  { name: "Rojo", bgColor: "#FEE2E2", borderColor: "#DC2626" },
-  { name: "Rosa", bgColor: "#FCE7F3", borderColor: "#DB2777" },
-  { name: "Púrpura", bgColor: "#F3E8FF", borderColor: "#9333EA" },
-  { name: "Gris", bgColor: "#F1F5F9", borderColor: "#64748B" },
-];
+// Mapa de Pares Armónicos: Fondo Pastel -> Texto Armónico Oscuro
+const HARMONIC_PAIRS: Record<string, string> = {
+  "#FF8B8B": "#5A0000",
+  "#FFC085": "#4A2800",
+  "#FFE285": "#3D3000",
+  "#C2F18E": "#1B4300",
+  "#85C8FF": "#002B5B",
+  "#FFB2E6": "#4A0033",
+  "#CFA5FF": "#330066",
+  "#CCCCCC": "#1A1A1A",
+};
 
-const QUOTE_COLOR_NAMES = QUOTE_COLORS.map((item) => item.name).join(", ");
+const handleApplyHarmonicHighlight = (ed: any, bgColor: string) => {
+  if (!ed) return;
+  const normalizedBg = (bgColor || "").toUpperCase();
+  const harmonicTextColor = HARMONIC_PAIRS[normalizedBg] || "#1A1A1A";
+  ed.chain()
+    .focus(undefined, { scrollIntoView: false })
+    .setHighlight({ color: bgColor })
+    .setColor(harmonicTextColor)
+    .run();
+};
+
+const ICONS_MAP: Record<string, string[]> = {
+  indicadores: ["🟢", "🔴", "🟡", "✅", "🛡️"],
+  simbolos: [
+    "🎯",
+    "👉",
+    "🔑",
+    "📖",
+    "💡",
+    "📘",
+    "📚",
+    "📜",
+    "🙏",
+    "🕊️",
+    "🔥",
+    "🔍",
+    "💬",
+    "🏁",
+    "⬆️",
+    "⬇️",
+  ],
+  enumeration: ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"],
+  herramientas: ["👉", "📖", "📚", "📜", "📝", "🔑", "🎯", "💡"],
+};
 
 function toolbarButton(
-  icon: ElementType,
+  icon: ElementType | null,
   label: string,
   onClick: () => void,
   isActive = false,
 ) {
+  const base =
+    "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900";
+  const activeCls = isActive
+    ? "border-purple-500 bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:border-purple-600"
+    : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950";
+
   return (
     <button
       type="button"
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900 ${
-        isActive
-          ? "border-purple-500 bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:border-purple-600"
-          : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950"
-      }`}
-      onMouseDown={(event) => event.preventDefault()}
+      className={`${base} ${activeCls}`}
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       aria-label={label}
       title={label}
     >
-      {createElement(icon, { className: "h-4 w-4" })}
+      {icon ? createElement(icon, { className: "h-4 w-4" }) : null}
     </button>
   );
 }
 
 export function EditorToolbar({
   editor,
-  onInsertEmoji,
   onInsertTable,
   onInsertImage,
   onInsertDate,
-  onInsertSubscript,
-  onInsertSuperscript,
 }: EditorToolbarProps) {
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
+  const [showInsertMenu, setShowInsertMenu] = useState(false);
+  const [showIconsMenu, setShowIconsMenu] = useState(false);
+  const [iconsTab, setIconsTab] = useState<
+    "indicadores" | "simbolos" | "enumeration" | "herramientas"
+  >("indicadores");
+  const [showTableSubmenu, setShowTableSubmenu] = useState(false);
+  const [showDateSubmenu, setShowDateSubmenu] = useState(false);
 
-  const textMenuRef = useRef<HTMLDivElement>(null);
-  const bgMenuRef = useRef<HTMLDivElement>(null);
+  const textMenuRef = useRef<HTMLDivElement | null>(null);
+  const bgMenuRef = useRef<HTMLDivElement | null>(null);
+  const insertMenuRef = useRef<HTMLDivElement | null>(null);
+  const iconsMenuRef = useRef<HTMLDivElement | null>(null);
 
-  // Cerrar menús al hacer clic afuera
   useEffect(() => {
-    function handleClickOutside(event: globalThis.MouseEvent) {
+    function handleClickOutside(event: MouseEvent) {
       if (
         textMenuRef.current &&
         !textMenuRef.current.contains(event.target as Node)
-      ) {
+      )
         setShowTextColorMenu(false);
-      }
       if (
         bgMenuRef.current &&
         !bgMenuRef.current.contains(event.target as Node)
-      ) {
+      )
         setShowBgColorMenu(false);
+      if (
+        insertMenuRef.current &&
+        !insertMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowInsertMenu(false);
+        setShowTableSubmenu(false);
+        setShowDateSubmenu(false);
       }
+      if (
+        iconsMenuRef.current &&
+        !iconsMenuRef.current.contains(event.target as Node)
+      )
+        setShowIconsMenu(false);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside as any);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside as any);
   }, []);
 
+  // helpers
+  const insertTable = (r: number, c: number) => {
+    onInsertTable?.(r, c);
+    setShowInsertMenu(false);
+    setShowTableSubmenu(false);
+  };
+
+  const insertDate = (format: string) => {
+    onInsertDate?.(format);
+    setShowInsertMenu(false);
+    setShowDateSubmenu(false);
+  };
+
   return (
-    <div className="w-full flex flex-wrap items-center justify-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-950 dark:border-slate-800">
-      {/* Selector de Encabezados (H1 - H6) */}
-      <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+    <div className="w-full flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-950 dark:border-slate-800">
+      {/* 1) Insert (+) */}
+      <div className="relative" ref={insertMenuRef}>
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setShowInsertMenu((s) => !s);
+            setShowIconsMenu(false);
+          }}
+          title="Insertar"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+
+        {showInsertMenu && (
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="space-y-1">
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onInsertImage();
+                  setShowInsertMenu(false);
+                }}
+              >
+                <Image className="h-4 w-4" />
+                <span>Insertar imagen</span>
+              </button>
+
+              {/* Insertar tabla -> submenu */}
+              <div className="relative">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowTableSubmenu((s) => !s)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Table className="h-4 w-4" />
+                    <span>Insertar tabla</span>
+                  </div>
+                  <span className="text-xs text-slate-400">▷</span>
+                </button>
+
+                {showTableSubmenu && (
+                  <div className="absolute left-full top-0 ml-2 w-36 rounded-xl border bg-white p-2 shadow-md">
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertTable(2, 2)}
+                    >
+                      2x2
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertTable(3, 3)}
+                    >
+                      3x3
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertTable(4, 4)}
+                    >
+                      4x4
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertTable(5, 5)}
+                    >
+                      5x5
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Insertar fecha -> submenu */}
+              <div className="relative">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowDateSubmenu((s) => !s)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>Insertar fecha</span>
+                  </div>
+                  <span className="text-xs text-slate-400">▷</span>
+                </button>
+
+                {showDateSubmenu && (
+                  <div className="absolute left-full top-0 ml-2 w-56 rounded-xl border bg-white p-2 shadow-md">
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertDate("datetime")}
+                    >
+                      Fecha y Hora
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertDate("date")}
+                    >
+                      Fecha corta
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertDate("time")}
+                    >
+                      Hora
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  // Placeholder: open templates modal
+                  console.info("Abrir modal de plantillas - placeholder");
+                  setShowInsertMenu(false);
+                }}
+              >
+                <Minus className="h-4 w-4" />
+                <span>Insertar plantilla</span>
+              </button>
+
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  console.info("Ver imágenes de la nota - placeholder");
+                  setShowInsertMenu(false);
+                }}
+              >
+                <Image className="h-4 w-4" />
+                <span>Ver imágenes de la nota</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 2) Header selector (H) */}
+      <div>
         <select
           aria-label="Formato de encabezado"
-          className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer px-1 py-0.5"
+          className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer px-2 py-1 rounded-xl border border-slate-200"
           onChange={(e) => {
             const val = e.target.value;
             if (val === "p") {
@@ -182,217 +396,295 @@ export function EditorToolbar({
           }}
           defaultValue="p"
         >
-          <option value="p">Párrafo</option>
-          <option value="1">Título 1 (H1)</option>
-          <option value="2">Título 2 (H2)</option>
-          <option value="3">Título 3 (H3)</option>
-          <option value="4">Título 4 (H4)</option>
-          <option value="5">Título 5 (H5)</option>
-          <option value="6">Título 6 (H6)</option>
+          <option value="p">P</option>
+          <option value="1">H1</option>
+          <option value="2">H2</option>
+          <option value="3">H3</option>
+          <option value="4">H4</option>
+          <option value="5">H5</option>
+          <option value="6">H6</option>
         </select>
       </div>
 
-      {/* Formato Básico */}
-      <div className="flex items-center gap-1">
-        {toolbarButton(Bold, "Negrita", () =>
-          editor?.runEditorCommand((ed) =>
-            ed
-              .chain()
-              .focus(undefined, { scrollIntoView: false })
-              .toggleBold()
-              .run(),
-          ),
-        )}
-        {toolbarButton(Italic, "Cursiva", () =>
-          editor?.runEditorCommand((ed) =>
-            ed
-              .chain()
-              .focus(undefined, { scrollIntoView: false })
-              .toggleItalic()
-              .run(),
-          ),
-        )}
-      </div>
+      {/* 3) Icons (Star) */}
+      <div className="relative" ref={iconsMenuRef}>
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setShowIconsMenu((s) => !s);
+            setShowInsertMenu(false);
+          }}
+        >
+          <Star className="h-4 w-4" />
+        </button>
 
-      {/* DESPLEGABLES DE COLOR ELEGANTES */}
-      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 dark:border-slate-800">
-        {/* Desplegable: Color de Texto */}
-        <div className="relative" ref={textMenuRef}>
-          <button
-            type="button"
-            title="Color de texto"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => {
-              setShowTextColorMenu(!showTextColorMenu);
-              setShowBgColorMenu(false);
-            }}
-          >
-            <Palette className="h-4 w-4" />
-          </button>
-
-          {showTextColorMenu && (
-            <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-              <div className="space-y-1">
-                {TEXT_COLORS.map((item) => (
-                  <button
-                    key={item.name}
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      editor?.runEditorCommand((ed) =>
-                        ed
-                          .chain()
-                          .focus(undefined, { scrollIntoView: false })
-                          .setColor(item.color)
-                          .run(),
-                      );
-                      setShowTextColorMenu(false);
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-3.5 w-3.5 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="font-medium">{item.name}</span>
-                    </div>
-                    {item.shortcut ? (
-                      <span className="text-[10px] text-slate-400">
-                        {item.shortcut}
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-2 border-t border-slate-100 pt-1 dark:border-slate-800">
+        {showIconsMenu && (
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center gap-1 mb-2">
+              <button
+                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "indicadores" ? "bg-slate-100" : ""}`}
+                onClick={() => setIconsTab("indicadores")}
+              >
+                Indicadores
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "simbolos" ? "bg-slate-100" : ""}`}
+                onClick={() => setIconsTab("simbolos")}
+              >
+                Símbolos
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "enumeration" ? "bg-slate-100" : ""}`}
+                onClick={() => setIconsTab("enumeration")}
+              >
+                Enumeración
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "herramientas" ? "bg-slate-100" : ""}`}
+                onClick={() => setIconsTab("herramientas")}
+              >
+                Herramientas
+              </button>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {ICONS_MAP[iconsTab].map((icon) => (
                 <button
+                  key={icon}
                   type="button"
-                  className="w-full rounded-xl px-3 py-1.5 text-left text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-slate-100"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     editor?.runEditorCommand((ed) =>
                       ed
                         .chain()
                         .focus(undefined, { scrollIntoView: false })
-                        .unsetColor()
+                        .insertContent(icon)
+                        .run(),
+                    );
+                    setShowIconsMenu(false);
+                  }}
+                >
+                  <span className="text-lg">{icon}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 4) Bold */}
+      {toolbarButton(Bold, "Negrita", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleBold()
+            .run(),
+        ),
+      )}
+
+      {/* 5) Italic */}
+      {toolbarButton(Italic, "Cursiva", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleItalic()
+            .run(),
+        ),
+      )}
+
+      {/* 6) Underline */}
+      <button
+        type="button"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleUnderline()
+              .run(),
+          );
+        }}
+        title="Subrayado"
+      >
+        <span className="font-semibold">U</span>
+      </button>
+
+      {/* 7) Strikethrough */}
+      <button
+        type="button"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleStrike()
+              .run(),
+          );
+        }}
+        title="Tachado"
+      >
+        <span className="font-semibold">S</span>
+      </button>
+
+      {/* 8) Text color (Palette) */}
+      <div className="relative" ref={textMenuRef}>
+        <button
+          type="button"
+          title="Color de texto"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setShowTextColorMenu((s) => !s);
+            setShowBgColorMenu(false);
+          }}
+        >
+          <Palette className="h-4 w-4" />
+        </button>
+        {showTextColorMenu && (
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="space-y-1">
+              {TEXT_COLORS.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    editor?.runEditorCommand((ed) =>
+                      ed
+                        .chain()
+                        .focus(undefined, { scrollIntoView: false })
+                        .setColor(item.color)
                         .run(),
                     );
                     setShowTextColorMenu(false);
                   }}
                 >
-                  Eliminar color de texto
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-3.5 w-3.5 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  {item.shortcut ? (
+                    <span className="text-[10px] text-slate-400">
+                      {item.shortcut}
+                    </span>
+                  ) : null}
                 </button>
-              </div>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        {/* Desplegable: Color de Fondo */}
-        <div className="relative" ref={bgMenuRef}>
-          <button
-            type="button"
-            title="Color de fondo (Resaltador)"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-            onMouseDown={(e) => e.preventDefault()}
-            onClick={() => {
-              setShowBgColorMenu(!showBgColorMenu);
-              setShowTextColorMenu(false);
-            }}
-          >
-            <Highlighter className="h-4 w-4" />
-          </button>
-
-          {showBgColorMenu && (
-            <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-              <div className="space-y-1">
-                {BG_COLORS.map((item) => (
-                  <button
-                    key={item.name}
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      editor?.runEditorCommand((ed) => {
-                        const { selection } = ed.state;
-                        const colorHex = item.color;
-                        const isInsideCallout = ed.isActive("customQuote");
-                        const accentColor =
-                          BG_TO_BORDER_MAP[colorHex.toUpperCase()] || "#6200ee";
-
-                        if (isInsideCallout && selection.empty) {
-                          ed.chain()
-                            .focus(undefined, { scrollIntoView: false })
-                            .updateAttributes("customQuote", {
-                              bgColor: colorHex,
-                              borderColor: accentColor,
-                            })
-                            .run();
-                        } else {
-                          ed.chain()
-                            .focus(undefined, { scrollIntoView: false })
-                            .toggleHighlight({ color: colorHex })
-                            .run();
-                        }
-                      });
-                      setShowBgColorMenu(false);
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-3.5 w-3.5 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="font-medium">{item.name}</span>
-                    </div>
-                    {item.shortcut ? (
-                      <span className="text-[10px] text-slate-400">
-                        {item.shortcut}
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-2 border-t border-slate-100 pt-1 dark:border-slate-800">
+      {/* 9) Background color (Highlighter) */}
+      <div className="relative" ref={bgMenuRef}>
+        <button
+          type="button"
+          title="Color de fondo (Resaltador)"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setShowBgColorMenu((s) => !s);
+            setShowTextColorMenu(false);
+          }}
+        >
+          <Highlighter className="h-4 w-4" />
+        </button>
+        {showBgColorMenu && (
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="space-y-1">
+              {BG_COLORS.map((item) => (
                 <button
+                  key={item.name}
                   type="button"
-                  className="w-full rounded-xl px-3 py-1.5 text-left text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     editor?.runEditorCommand((ed) => {
                       const { selection } = ed.state;
-                      if (ed.isActive("customQuote") && selection.empty) {
+                      const colorHex = item.color;
+                      const isInsideCallout = ed.isActive("customQuote");
+                      const accentColor =
+                        BG_TO_BORDER_MAP[colorHex.toUpperCase()] || "#6200ee";
+                      if (isInsideCallout && selection.empty) {
                         ed.chain()
                           .focus(undefined, { scrollIntoView: false })
                           .updateAttributes("customQuote", {
-                            bgColor: "#F1F5F9",
-                            borderColor: "#64748B",
+                            backgroundColor: colorHex,
+                            color: accentColor,
                           })
                           .run();
                       } else {
-                        ed.chain()
-                          .focus(undefined, { scrollIntoView: false })
-                          .unsetHighlight()
-                          .run();
+                        handleApplyHarmonicHighlight(ed, colorHex);
                       }
                     });
                     setShowBgColorMenu(false);
                   }}
                 >
-                  Sin fondo
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-3.5 w-3.5 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  {item.shortcut ? (
+                    <span className="text-[10px] text-slate-400">
+                      {item.shortcut}
+                    </span>
+                  ) : null}
                 </button>
-              </div>
+              ))}
             </div>
-          )}
-        </div>
+            <div className="mt-2 border-t border-slate-100 pt-1">
+              <button
+                type="button"
+                className="w-full rounded-xl px-3 py-1.5 text-left text-xs font-medium text-slate-600 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  editor?.runEditorCommand((ed) => {
+                    const { selection } = ed.state;
+                    if (ed.isActive("customQuote") && selection.empty) {
+                      ed.chain()
+                        .focus(undefined, { scrollIntoView: false })
+                        .updateAttributes("customQuote", {
+                          backgroundColor: "#F1F5F9",
+                          color: "#64748B",
+                        })
+                        .run();
+                    } else {
+                      ed.chain()
+                        .focus(undefined, { scrollIntoView: false })
+                        .unsetHighlight()
+                        .run();
+                    }
+                  });
+                  setShowBgColorMenu(false);
+                }}
+              >
+                Sin fondo
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Transformación de Texto: Mayúsculas / Minúsculas / Capitalizar */}
-      <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+      {/* 10) Transformation select (Aa) */}
+      <div>
         <select
           aria-label="Transformar texto"
-          className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer px-1 py-0.5"
+          className="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer px-1 py-0.5"
           onChange={(e) => {
             const val = e.target.value as
               | "uppercase"
@@ -400,28 +692,25 @@ export function EditorToolbar({
               | "capitalize"
               | "none"
               | "highlight_combo";
-
             if (val === "highlight_combo") {
               const randomTextColor =
                 TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)]
                   .color;
               const randomBgColor =
                 BG_COLORS[Math.floor(Math.random() * BG_COLORS.length)].color;
-
               editor?.runEditorCommand((ed) => {
                 (ed.commands as any).setTextTransform("uppercase");
                 ed.chain()
                   .focus(undefined, { scrollIntoView: false })
                   .setBold()
                   .setColor(randomTextColor)
-                  .toggleHighlight({ color: randomBgColor })
                   .run();
+                // apply harmonic highlight after setting text color
+                handleApplyHarmonicHighlight(ed, randomBgColor);
               });
-
               (e.target as HTMLSelectElement).value = "none";
               return;
             }
-
             editor?.runEditorCommand((ed) =>
               (ed.commands as any).setTextTransform(val),
             );
@@ -436,54 +725,30 @@ export function EditorToolbar({
         </select>
       </div>
 
-      {/* Listas y Checklists */}
-      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 dark:border-slate-800">
-        {toolbarButton(CheckSquare, "Checklist", () =>
-          editor?.runEditorCommand((ed) =>
-            ed
-              .chain()
-              .focus(undefined, { scrollIntoView: false })
-              .toggleTaskList()
-              .run(),
-          ),
-        )}
-        {toolbarButton(List, "Lista con viñetas", () =>
-          editor?.runEditorCommand((ed) =>
-            ed
-              .chain()
-              .focus(undefined, { scrollIntoView: false })
-              .toggleBulletList()
-              .run(),
-          ),
-        )}
-        {toolbarButton(ListOrdered, "Lista numerada", () =>
-          editor?.runEditorCommand((ed) =>
-            ed
-              .chain()
-              .focus(undefined, { scrollIntoView: false })
-              .toggleOrderedList()
-              .run(),
-          ),
-        )}
+      {/* 11) Clear format (Tx) */}
+      <div>
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() =>
+            editor?.runEditorCommand((ed) =>
+              ed
+                .chain()
+                .focus(undefined, { scrollIntoView: false })
+                .clearNodes()
+                .unsetAllMarks()
+                .run(),
+            )
+          }
+          title="Limpiar formato"
+        >
+          <span className="text-xs">Tx</span>
+        </button>
       </div>
 
-      {/* Súper y Subíndice + Funciones */}
-      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 dark:border-slate-800">
-        {toolbarButton(Subscript, "Subíndice", onInsertSubscript)}
-        {toolbarButton(Superscript, "Superíndice", onInsertSuperscript)}
-        {toolbarButton(Slash, "Bloque de Código", () =>
-          editor?.runEditorCommand((ed) =>
-            ed
-              .chain()
-              .focus(undefined, { scrollIntoView: false })
-              .toggleCodeBlock()
-              .run(),
-          ),
-        )}
-      </div>
-
-      {/* Alineación */}
-      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 dark:border-slate-800">
+      {/* 12..15) Alignment and lists */}
+      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5">
         {toolbarButton(AlignLeft, "Izquierda", () =>
           editor?.runEditorCommand((ed) =>
             ed
@@ -520,44 +785,122 @@ export function EditorToolbar({
               .run(),
           ),
         )}
+
+        {toolbarButton(
+          List,
+          "Lista con viñetas",
+          () =>
+            editor?.runEditorCommand((ed) =>
+              ed
+                .chain()
+                .focus(undefined, { scrollIntoView: false })
+                .toggleBulletList()
+                .run(),
+            ),
+          !!editor?.isActive("bulletList"),
+        )}
+        {toolbarButton(
+          ListOrdered,
+          "Lista numerada",
+          () =>
+            editor?.runEditorCommand((ed) =>
+              ed
+                .chain()
+                .focus(undefined, { scrollIntoView: false })
+                .toggleOrderedList()
+                .run(),
+            ),
+          !!editor?.isActive("orderedList"),
+        )}
+        {toolbarButton(CheckSquare, "Checklist", () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleTaskList()
+              .run(),
+          ),
+        )}
       </div>
 
-      {/* Inserción de Objetos */}
-      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 dark:border-slate-800">
-        {toolbarButton(Minus, "Línea horizontal separadora", () =>
+      {/* 16) Quote / Callout */}
+      {toolbarButton(
+        Quote,
+        `Cita destacada`,
+        () =>
+          editor?.runEditorCommand((ed) => {
+            if (ed.isActive("customQuote")) {
+              ed.chain()
+                .focus(undefined, { scrollIntoView: false })
+                .lift("customQuote")
+                .run();
+            } else {
+              ed.chain()
+                .focus(undefined, { scrollIntoView: false })
+                .wrapIn("customQuote")
+                .run();
+            }
+          }),
+        !!editor?.isActive("customQuote"),
+      )}
+
+      {/* 17) Code block */}
+      {toolbarButton(Slash, "Bloque de Código", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleCodeBlock()
+            .run(),
+        ),
+      )}
+
+      {/* Sub/Superscript buttons (use handlers passed from parent) */}
+      {toolbarButton(Subscript, "Subíndice", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleSubscript()
+            .run(),
+        ),
+      )}
+      {toolbarButton(Superscript, "Superíndice", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleSuperscript()
+            .run(),
+        ),
+      )}
+
+      {/* 18) Horizontal rule */}
+      {toolbarButton(Minus, "Línea horizontal separadora", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .setHorizontalRule()
+            .run(),
+        ),
+      )}
+
+      {/* 19..20) Undo / Redo */}
+      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5">
+        {toolbarButton(RotateCcw, "Deshacer", () =>
           editor?.runEditorCommand((ed) =>
-            ed
-              .chain()
-              .focus(undefined, { scrollIntoView: false })
-              .setHorizontalRule()
-              .run(),
+            ed.chain().focus(undefined, { scrollIntoView: false }).undo().run(),
           ),
         )}
-        {toolbarButton(Quote, `Cita destacada (${QUOTE_COLOR_NAMES})`, () =>
+        {toolbarButton(RotateCw, "Rehacer", () =>
           editor?.runEditorCommand((ed) =>
-            ed
-              .chain()
-              .focus(undefined, { scrollIntoView: false })
-              .toggleWrap("customQuote")
-              .run(),
+            ed.chain().focus(undefined, { scrollIntoView: false }).redo().run(),
           ),
         )}
-        {toolbarButton(Image, "Insertar imagen", onInsertImage)}
-        {toolbarButton(Calendar, "Insertar fecha", onInsertDate)}
-        {toolbarButton(Table, "Insertar tabla", onInsertTable)}
-        <button
-          type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
-          onMouseDown={(event: MouseEvent<HTMLButtonElement>) =>
-            event.preventDefault()
-          }
-          onClick={() => onInsertEmoji("🔥")}
-          aria-label="Insertar emoji"
-          title="Insertar emoji"
-        >
-          <span className="text-base">🔥</span>
-        </button>
       </div>
+
+      {/* Emoji quick insert removed per UI cleanup */}
     </div>
   );
 }

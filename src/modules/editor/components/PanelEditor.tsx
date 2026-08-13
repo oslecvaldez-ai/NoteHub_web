@@ -172,8 +172,9 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
     const handleInsertImage = useCallback(async () => {
       const fileName = await window.electron?.files?.saveImage?.();
       if (!fileName) return;
-      editorRef.current?.insertContent(
-        `<img src="notehub://images/${fileName}" alt="Imagen" />`,
+      const src = `notehub://images/${fileName}`;
+      editorRef.current?.runEditorCommand((ed) =>
+        ed.chain().focus().setImage({ src }).run(),
       );
     }, []);
 
@@ -280,31 +281,21 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
       setOptionsModalOpen(true);
     }, []);
 
-    const handleInsertTable = useCallback(() => {
-      editorRef.current?.insertContent(
-        "<table><tbody><tr><td></td><td></td></tr></tbody></table>",
+    const handleInsertTable = useCallback((r?: number, c?: number) => {
+      const rows = r ?? 2;
+      const cols = c ?? 2;
+      editorRef.current?.runEditorCommand((ed) =>
+        ed
+          .chain()
+          .focus()
+          .insertTable({ rows, cols, withHeaderRow: false })
+          .run(),
       );
     }, []);
 
     const handleInsertDate = useCallback(() => {
       const now = new Date().toLocaleDateString("es-ES");
       editorRef.current?.insertContent(now);
-    }, []);
-
-    const handleInsertEmoji = useCallback((emoji: string) => {
-      editorRef.current?.insertContent(emoji);
-    }, []);
-
-    const handleInsertSubscript = useCallback(() => {
-      editorRef.current?.runEditorCommand((editor) =>
-        editor.chain().focus().insertContent("<sub>x</sub>").run(),
-      );
-    }, []);
-
-    const handleInsertSuperscript = useCallback(() => {
-      editorRef.current?.runEditorCommand((editor) =>
-        editor.chain().focus().insertContent("<sup>x</sup>").run(),
-      );
     }, []);
 
     return (
@@ -330,8 +321,8 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
             onImageDrop={async (file) => {
               const src = await handleImageSave(file);
               if (src) {
-                editorRef.current?.insertContent(
-                  `<img src="${src}" alt="Imagen" />`,
+                editorRef.current?.runEditorCommand((ed) =>
+                  ed.chain().focus().setImage({ src }).run(),
                 );
               }
               return src;
@@ -342,12 +333,9 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
         <div className="flex-shrink-0 w-full flex flex-col bg-white border-t border-gray-200 z-10">
           <EditorToolbar
             editor={editorRef.current}
-            onInsertEmoji={handleInsertEmoji}
             onInsertTable={handleInsertTable}
             onInsertImage={handleInsertImage}
             onInsertDate={handleInsertDate}
-            onInsertSubscript={handleInsertSubscript}
-            onInsertSuperscript={handleInsertSuperscript}
           />
           <footer className="w-full flex items-center justify-between border-t border-gray-100 bg-white px-4 py-2.5 text-sm text-slate-600">
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700">

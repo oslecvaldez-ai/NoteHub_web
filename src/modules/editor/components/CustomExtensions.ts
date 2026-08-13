@@ -9,7 +9,7 @@ export interface CustomQuoteOptions {
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     customQuote: {
-      setCustomQuote: (bgColor?: string, borderColor?: string) => ReturnType;
+      setCustomQuote: (backgroundColor?: string, color?: string) => ReturnType;
       toggleCustomQuote: () => ReturnType;
     };
   }
@@ -20,23 +20,31 @@ export const CustomQuote = Node.create<CustomQuoteOptions>({
   group: "block",
   content: "block+",
   defining: true,
+  selectable: true,
+  draggable: true,
 
   addAttributes() {
     return {
-      bgColor: {
-        default: "#f5f5f5",
-        parseHTML: (element) =>
-          (element as HTMLElement).style.backgroundColor || "#f5f5f5",
-        renderHTML: (attributes) => ({
-          style: `background-color: ${attributes.bgColor}`,
-        }),
-      },
-      borderColor: {
+      color: {
         default: "#6200ee",
         parseHTML: (element) =>
-          (element as HTMLElement).style.borderLeftColor || "#6200ee",
+          (element as HTMLElement).getAttribute("data-color") ||
+          (element as HTMLElement).style.borderLeftColor ||
+          "#6200ee",
         renderHTML: (attributes) => ({
-          style: `border-left-color: ${attributes.borderColor}`,
+          "data-color": attributes.color,
+          style: `border-left-color: ${attributes.color} !important;`,
+        }),
+      },
+      backgroundColor: {
+        default: "#f5f5f5",
+        parseHTML: (element) =>
+          (element as HTMLElement).getAttribute("data-bg-color") ||
+          (element as HTMLElement).style.backgroundColor ||
+          "#f5f5f5",
+        renderHTML: (attributes) => ({
+          "data-bg-color": attributes.backgroundColor,
+          style: `background-color: ${attributes.backgroundColor} !important;`,
         }),
       },
     };
@@ -45,21 +53,15 @@ export const CustomQuote = Node.create<CustomQuoteOptions>({
   parseHTML() {
     return [
       { tag: "div.editor-callout" },
+      { tag: "blockquote" },
       { tag: 'div[data-type="custom-quote"]' },
     ];
   },
 
-  renderHTML({ HTMLAttributes, node }) {
-    const bg = node.attrs.bgColor || "#f5f5f5";
-    const border = node.attrs.borderColor || "#6200ee";
-
+  renderHTML({ HTMLAttributes }) {
     return [
       "div",
-      mergeAttributes(HTMLAttributes, {
-        "data-type": "custom-quote",
-        class: "editor-callout my-3 p-4 rounded-r-md relative transition-all",
-        style: `background-color: ${bg}; border-left: 4px solid ${border} !important; border-radius: 6px;`,
-      }),
+      mergeAttributes({ class: "editor-callout" }, HTMLAttributes),
       0,
     ];
   },
@@ -67,11 +69,11 @@ export const CustomQuote = Node.create<CustomQuoteOptions>({
   addCommands() {
     return {
       setCustomQuote:
-        (bgColor = "#f5f5f5", borderColor = "#6200ee") =>
+        (backgroundColor = "#f5f5f5", color = "#6200ee") =>
         ({ commands }) => {
           return commands.insertContent({
             type: this.name,
-            attrs: { bgColor, borderColor },
+            attrs: { backgroundColor, color },
             content: [{ type: "paragraph" }],
           });
         },
@@ -81,31 +83,6 @@ export const CustomQuote = Node.create<CustomQuoteOptions>({
           return commands.toggleWrap(this.name);
         },
     };
-  },
-});
-
-export const Callout = Node.create({
-  name: "callout",
-  group: "block",
-  content: "block+",
-  defining: true,
-  addAttributes() {
-    return {
-      style: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("style") || null,
-      },
-    };
-  },
-  parseHTML() {
-    return [{ tag: "div.editor-callout" }];
-  },
-  renderHTML({ HTMLAttributes }) {
-    return [
-      "div",
-      mergeAttributes(HTMLAttributes, { class: "editor-callout" }),
-      0,
-    ];
   },
 });
 

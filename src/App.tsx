@@ -16,6 +16,11 @@ import {
 } from "./modules/editor/components/PanelEditor";
 
 function WorkspaceShell() {
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarVisible((prev) => !prev);
+  }, []);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
     null,
   );
@@ -86,6 +91,14 @@ function WorkspaceShell() {
     setSelectedNote(note);
   }, []);
 
+  const handleSelectAllNotes = useCallback(() => {
+    setSelectedNote(null);
+    setSelectedNotebookId(null);
+    setSearchQuery("");
+    // reset other filters/pagination here if present
+    reloadAction();
+  }, [reloadAction]);
+
   const handleSaveAndCloseNote = useCallback(async () => {
     if (selectedNote) {
       if (panelEditorRef.current) {
@@ -106,26 +119,30 @@ function WorkspaceShell() {
           onCreateNote={createNoteAction}
           onSaveNote={handleSaveAndCloseNote}
           onReload={reloadAction}
+          onToggleSidebar={toggleSidebar}
         />
       </div>
 
       {/* Contenedor estricto de 3 columnas */}
       <div className="flex flex-row flex-1 min-h-0 overflow-hidden">
         {/* Columna 1: Sidebar Ampliado para ver todo completo */}
-        <div className="w-72 h-full overflow-y-auto border-r border-gray-200 flex-shrink-0 bg-slate-50 overflow-x-hidden">
-          <SidebarNavegacion
-            activeWorkspace={activeWorkspace}
-            onSelectNotebook={(notebookId) => {
-              setSelectedNotebookId(notebookId);
-              setSelectedNote(null);
-            }}
-            onWorkspaceChange={handleWorkspaceChange}
-            selectedNotebookId={selectedNotebookId}
-          />
-        </div>
+        {isSidebarVisible && (
+          <div className="w-72 h-full overflow-y-auto border-r border-gray-200 flex-shrink-0 bg-slate-50 overflow-x-hidden transition-all duration-200">
+            <SidebarNavegacion
+              activeWorkspace={activeWorkspace}
+              onSelectNotebook={(notebookId) => {
+                setSelectedNotebookId(notebookId);
+                setSelectedNote(null);
+              }}
+              onWorkspaceChange={handleWorkspaceChange}
+              selectedNotebookId={selectedNotebookId}
+              onSelectAllNotes={handleSelectAllNotes}
+            />
+          </div>
+        )}
 
         {/* Columna 2: Lista de Notas Compacta */}
-        <div className="w-52 h-full flex flex-col border-r border-gray-200 flex-shrink-0 bg-white overflow-hidden">
+        <div className="w-52 h-full flex flex-col border-r border-gray-200 flex-shrink-0 bg-white overflow-hidden transition-all duration-200">
           <PanelCentralNotas
             key={`${activeWorkspace?.id ?? "none"}-${selectedNotebookId ?? "all"}`}
             notebookId={selectedNotebookId}
@@ -139,7 +156,7 @@ function WorkspaceShell() {
         </div>
 
         {/* Columna 3: Editor (Expansible al resto de la pantalla) */}
-        <div className="flex-1 h-full min-w-0 flex flex-col bg-white overflow-hidden">
+        <div className="flex-1 h-full min-w-0 flex flex-col bg-white overflow-hidden transition-all duration-200">
           {selectedNote ? (
             <PanelEditor
               ref={panelEditorRef}
