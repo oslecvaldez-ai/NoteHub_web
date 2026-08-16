@@ -78,12 +78,32 @@ export interface ElectronApi {
     move(id: number, notebookId: number | null): Promise<unknown>;
     delete(id: number): Promise<unknown>;
   };
+  trash: {
+    getAll(workspaceId: number): Promise<unknown[]>;
+    restore(noteId: number): Promise<{ success: boolean }>;
+    deletePermanent(noteId: number): Promise<{ success: boolean }>;
+    empty(workspaceId: number): Promise<{ success: boolean; count: number }>;
+    getCount(workspaceId: number): Promise<number>;
+  };
   templates: {
+    getAll(workspaceId: number): Promise<unknown[]>;
+    getById(templateId: number): Promise<unknown>;
     getByWorkspace(workspaceId: number): Promise<unknown[]>;
     create(input: {
       workspaceId: number;
       name: string;
       content: string;
+    }): Promise<unknown>;
+    update(input: {
+      id: number;
+      name: string;
+      content: string;
+    }): Promise<{ success: boolean }>;
+    delete(templateId: number): Promise<{ success: boolean }>;
+    createNoteFromTemplate(input: {
+      templateId: number;
+      workspaceId: number;
+      notebookId?: number | null;
     }): Promise<unknown>;
   };
   export: {

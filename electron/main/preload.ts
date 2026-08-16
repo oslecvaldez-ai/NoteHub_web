@@ -96,11 +96,35 @@ const electronApi = {
       ipcRenderer.invoke("notes:move", id, notebookId),
     delete: (id: number) => ipcRenderer.invoke("notes:delete", id),
   },
+  trash: {
+    getAll: (workspaceId: number) =>
+      ipcRenderer.invoke("trash:get-all", workspaceId),
+    restore: (noteId: number) => ipcRenderer.invoke("trash:restore", noteId),
+    deletePermanent: (noteId: number) =>
+      ipcRenderer.invoke("trash:delete-permanent", noteId),
+    empty: (workspaceId: number) =>
+      ipcRenderer.invoke("trash:empty", workspaceId),
+    getCount: (workspaceId: number) =>
+      ipcRenderer.invoke("trash:get-count", workspaceId),
+  },
   templates: {
+    getAll: (workspaceId: number) =>
+      ipcRenderer.invoke("templates:get-all", workspaceId),
+    getById: (templateId: number) =>
+      ipcRenderer.invoke("templates:get-by-id", templateId),
     getByWorkspace: (workspaceId: number) =>
       ipcRenderer.invoke("templates:get-by-workspace", workspaceId),
     create: (input: { workspaceId: number; name: string; content: string }) =>
       ipcRenderer.invoke("templates:create", input),
+    update: (input: { id: number; name: string; content: string }) =>
+      ipcRenderer.invoke("templates:update", input),
+    delete: (templateId: number) =>
+      ipcRenderer.invoke("templates:delete", templateId),
+    createNoteFromTemplate: (input: {
+      templateId: number;
+      workspaceId: number;
+      notebookId?: number | null;
+    }) => ipcRenderer.invoke("templates:create-note-from-template", input),
   },
 };
 

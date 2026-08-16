@@ -12,6 +12,13 @@ import {
   type Note,
 } from "./modules/notas";
 import {
+  EditorPlantilla,
+  PanelPapelera,
+  PanelPlantillas,
+  VistaPreviaPlantilla,
+  type Plantilla,
+} from "./modules/papelera-plantillas";
+import {
   PanelEditor,
   type PanelEditorHandle,
 } from "./modules/editor/components/PanelEditor";
@@ -28,6 +35,16 @@ function WorkspaceShell() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [quickAccessNotes, setQuickAccessNotes] = useState<Note[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<Plantilla | null>(
+    null,
+  );
+  const [templateEditorMode, setTemplateEditorMode] = useState<
+    "idle" | "create" | "edit"
+  >("idle");
+  const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
+  const [activeView, setActiveView] = useState<
+    "notas" | "papelera" | "plantillas"
+  >("notas");
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarVisible((prev) => !prev);
@@ -40,16 +57,34 @@ function WorkspaceShell() {
   const exitFocusMode = useCallback(() => {
     setIsFocusMode(false);
   }, []);
-  const [createNoteAction, setCreateNoteAction] = useState<() => void>(
-    () => () => {},
-  );
   const [reloadAction, setReloadAction] = useState<() => void>(() => () => {});
 
   const panelEditorRef = useRef<PanelEditorHandle | null>(null);
 
-  const handleCreateNoteReady = useCallback((createNote: () => void) => {
-    setCreateNoteAction(() => createNote);
-  }, []);
+  const handleCreateNewNote = useCallback(async () => {
+    if (!activeWorkspace) return;
+
+    try {
+      const createdNote = await notesApi.notes.create(activeWorkspace.id, {
+        notebookId: selectedNotebookId,
+        title: "Sin título",
+        content: "",
+      });
+
+      if (!createdNote) {
+        throw new Error("No se pudo crear la nota");
+      }
+
+      setSelectedNotebookId(createdNote.notebook_id ?? selectedNotebookId);
+      setSelectedNote(createdNote);
+      setActiveView("notas");
+      setSearchQuery("");
+      window.dispatchEvent(new CustomEvent("notes:updated"));
+      reloadAction();
+    } catch (error) {
+      console.error("Error al crear nueva nota:", error);
+    }
+  }, [activeWorkspace, reloadAction, selectedNotebookId]);
 
   const refreshQuickAccessNotes = useCallback(async () => {
     if (!activeWorkspace) {
@@ -138,6 +173,12 @@ function WorkspaceShell() {
   }, [refreshQuickAccessNotes]);
 
   useEffect(() => {
+    if (activeView === "papelera") {
+      setSelectedNote(null);
+    }
+  }, [activeView]);
+
+  useEffect(() => {
     const handleNotesUpdated = (): void => {
       void refreshQuickAccessNotes();
     };
@@ -187,7 +228,7 @@ function WorkspaceShell() {
         <GlobalHeader
           searchQuery={searchQuery}
           onSearch={setSearchQuery}
-          onCreateNote={createNoteAction}
+          onCreateNote={handleCreateNewNote}
           onSaveNote={handleSaveAndCloseNote}
           onReload={reloadAction}
           onToggleSidebar={toggleSidebar}
@@ -203,29 +244,58 @@ function WorkspaceShell() {
               onSelectNotebook={(notebookId) => {
                 setSelectedNotebookId(notebookId);
                 setSelectedNote(null);
+                setActiveView("notas");
               }}
               onWorkspaceChange={handleWorkspaceChange}
               selectedNotebookId={selectedNotebookId}
               activeNoteId={selectedNote?.id ?? null}
               quickAccessNotes={quickAccessNotes}
               onSelectQuickNote={handleSelectQuickNote}
-              onSelectAllNotes={handleSelectAllNotes}
+              onSelectAllNotes={() => {
+                setActiveView("notas");
+                handleSelectAllNotes();
+              }}
+              onSelectTrash={() => setActiveView("papelera")}
+              onSelectTemplates={() => setActiveView("plantillas")}
             />
           </div>
         )}
 
-        {!isFocusMode && (
-          <div className="w-52 h-full flex flex-col border-r border-gray-200 flex-shrink-0 bg-white overflow-hidden transition-all duration-200">
-            <PanelCentralNotas
-              key={`${activeWorkspace?.id ?? "none"}-${selectedNotebookId ?? "all"}`}
-              notebookId={selectedNotebookId}
-              workspaceId={activeWorkspace?.id ?? null}
-              searchQuery={searchQuery}
-              onCreateNoteReady={handleCreateNoteReady}
-              onReloadReady={handleReloadReady}
-              onNoteSelect={handleNoteSelect}
-              activeNoteId={selectedNote?.id ?? null}
-            />
+        {!isFocusMode && activeView !== "papelera" && (
+          <div
+            className={`h-full flex flex-col border-r border-gray-200 flex-shrink-0 bg-white overflow-hidden transition-all duration-200 ${
+              activeView === "plantillas" ? "w-[360px]" : "w-52"
+            }`}
+          >
+            {activeView === "plantillas" ? (
+              <PanelPlantillas
+                workspaceId={activeWorkspace?.id ?? 0}
+                selectedTemplateId={selectedTemplate?.id ?? null}
+                refreshTrigger={templatesRefreshKey}
+                onSelectTemplate={(template) => {
+                  setSelectedTemplate(template);
+                  setTemplateEditorMode("idle");
+                }}
+                onCreateNewTemplate={() => {
+                  setSelectedTemplate(null);
+                  setTemplateEditorMode("create");
+                }}
+                onEditTemplate={(template) => {
+                  setSelectedTemplate(template);
+                  setTemplateEditorMode("edit");
+                }}
+              />
+            ) : (
+              <PanelCentralNotas
+                key={`${activeWorkspace?.id ?? "none"}-${selectedNotebookId ?? "all"}`}
+                notebookId={selectedNotebookId}
+                workspaceId={activeWorkspace?.id ?? null}
+                searchQuery={searchQuery}
+                onReloadReady={handleReloadReady}
+                onNoteSelect={handleNoteSelect}
+                activeNoteId={selectedNote?.id ?? null}
+              />
+            )}
           </div>
         )}
 
@@ -234,7 +304,50 @@ function WorkspaceShell() {
             isFocusMode ? "max-w-none" : ""
           }`}
         >
-          {selectedNote ? (
+          {activeView === "papelera" && activeWorkspace ? (
+            <PanelPapelera
+              workspaceId={activeWorkspace.id}
+              onNotesMutated={() => {
+                void refreshQuickAccessNotes();
+                reloadAction();
+              }}
+            />
+          ) : activeView === "plantillas" ? (
+            templateEditorMode !== "idle" ? (
+              <EditorPlantilla
+                plantilla={
+                  templateEditorMode === "edit" ? selectedTemplate : null
+                }
+                workspaceId={activeWorkspace?.id ?? 0}
+                onSave={() => {
+                  setTemplateEditorMode("idle");
+                  setTemplatesRefreshKey((current) => current + 1);
+                }}
+                onCancel={() => setTemplateEditorMode("idle")}
+              />
+            ) : (
+              <VistaPreviaPlantilla
+                plantilla={selectedTemplate}
+                onUseTemplate={async (plantilla) => {
+                  if (!activeWorkspace) return;
+                  const newNote =
+                    await window.electron?.templates?.createNoteFromTemplate({
+                      templateId: plantilla.id,
+                      workspaceId: activeWorkspace.id,
+                    });
+                  if (newNote) {
+                    const createdNote = newNote as Note & {
+                      notebook_id?: number | null;
+                    };
+                    setSelectedNote(createdNote as Note);
+                    setSelectedNotebookId(createdNote.notebook_id ?? null);
+                    setActiveView("notas");
+                    window.dispatchEvent(new CustomEvent("notes:updated"));
+                  }
+                }}
+              />
+            )
+          ) : selectedNote ? (
             <PanelEditor
               ref={panelEditorRef}
               noteId={selectedNote.id}

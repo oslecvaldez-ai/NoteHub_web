@@ -225,7 +225,7 @@ function O(e) {
 	}
 	return r = D(e.name, e.mimeType), i = o.join(n, r), s.writeFileSync(i, Buffer.from(e.data)), r;
 }
-function k() {
+function re() {
 	r.handle("files:copy-image", async (e, t) => {
 		let r = t?.trim() ?? "";
 		if (!r) {
@@ -270,19 +270,19 @@ function k() {
 }
 //#endregion
 //#region electron/main/notebooks.ts
-function A(e) {
+function ie(e) {
 	return u("sha256").update(e).digest("hex");
 }
-function j(e) {
+function k(e) {
 	return _().prepare("SELECT notebooks.*, COUNT(notes.id) AS note_count\n			 FROM notebooks\n			 LEFT JOIN notes ON notes.notebook_id = notebooks.id AND notes.is_deleted = 0\n			 WHERE notebooks.id = ?\n			 GROUP BY notebooks.id").get(e);
 }
-function M(e) {
+function A(e) {
 	return e.iconType ?? e.iconTypeValue ?? e.icon ?? e.icon_type ?? "folder";
 }
-function N(e) {
+function j(e) {
 	let t = +(e.isLocked === !0 || e.isLocked === 1);
 	if (t) {
-		let n = e.password ? A(e.password) : e.passwordHash ?? null;
+		let n = e.password ? ie(e.password) : e.passwordHash ?? null;
 		if (!n) throw Error("La contraseña es obligatoria para bloquear el cuaderno");
 		return {
 			isLocked: t,
@@ -294,18 +294,18 @@ function N(e) {
 		passwordHash: null
 	};
 }
-function P(e, t) {
+function M(e, t) {
 	console.error(`[notebooks] ${e} failed`, t instanceof Error ? t.message : t), t instanceof Error && t.stack && console.error(t.stack);
 }
-function F(e, t, n) {
+function N(e, t, n) {
 	if (_().prepare("SELECT id FROM notebooks\n			 WHERE workspace_id = ?\n			   AND name = ?\n			   AND (\n					(? IS NULL AND parent_notebook_id IS NULL)\n					OR (? IS NOT NULL AND parent_notebook_id = ?)\n				)").get(e, t, n, n, n)) throw Error("Ya existe un cuaderno con este nombre en esta ubicación");
 }
-function I() {
+function P() {
 	r.handle("notebooks:get-all", (e, t) => {
 		try {
 			return _().prepare("SELECT notebooks.*, COUNT(notes.id) AS note_count\n					 FROM notebooks\n					 LEFT JOIN notes ON notes.notebook_id = notebooks.id AND notes.is_deleted = 0\n					 WHERE notebooks.workspace_id = ?\n					 GROUP BY notebooks.id\n					 ORDER BY notebooks.parent_notebook_id IS NOT NULL, notebooks.name COLLATE NOCASE ASC").all(t);
 		} catch (e) {
-			throw P("notebooks:get-all", e), e;
+			throw M("notebooks:get-all", e), e;
 		}
 	}), r.handle("notebooks:create", (e, t, n) => {
 		try {
@@ -316,37 +316,37 @@ function I() {
 			let e = n.name?.trim();
 			if (!e) throw Error("El nombre del cuaderno es obligatorio");
 			let r = n.parentNotebookId ?? null;
-			F(t, e, r);
-			let i = M(n), { isLocked: a, passwordHash: o } = N(n), s = _().prepare("INSERT INTO notebooks\n						 (workspace_id, parent_notebook_id, name, icon_type, icon_color, is_locked, password_hash)\n						 VALUES (?, ?, ?, ?, ?, ?, ?)").run(t, r, e, i, n.iconColor ?? null, a, o);
-			return j(Number(s.lastInsertRowid));
+			N(t, e, r);
+			let i = A(n), { isLocked: a, passwordHash: o } = j(n), s = _().prepare("INSERT INTO notebooks\n						 (workspace_id, parent_notebook_id, name, icon_type, icon_color, is_locked, password_hash)\n						 VALUES (?, ?, ?, ?, ?, ?, ?)").run(t, r, e, i, n.iconColor ?? null, a, o);
+			return k(Number(s.lastInsertRowid));
 		} catch (e) {
-			throw P("notebooks:create", e), e;
+			throw M("notebooks:create", e), e;
 		}
 	}), r.handle("notebooks:update", (e, t, n) => {
 		try {
 			let e = n.name?.trim();
 			if (!e) throw Error("El nombre del cuaderno es obligatorio");
-			let r = M(n), { isLocked: i, passwordHash: a } = N(n);
+			let r = A(n), { isLocked: i, passwordHash: a } = j(n);
 			if (_().prepare("UPDATE notebooks\n						 SET name = ?, parent_notebook_id = ?, icon_type = ?, icon_color = ?, is_locked = ?, password_hash = ?\n						 WHERE id = ?").run(e, n.parentNotebookId ?? null, r, n.iconColor ?? null, i, a, t).changes === 0) throw Error("El cuaderno no existe");
-			return j(t);
+			return k(t);
 		} catch (e) {
-			throw P("notebooks:update", e), e;
+			throw M("notebooks:update", e), e;
 		}
 	}), r.handle("notebooks:delete", (e, t) => {
 		try {
 			if (_().prepare("DELETE FROM notebooks WHERE id = ?").run(t).changes === 0) throw Error("El cuaderno no existe");
 			return { id: t };
 		} catch (e) {
-			throw P("notebooks:delete", e), e;
+			throw M("notebooks:delete", e), e;
 		}
 	});
 }
 //#endregion
 //#region electron/main/notes.ts
-function L(e) {
+function F(e) {
 	return _().prepare("SELECT * FROM notes WHERE id = ?").get(e);
 }
-function R(e, t, n = "") {
+function I(e, t, n = "") {
 	let r = ["workspace_id = ?", "is_deleted = 0"], i = [e];
 	if (t != null && (r.push("notebook_id = ?"), i.push(t)), n.trim()) {
 		r.push("(title LIKE ? OR content LIKE ?)");
@@ -357,55 +357,55 @@ function R(e, t, n = "") {
 			 WHERE ${r.join(" AND ")}
 			 ORDER BY is_pinned DESC, updated_at DESC`).all(...i);
 }
-function z() {
-	r.handle("notes:get-by-id", (e, t) => L(t)), r.handle("notes:get-by-workspace", (e, t, n) => R(t, n)), r.handle("notes:get-quick-access", (e, t) => _().prepare("SELECT id, workspace_id, notebook_id, title, content, is_pinned, is_quick_access, is_deleted, pinned_at, created_at, updated_at\n				 FROM notes\n				 WHERE workspace_id = ? AND (is_quick_access = 1 OR is_pinned = 1) AND is_deleted = 0\n				 ORDER BY updated_at DESC").all(t)), r.handle("notes:search", (e, t, n, r) => R(t, r, n)), r.handle("notes:create", (e, t, n = {}) => {
+function L() {
+	r.handle("notes:get-by-id", (e, t) => F(t)), r.handle("notes:get-by-workspace", (e, t, n) => I(t, n)), r.handle("notes:get-quick-access", (e, t) => _().prepare("SELECT id, workspace_id, notebook_id, title, content, is_pinned, is_quick_access, is_deleted, pinned_at, created_at, updated_at\n				 FROM notes\n				 WHERE workspace_id = ? AND (is_quick_access = 1 OR is_pinned = 1) AND is_deleted = 0\n				 ORDER BY updated_at DESC").all(t)), r.handle("notes:search", (e, t, n, r) => I(t, r, n)), r.handle("notes:create", (e, t, n = {}) => {
 		let r = _().prepare("INSERT INTO notes (workspace_id, notebook_id, title, content)\n				 VALUES (?, ?, ?, ?)").run(t, n.notebookId ?? null, n.title?.trim() ?? "", n.content ?? "");
-		return L(Number(r.lastInsertRowid));
+		return F(Number(r.lastInsertRowid));
 	}), r.handle("notes:duplicate", (e, t) => {
-		let n = L(t);
+		let n = F(t);
 		if (!n) throw Error("La nota no existe");
 		let r = _().prepare("INSERT INTO notes (workspace_id, notebook_id, title, content)\n				 VALUES (?, ?, ?, ?)").run(n.workspace_id, n.notebook_id, `${n.title} (copia)`, n.content);
-		return L(Number(r.lastInsertRowid));
+		return F(Number(r.lastInsertRowid));
 	}), r.handle("notes:toggle-pin", (e, t) => {
-		let n = L(t);
+		let n = F(t);
 		if (!n) throw Error("La nota no existe");
 		let r = n.is_pinned === 1 ? 0 : 1;
-		return _().prepare("UPDATE notes SET is_pinned = ?, is_quick_access = ?, pinned_at = CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE NULL END, updated_at = CURRENT_TIMESTAMP\n				 WHERE id = ?").run(r, r, r, t), L(t);
+		return _().prepare("UPDATE notes SET is_pinned = ?, is_quick_access = ?, pinned_at = CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE NULL END, updated_at = CURRENT_TIMESTAMP\n				 WHERE id = ?").run(r, r, r, t), F(t);
 	}), r.handle("notes:toggle-quick-access", (e, t, n) => {
-		let r = L(t);
+		let r = F(t);
 		if (!r) throw Error("La nota no existe");
 		let i = n === 0 || n === 1 ? n : r.is_quick_access === 1 ? 0 : 1;
-		return _().prepare("UPDATE notes SET is_quick_access = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(i, t), L(t);
+		return _().prepare("UPDATE notes SET is_quick_access = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(i, t), F(t);
 	}), r.handle("notes:move", (e, t, n) => {
 		if (_().prepare("UPDATE notes SET notebook_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(n, t).changes === 0) throw Error("La nota no existe");
-		return L(t);
+		return F(t);
 	}), r.handle("notes:delete", (e, t) => {
 		if (_().prepare("UPDATE notes SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(t).changes === 0) throw Error("La nota no existe");
-		return L(t);
+		return F(t);
 	});
 }
 //#endregion
 //#region electron/main/workspaces.ts
-function B(e) {
+function R(e) {
 	return _().prepare("SELECT * FROM workspaces WHERE id = ?").get(e);
 }
-function V() {
+function z() {
 	r.handle("workspaces:get-all", () => _().prepare("SELECT * FROM workspaces ORDER BY is_default DESC, name COLLATE NOCASE ASC").all()), r.handle("workspaces:create", (e, t) => {
 		try {
 			let e = t.trim();
 			if (!e) throw Error("El nombre del espacio es obligatorio");
 			let n = _().prepare("INSERT INTO workspaces (name, is_default, color_hex) VALUES (?, 0, ?)").run(e, "#8B5CF6");
-			return B(Number(n.lastInsertRowid));
+			return R(Number(n.lastInsertRowid));
 		} catch (e) {
 			throw console.error("Error al crear espacio:", e), e;
 		}
 	}), r.handle("workspaces:update", (e, t, n) => {
 		let r = n.trim();
 		if (!r) throw Error("El nombre del espacio es obligatorio");
-		if (!B(t)) throw Error("El espacio no existe");
-		return _().prepare("UPDATE workspaces SET name = ? WHERE id = ?").run(r, t), B(t);
+		if (!R(t)) throw Error("El espacio no existe");
+		return _().prepare("UPDATE workspaces SET name = ? WHERE id = ?").run(r, t), R(t);
 	}), r.handle("workspaces:delete", (e, t) => {
-		let n = _(), r = B(t);
+		let n = _(), r = R(t);
 		if (!r) throw Error("El espacio no existe");
 		if (r.is_default === 1) throw Error("El espacio por defecto no se puede eliminar");
 		let i = n.prepare("SELECT id FROM workspaces WHERE is_default = 1 LIMIT 1").get();
@@ -415,7 +415,7 @@ function V() {
 		})(), { id: t };
 	}), r.handle("workspaces:move-element", (e, t, n, r) => {
 		let i = _();
-		if (!B(r)) throw Error("El espacio de destino no existe");
+		if (!R(r)) throw Error("El espacio de destino no existe");
 		if (t === "note") {
 			if (i.prepare("UPDATE notes SET workspace_id = ? WHERE id = ?").run(r, n).changes === 0) throw Error("La nota no existe");
 			return {
@@ -437,69 +437,111 @@ function V() {
 }
 //#endregion
 //#region electron/main/tags.ts
-function H(e) {
+function B(e) {
 	return _().prepare("SELECT * FROM tags WHERE id = ?").get(e);
 }
-function U(e) {
+function V(e) {
 	return _().prepare("SELECT * FROM tags WHERE workspace_id = ? ORDER BY name COLLATE NOCASE ASC").all(e);
 }
-function W(e) {
+function H(e) {
 	return _().prepare("SELECT t.*\n       FROM tags t\n       INNER JOIN note_tags nt ON nt.tag_id = t.id\n       WHERE nt.note_id = ?\n       ORDER BY t.name COLLATE NOCASE ASC").all(e);
 }
-function G(e) {
+function U(e) {
 	let t = e.trim().replace(/^#+/, "").trim();
 	if (!t) throw Error("El nombre del tag no puede estar vacío");
 	return t;
 }
-function K() {
-	r.handle("tags:get-all-for-workspace", (e, t) => U(t)), r.handle("tags:get-for-note", (e, t) => W(t)), r.handle("tags:create", (e, t, n) => {
-		let r = G(n), i = _().prepare("SELECT id FROM tags WHERE workspace_id = ? AND name = ? COLLATE NOCASE").get(t, r);
-		if (i) return H(i.id);
+function W() {
+	r.handle("tags:get-all-for-workspace", (e, t) => V(t)), r.handle("tags:get-for-note", (e, t) => H(t)), r.handle("tags:create", (e, t, n) => {
+		let r = U(n), i = _().prepare("SELECT id FROM tags WHERE workspace_id = ? AND name = ? COLLATE NOCASE").get(t, r);
+		if (i) return B(i.id);
 		let a = _().prepare("INSERT INTO tags (workspace_id, name, color_hex) VALUES (?, ?, ?)").run(t, r, "#8B5CF6");
-		return H(Number(a.lastInsertRowid));
+		return B(Number(a.lastInsertRowid));
 	}), r.handle("tags:set-for-note", (e, t, n) => {
 		let r = _();
-		if (r.prepare("DELETE FROM note_tags WHERE note_id = ?").run(t), !Array.isArray(n) || n.length === 0) return W(t);
+		if (r.prepare("DELETE FROM note_tags WHERE note_id = ?").run(t), !Array.isArray(n) || n.length === 0) return H(t);
 		let i = [...new Set(n.filter((e) => Number.isFinite(Number(e))))].map(Number);
-		for (let e of i) H(e) && r.prepare("INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)").run(t, e);
-		return W(t);
+		for (let e of i) B(e) && r.prepare("INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)").run(t, e);
+		return H(t);
 	});
 }
 //#endregion
 //#region electron/main/editor.ts
-function q(e) {
+function G(e) {
 	return _().prepare("SELECT id, title, content, notebook_id FROM notes WHERE id = ?").get(e);
 }
-function J(e) {
+function K(e) {
 	return e.replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;|&#34;/g, "\"").replace(/&#39;|&#x27;/g, "'").replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 }
-function Y(e) {
+function q(e) {
 	let t = e.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);
-	return ((t?.[1] ? J(t[1]) : J(e)).split("\n").map((e) => e.trim()).find(Boolean) ?? "").slice(0, 120) || "Nota sin título";
+	return ((t?.[1] ? K(t[1]) : K(e)).split("\n").map((e) => e.trim()).find(Boolean) ?? "").slice(0, 120) || "Nota sin título";
 }
-function X() {
+function J() {
 	r.handle("notes:save-content", (e, t, n, r) => {
-		let i = q(t);
+		let i = G(t);
 		if (!i) throw Error("La nota no existe");
-		let a = Y(n) || i.title || "Nota sin título", o = r === void 0 ? i.notebook_id : r;
-		return _().prepare("UPDATE notes\n				 SET title = ?, content = ?, notebook_id = ?, updated_at = CURRENT_TIMESTAMP\n				 WHERE id = ?").run(a, n, o, t), q(t);
+		let a = q(n) || i.title || "Nota sin título", o = r === void 0 ? i.notebook_id : r;
+		return _().prepare("UPDATE notes\n				 SET title = ?, content = ?, notebook_id = ?, updated_at = CURRENT_TIMESTAMP\n				 WHERE id = ?").run(a, n, o, t), G(t);
 	});
 }
 //#endregion
 //#region electron/main/templates.ts
-function re(e) {
+function Y(e) {
 	return _().prepare("SELECT * FROM templates WHERE id = ?").get(e);
 }
-function ie(e) {
+function X(e) {
 	return _().prepare("SELECT * FROM templates\n       WHERE workspace_id = ?\n       ORDER BY created_at DESC").all(e);
 }
 function ae() {
-	r.handle("templates:get-by-workspace", (e, t) => t ? ie(Number(t)) : []), r.handle("templates:create", (e, t) => {
+	r.handle("templates:get-all", (e, t) => t ? X(Number(t)) : []), r.handle("templates:get-by-id", (e, t) => Y(Number(t))), r.handle("templates:get-by-workspace", (e, t) => t ? X(Number(t)) : []), r.handle("templates:create", (e, t) => {
 		let n = Number(t?.workspaceId ?? 0), r = String(t?.name ?? "").trim(), i = String(t?.content ?? "");
 		if (!n || !r) throw Error("Se requiere un espacio y un nombre para la plantilla");
 		let a = _().prepare("INSERT INTO templates (workspace_id, name, content)\n         VALUES (?, ?, ?)").run(n, r, i);
-		return re(Number(a.lastInsertRowid));
+		return Y(Number(a.lastInsertRowid));
+	}), r.handle("templates:update", (e, t) => {
+		let n = Number(t?.id ?? 0), r = String(t?.name ?? "").trim(), i = String(t?.content ?? "");
+		if (!n || !r) throw Error("Se requiere una plantilla y un nombre válidos");
+		return _().prepare("UPDATE templates SET name = ?, content = ? WHERE id = ?").run(r, i, n), { success: !0 };
+	}), r.handle("templates:delete", (e, t) => (_().prepare("DELETE FROM templates WHERE id = ?").run(t), { success: !0 })), r.handle("templates:create-note-from-template", (e, t) => {
+		let n = _(), r = Number(t?.templateId ?? 0), i = Number(t?.workspaceId ?? 0), a = t?.notebookId ?? null, o = n.prepare("SELECT * FROM templates WHERE id = ?").get(r);
+		if (!o) throw Error("No se encontró la plantilla especificada");
+		let s = n.prepare("INSERT INTO notes (workspace_id, notebook_id, title, content, is_pinned, is_quick_access, is_deleted, created_at, updated_at)\n           VALUES (?, ?, ?, ?, 0, 0, 0, datetime('now', 'localtime'), datetime('now', 'localtime'))").run(i, a ?? null, o.name, o.content), c = Number(s.lastInsertRowid);
+		return a && n.prepare("UPDATE notebooks\n             SET note_count = (\n               SELECT COUNT(*) FROM notes WHERE notebook_id = ? AND is_deleted = 0\n             )\n             WHERE id = ?").run(a, a), {
+			id: c,
+			title: o.name,
+			content: o.content,
+			workspaceId: i,
+			notebookId: a
+		};
 	});
+}
+//#endregion
+//#region electron/main/trash.ts
+function oe(e) {
+	return _().prepare("SELECT n.*, b.name AS notebookName\n       FROM notes n\n       LEFT JOIN notebooks b ON b.id = n.notebook_id\n       WHERE n.is_deleted = 1 AND n.workspace_id = ?\n       ORDER BY n.updated_at DESC").all(e);
+}
+function se(e) {
+	return _().prepare("SELECT notebook_id FROM notes WHERE id = ?").get(e);
+}
+function ce() {
+	r.handle("trash:get-all", (e, t) => oe(Number(t))), r.handle("trash:restore", (e, t) => {
+		let n = _();
+		n.prepare("UPDATE notes\n         SET is_deleted = 0, updated_at = datetime('now', 'localtime')\n         WHERE id = ?").run(t);
+		let r = se(Number(t));
+		return r?.notebook_id && n.prepare("UPDATE notebooks\n           SET note_count = (\n             SELECT COUNT(*) FROM notes WHERE notebook_id = ? AND is_deleted = 0\n           )\n           WHERE id = ?").run(r.notebook_id, r.notebook_id), { success: !0 };
+	}), r.handle("trash:delete-permanent", (e, t) => {
+		let n = _();
+		return n.prepare("DELETE FROM note_tags WHERE note_id = ?").run(t), n.prepare("DELETE FROM notes WHERE id = ?").run(t), { success: !0 };
+	}), r.handle("trash:empty", (e, t) => {
+		let n = _(), r = n.prepare("SELECT id FROM notes WHERE workspace_id = ? AND is_deleted = 1").all(Number(t)), i = n.prepare("DELETE FROM note_tags WHERE note_id = ?"), a = n.prepare("DELETE FROM notes WHERE id = ?");
+		return n.transaction(() => {
+			for (let e of r) i.run(e.id), a.run(e.id);
+		})(), {
+			success: !0,
+			count: r.length
+		};
+	}), r.handle("trash:get-count", (e, t) => _().prepare("SELECT COUNT(*) AS count FROM notes WHERE workspace_id = ? AND is_deleted = 1").get(Number(t))?.count ?? 0);
 }
 //#endregion
 //#region electron/main.ts
@@ -552,7 +594,7 @@ t.whenReady().then(() => {
 			status: 404,
 			headers: { "content-type": "text/plain" }
 		});
-	}), _(), y(), V(), I(), z(), K(), X(), ae(), k(), E(), $(), t.on("activate", () => {
+	}), _(), y(), z(), P(), L(), W(), J(), ae(), ce(), re(), E(), $(), t.on("activate", () => {
 		e.getAllWindows().length === 0 && $();
 	});
 }), t.on("window-all-closed", () => {

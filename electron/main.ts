@@ -15,6 +15,7 @@ import { registerWorkspacesIpc } from "./main/workspaces";
 import { registerTagsIpc } from "./main/tags";
 import { registerEditorIpc } from "./main/editor";
 import { registerTemplatesIpc } from "./main/templates";
+import { registerTrashIpc } from "./main/trash";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 let mainWindow: BrowserWindow | null = null;
@@ -123,6 +124,7 @@ void app.whenReady().then(() => {
   registerTagsIpc();
   registerEditorIpc();
   registerTemplatesIpc();
+  registerTrashIpc();
   registerFilesIpc();
   registerExportIpc();
   createWindow();

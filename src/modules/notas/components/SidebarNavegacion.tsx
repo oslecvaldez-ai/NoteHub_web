@@ -21,6 +21,8 @@ export interface SidebarNavegacionProps {
   onSelectNotebook: (notebookId: number | null) => void;
   onSelectQuickNote?: (noteId: number) => void;
   onSelectAllNotes?: () => void;
+  onSelectTrash?: () => void;
+  onSelectTemplates?: () => void;
 }
 
 export function SidebarNavegacion({
@@ -32,10 +34,16 @@ export function SidebarNavegacion({
   onSelectNotebook,
   onSelectQuickNote,
   onSelectAllNotes,
+  onSelectTrash,
+  onSelectTemplates,
 }: SidebarNavegacionProps): ReactElement {
   const [resolvedWorkspace, setResolvedWorkspace] = useState<Workspace | null>(
     activeWorkspace,
   );
+  const [trashCount, setTrashCount] = useState<number>(0);
+  const [templatesCount, setTemplatesCount] = useState<number>(0);
+
+  const workspaceId = activeWorkspace?.id ?? resolvedWorkspace?.id ?? null;
 
   useEffect(() => {
     if (activeWorkspace) {
@@ -69,6 +77,45 @@ export function SidebarNavegacion({
       active = false;
     };
   }, [activeWorkspace]);
+
+  useEffect(() => {
+    const fetchBadges = async (): Promise<void> => {
+      if (!workspaceId) {
+        setTrashCount(0);
+        setTemplatesCount(0);
+        return;
+      }
+
+      try {
+        const [trashTotal, templates] = await Promise.all([
+          window.electron?.trash?.getCount(workspaceId) ?? Promise.resolve(0),
+          window.electron?.templates?.getAll(workspaceId) ??
+            Promise.resolve([]),
+        ]);
+
+        setTrashCount(Number(trashTotal) || 0);
+        setTemplatesCount(Array.isArray(templates) ? templates.length : 0);
+      } catch (error) {
+        console.error("Error al actualizar contadores del sidebar:", error);
+      }
+    };
+
+    void fetchBadges();
+
+    const handleUpdate = (): void => {
+      void fetchBadges();
+    };
+
+    window.addEventListener("notes:updated", handleUpdate);
+    window.addEventListener("templates:updated", handleUpdate);
+    window.addEventListener("trash:updated", handleUpdate);
+
+    return () => {
+      window.removeEventListener("notes:updated", handleUpdate);
+      window.removeEventListener("templates:updated", handleUpdate);
+      window.removeEventListener("trash:updated", handleUpdate);
+    };
+  }, [workspaceId]);
 
   return (
     <aside className="notas-sidebar">
@@ -125,11 +172,35 @@ export function SidebarNavegacion({
           )}
         </div>
 
-        <button type="button">
-          <Trash2 size={17} /> Papelera
+        <button
+          type="button"
+          onClick={() => onSelectTrash?.()}
+          className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+        >
+          <span className="flex items-center gap-2">
+            <Trash2 size={17} />
+            <span>Papelera</span>
+          </span>
+          {trashCount > 0 && (
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-100 px-1.5 text-[11px] font-bold text-red-600 dark:bg-red-950 dark:text-red-400">
+              {trashCount}
+            </span>
+          )}
         </button>
-        <button type="button">
-          <Archive size={17} /> Plantillas
+        <button
+          type="button"
+          onClick={() => onSelectTemplates?.()}
+          className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+        >
+          <span className="flex items-center gap-2">
+            <Archive size={17} />
+            <span>Plantillas</span>
+          </span>
+          {templatesCount > 0 && (
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-purple-100 px-1.5 text-[11px] font-bold text-purple-600 dark:bg-purple-950 dark:text-purple-400">
+              {templatesCount}
+            </span>
+          )}
         </button>
         <button type="button">
           <Settings size={17} /> Ajustes

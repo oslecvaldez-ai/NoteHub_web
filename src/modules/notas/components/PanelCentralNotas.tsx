@@ -223,6 +223,8 @@ export function PanelCentralNotas({
       () => notesApi.notes.delete(deleteTarget.id),
       "Nota eliminada correctamente",
     );
+    window.dispatchEvent(new CustomEvent("notes:updated"));
+    window.dispatchEvent(new CustomEvent("trash:updated"));
     setDeleteTarget(null);
   }
 

@@ -448,6 +448,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
           notify("No se pudo crear la plantilla", "error");
           return;
         }
+        window.dispatchEvent(new CustomEvent("templates:updated"));
         notify("Plantilla creada a partir de la nota", "success");
       } catch (error) {
         console.error("Error creando plantilla:", error);
@@ -464,6 +465,8 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
       if (!noteId) return;
       try {
         await window.electron?.notes?.delete(noteId);
+        window.dispatchEvent(new CustomEvent("notes:updated"));
+        window.dispatchEvent(new CustomEvent("trash:updated"));
         notify("Nota enviada a la papelera", "success");
         setIsDeleteConfirmOpen(false);
         onNotesChanged?.();
