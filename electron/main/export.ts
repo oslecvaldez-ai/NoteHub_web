@@ -228,11 +228,61 @@ export function registerExportIpc(): void {
     if (canceled || filePaths.length === 0) return null;
 
     const filePath = filePaths[0];
-    const content = fs.readFileSync(filePath, "utf8");
-    const parsed = JSON.parse(content) as { note?: Record<string, unknown> };
-    if (!parsed || typeof parsed !== "object" || !parsed.note) {
-      throw new Error("Formato de archivo NoteHub no válido");
+
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      const noteData =
+        (parsed && typeof parsed === "object" && "data" in parsed
+          ? parsed.data
+          : "note" in parsed
+            ? parsed.note
+            : parsed) ?? parsed;
+
+      if (
+        !noteData ||
+        typeof noteData !== "object" ||
+        (!("content" in noteData && typeof noteData.content === "string") &&
+          !("title" in noteData && typeof noteData.title === "string"))
+      ) {
+        throw new Error("Formato de archivo NoteHub no válido");
+      }
+
+      const normalizedNote = noteData as Record<string, unknown>;
+      return {
+        title:
+          typeof normalizedNote.title === "string" &&
+          normalizedNote.title.trim()
+            ? normalizedNote.title
+            : "Nota importada",
+        content:
+          typeof normalizedNote.content === "string"
+            ? normalizedNote.content
+            : "",
+        notebookId:
+          typeof normalizedNote.notebookId === "number"
+            ? normalizedNote.notebookId
+            : (normalizedNote.notebookId ?? null),
+        workspaceId:
+          typeof normalizedNote.workspaceId === "number"
+            ? normalizedNote.workspaceId
+            : (normalizedNote.workspaceId ?? null),
+      };
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new Error("El archivo JSON no es válido o está corrupto.");
+      }
+
+      if (
+        error instanceof Error &&
+        error.message === "Formato de archivo NoteHub no válido"
+      ) {
+        throw error;
+      }
+
+      throw new Error(
+        "No se pudo importar la nota. El formato del archivo no es válido.",
+      );
     }
-    return parsed.note;
   });
 }

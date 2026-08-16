@@ -8,7 +8,16 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tree": "powershell -ExecutionPolicy Bypass -File ./scripts/list-tree.ps1",
+    "export:core": "powershell -ExecutionPolicy Bypass -File ./scripts/export-module.ps1 -Path src/core",
+    "export:notas": "powershell -ExecutionPolicy Bypass -File ./scripts/export-module.ps1 -Path src/modules/notas",
+    "export:editor": "powershell -ExecutionPolicy Bypass -File ./scripts/export-module.ps1 -Path src/modules/editor",
+    "export:espacios": "powershell -ExecutionPolicy Bypass -File ./scripts/export-module.ps1 -Path src/modules/espacios",
+    "export:papelera": "powershell -ExecutionPolicy Bypass -File ./scripts/export-module.ps1 -Path src/modules/papelera-plantillas",
+    "export:respaldos": "powershell -ExecutionPolicy Bypass -File ./scripts/export-module.ps1 -Path src/modules/respaldos",
+    "export:config": "powershell -ExecutionPolicy Bypass -File ./scripts/export-module.ps1 -Path src/modules/configuracion",
+    "export:electron": "powershell -ExecutionPolicy Bypass -File ./scripts/export-module.ps1 -Path electron/main"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

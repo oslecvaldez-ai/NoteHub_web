@@ -6,7 +6,7 @@ import {
   type MouseEvent,
   type ReactElement,
 } from "react";
-import { ArrowUpDown, MoreVertical } from "lucide-react";
+import { ArrowUpDown, MoreVertical, Star, StarOff } from "lucide-react";
 import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
 import { useNotifications } from "../../../core/components/useNotifications";
 import { MenuContextual, type ContextMenuItem } from "./MenuContextual";
@@ -150,6 +150,8 @@ export function PanelCentralNotas({
   }
 
   function noteMenuItems(note: Note): ContextMenuItem[] {
+    const isQuickAccess = note.is_quick_access === 1;
+
     return [
       {
         id: "pin",
@@ -162,12 +164,35 @@ export function PanelCentralNotas({
       },
       {
         id: "quick",
-        label: "Acceso rápido",
-        onSelect: () =>
-          void runNoteAction(
-            () => notesApi.notes.toggleQuickAccess(note.id),
-            "Acceso rápido actualizado",
-          ),
+        label: isQuickAccess ? "Quitar de Acceso rápido" : "Acceso rápido",
+        icon: isQuickAccess ? (
+          <StarOff className="h-4 w-4 text-amber-500" />
+        ) : (
+          <Star className="h-4 w-4 text-amber-500 fill-amber-500/80" />
+        ),
+        onSelect: () => {
+          void (async () => {
+            try {
+              const nextStatus = isQuickAccess ? 0 : 1;
+              await notesApi.notes.toggleQuickAccess(note.id, nextStatus);
+              window.dispatchEvent(new CustomEvent("notes:updated"));
+              showNotification(
+                nextStatus === 1
+                  ? "Nota añadida a Acceso rápido"
+                  : "Nota quitada de Acceso rápido",
+                "success",
+              );
+              await loadNotes();
+            } catch (error) {
+              showNotification(
+                error instanceof Error
+                  ? error.message
+                  : "No se pudo actualizar el acceso rápido",
+                "error",
+              );
+            }
+          })();
+        },
       },
       {
         id: "duplicate",

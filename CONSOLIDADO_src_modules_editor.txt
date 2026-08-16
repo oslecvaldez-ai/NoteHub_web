@@ -1,0 +1,2445 @@
+﻿========================================
+FILE: \src\modules\editor\components\BuscadorInterno.tsx
+========================================
+
+import { type ChangeEvent } from 'react'
+
+export interface BuscadorInternoProps {
+  query: string
+  onSearch: (query: string) => void
+}
+
+export function BuscadorInterno({ query, onSearch }: BuscadorInternoProps) {
+  return (
+    <div className="editor-search fixed bottom-4 right-4 rounded-2xl border border-slate-300 bg-white p-4 shadow-lg dark:border-slate-700 dark:bg-slate-950">
+      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Buscar</label>
+      <input
+        className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        type="text"
+        value={query}
+        onChange={(event: ChangeEvent<HTMLInputElement>) => onSearch(event.target.value)}
+        placeholder="Buscar texto..."
+      />
+    </div>
+  )
+}
+
+
+
+
+========================================
+FILE: \src\modules\editor\components\CustomExtensions.ts
+========================================
+
+import { mergeAttributes, Mark, Node, Extension } from "@tiptap/core";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
+
+export interface CustomQuoteOptions {
+  HTMLAttributes: Record<string, any>;
+}
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    customQuote: {
+      setCustomQuote: (backgroundColor?: string, color?: string) => ReturnType;
+      toggleCustomQuote: () => ReturnType;
+    };
+  }
+}
+
+export const CustomQuote = Node.create<CustomQuoteOptions>({
+  name: "customQuote",
+  group: "block",
+  content: "block+",
+  defining: true,
+  selectable: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      color: {
+        default: "#6200ee",
+        parseHTML: (element) =>
+          (element as HTMLElement).getAttribute("data-color") ||
+          (element as HTMLElement).style.borderLeftColor ||
+          "#6200ee",
+        renderHTML: (attributes) => ({
+          "data-color": attributes.color,
+          style: `border-left-color: ${attributes.color} !important;`,
+        }),
+      },
+      backgroundColor: {
+        default: "#f5f5f5",
+        parseHTML: (element) =>
+          (element as HTMLElement).getAttribute("data-bg-color") ||
+          (element as HTMLElement).style.backgroundColor ||
+          "#f5f5f5",
+        renderHTML: (attributes) => ({
+          "data-bg-color": attributes.backgroundColor,
+          style: `background-color: ${attributes.backgroundColor} !important;`,
+        }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [
+      { tag: "div.editor-callout" },
+      { tag: "blockquote" },
+      { tag: 'div[data-type="custom-quote"]' },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "div",
+      mergeAttributes({ class: "editor-callout" }, HTMLAttributes),
+      0,
+    ];
+  },
+
+  addCommands() {
+    return {
+      setCustomQuote:
+        (backgroundColor = "#f5f5f5", color = "#6200ee") =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: { backgroundColor, color },
+            content: [{ type: "paragraph" }],
+          });
+        },
+      toggleCustomQuote:
+        () =>
+        ({ commands }) => {
+          return commands.toggleWrap(this.name);
+        },
+    };
+  },
+});
+
+export const Collapsible = Node.create({
+  name: "collapsible",
+  group: "block",
+  content: "block*",
+  defining: true,
+  addAttributes() {
+    return {
+      summary: {
+        default: "Detalles",
+        parseHTML: (element) => {
+          const summaryElement = (element as HTMLElement).querySelector(
+            "summary.kh-collapsible-header",
+          );
+          return summaryElement?.innerHTML || "Detalles";
+        },
+      },
+      style: {
+        default: null,
+        parseHTML: (element) =>
+          (element as HTMLElement).getAttribute("style") || null,
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: "details.kh-collapsible" }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "details",
+      mergeAttributes(HTMLAttributes, { class: "kh-collapsible" }),
+      [
+        "summary",
+        { class: "kh-collapsible-header" },
+        HTMLAttributes.summary ?? "Detalles",
+      ],
+      ["div", { class: "kh-collapsible-content" }, 0],
+    ];
+  },
+});
+
+export const EditorHighlight = Mark.create({
+  name: "editorHighlight",
+  addAttributes() {
+    return {
+      style: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("style") || null,
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: "span.editor-highlight" }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "span",
+      mergeAttributes(HTMLAttributes, { class: "editor-highlight" }),
+      0,
+    ];
+  },
+});
+
+export const SearchHighlight = Mark.create({
+  name: "searchHighlight",
+  parseHTML() {
+    return [{ tag: "mark.search-highlight" }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "mark",
+      mergeAttributes(HTMLAttributes, { class: "search-highlight" }),
+      0,
+    ];
+  },
+});
+
+export type TransformType = "uppercase" | "lowercase" | "capitalize" | "none";
+
+export const TextTransform = Extension.create({
+  name: "textTransform",
+
+  addOptions() {
+    return {
+      types: ["textStyle"],
+    };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          textTransform: {
+            default: null,
+            parseHTML: (element) =>
+              (element as HTMLElement).style.textTransform || null,
+            renderHTML: (attributes) => {
+              if (!attributes.textTransform) return {};
+              return { style: `text-transform: ${attributes.textTransform}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setTextTransform:
+        (transform: TransformType) =>
+        ({ chain }: { chain: any }) => {
+          return chain()
+            .setMark("textStyle", { textTransform: transform })
+            .run();
+        },
+    } as any;
+  },
+});
+
+export const Checklist = TaskList.extend({
+  renderHTML({ HTMLAttributes }) {
+    return ["ul", mergeAttributes(HTMLAttributes, { class: "checklist" }), 0];
+  },
+});
+
+export const ChecklistItem = TaskItem.extend({
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "li",
+      mergeAttributes(HTMLAttributes, { class: "checklist-item" }),
+      0,
+    ];
+  },
+});
+
+
+
+
+========================================
+FILE: \src\modules\editor\components\EditorHeader.tsx
+========================================
+
+import {
+  Clock,
+  ExternalLink,
+  Maximize2,
+  MoreHorizontal,
+  Pin,
+  Share2,
+  Star,
+} from "lucide-react";
+import { type TiptapEditorHandle } from "./TiptapEditor";
+
+export interface EditorHeaderProps {
+  title: string;
+  onPin: () => void;
+  onStar: () => void;
+  onShare: () => void;
+  onHistory: () => void;
+  onExternal: () => void;
+  onMenu: () => void;
+  onToggleFocusMode: () => void;
+  editor?: TiptapEditorHandle | null;
+}
+
+export function EditorHeader({
+  onPin,
+  onStar,
+  onShare,
+  onHistory,
+  onExternal,
+  onMenu,
+  onToggleFocusMode,
+}: EditorHeaderProps) {
+  return (
+    <header className="editor-header flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-200/50 dark:border-slate-700 dark:bg-slate-950 dark:shadow-none">
+      <div className="flex flex-1 items-center gap-3 min-w-0">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+            Editor
+          </p>
+          {/* <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
+            {title}
+          </h1> */}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onPin}
+            aria-label="Pin"
+            title="Pin"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <Pin className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onStar}
+            aria-label="Favorito"
+            title="Favorito"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <Star className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onShare}
+            aria-label="Compartir"
+            title="Compartir"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onHistory}
+            aria-label="Historial"
+            title="Historial"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <Clock className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onExternal}
+            aria-label="Abrir externamente"
+            title="Abrir externamente"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={onMenu}
+            aria-label="MÃ¡s opciones"
+            title="MÃ¡s opciones"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onToggleFocusMode}
+        aria-label="Pantalla completa"
+        title="Pantalla completa"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+      >
+        <Maximize2 className="h-4 w-4" />
+      </button>
+    </header>
+  );
+}
+
+
+
+
+========================================
+FILE: \src\modules\editor\components\EditorToolbar.tsx
+========================================
+
+import {
+  createElement,
+  useState,
+  useRef,
+  useEffect,
+  type ElementType,
+  type MouseEvent,
+} from "react";
+import { type TiptapEditorHandle } from "./TiptapEditor";
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Calendar,
+  CheckSquare,
+  Highlighter,
+  Image,
+  Italic,
+  List,
+  ListOrdered,
+  Minus,
+  Palette,
+  Quote,
+  Plus,
+  Slash,
+  Subscript,
+  Superscript,
+  Table,
+  Star,
+  RotateCcw,
+  RotateCw,
+} from "lucide-react";
+
+export interface EditorToolbarProps {
+  editor?: TiptapEditorHandle | null;
+  onInsertTable: (rows?: number, cols?: number) => void;
+  onInsertImage: () => void;
+  onInsertDate: (format?: string) => void;
+}
+
+type ColorOption = { name: string; color: string; shortcut?: string };
+
+const TEXT_COLORS: ColorOption[] = [
+  { name: "Rojo", color: "#EE2C2C" },
+  { name: "Naranja", color: "#FF7A00" },
+  { name: "Amarillo", color: "#FFC72C" },
+  { name: "Verde", color: "#51B837" },
+  { name: "Azul", color: "#478AF6" },
+  { name: "Rosa", color: "#F86BD7" },
+  { name: "PÃºrpura", color: "#9B51E0" },
+  { name: "Gris", color: "#707070" },
+];
+
+const BG_COLORS: ColorOption[] = [
+  { name: "Rojo", color: "#FF8B8B" },
+  { name: "Naranja", color: "#FFC085" },
+  { name: "Amarillo", color: "#FFE285" },
+  { name: "Verde", color: "#C2F18E" },
+  { name: "Azul", color: "#85C8FF" },
+  { name: "Rosa", color: "#FFB2E6" },
+  { name: "PÃºrpura", color: "#CFA5FF" },
+  { name: "Gris", color: "#CCCCCC" },
+];
+
+const BG_TO_BORDER_MAP: Record<string, string> = {
+  "#FF8B8B": "#EE2C2C",
+  "#FFC085": "#FF7A00",
+  "#FFE285": "#FFC72C",
+  "#C2F18E": "#51B837",
+  "#85C8FF": "#478AF6",
+  "#FFB2E6": "#F86BD7",
+  "#CFA5FF": "#9B51E0",
+  "#CCCCCC": "#707070",
+};
+
+// Mapa de Pares ArmÃ³nicos: Fondo Pastel -> Texto ArmÃ³nico Oscuro
+const HARMONIC_PAIRS: Record<string, string> = {
+  "#FF8B8B": "#5A0000",
+  "#FFC085": "#4A2800",
+  "#FFE285": "#3D3000",
+  "#C2F18E": "#1B4300",
+  "#85C8FF": "#002B5B",
+  "#FFB2E6": "#4A0033",
+  "#CFA5FF": "#330066",
+  "#CCCCCC": "#1A1A1A",
+};
+
+const handleApplyHarmonicHighlight = (ed: any, bgColor: string) => {
+  if (!ed) return;
+  const normalizedBg = (bgColor || "").toUpperCase();
+  const harmonicTextColor = HARMONIC_PAIRS[normalizedBg] || "#1A1A1A";
+  ed.chain()
+    .focus(undefined, { scrollIntoView: false })
+    .setHighlight({ color: bgColor })
+    .setColor(harmonicTextColor)
+    .run();
+};
+
+const ICONS_MAP: Record<string, string[]> = {
+  indicadores: ["ðŸŸ¢", "ðŸ”´", "ðŸŸ¡", "âœ…", "ðŸ›¡ï¸"],
+  simbolos: [
+    "ðŸŽ¯",
+    "ðŸ‘‰",
+    "ðŸ”‘",
+    "ðŸ“–",
+    "ðŸ’¡",
+    "ðŸ“˜",
+    "ðŸ“š",
+    "ðŸ“œ",
+    "ðŸ™",
+    "ðŸ•Šï¸",
+    "ðŸ”¥",
+    "ðŸ”",
+    "ðŸ’¬",
+    "ðŸ",
+    "â¬†ï¸",
+    "â¬‡ï¸",
+  ],
+  enumeration: ["1ï¸âƒ£", "2ï¸âƒ£", "3ï¸âƒ£", "4ï¸âƒ£", "5ï¸âƒ£", "6ï¸âƒ£", "7ï¸âƒ£", "8ï¸âƒ£", "9ï¸âƒ£", "ðŸ”Ÿ"],
+  herramientas: ["ðŸ‘‰", "ðŸ“–", "ðŸ“š", "ðŸ“œ", "ðŸ“", "ðŸ”‘", "ðŸŽ¯", "ðŸ’¡"],
+};
+
+function toolbarButton(
+  icon: ElementType | null,
+  label: string,
+  onClick: () => void,
+  isActive = false,
+) {
+  const base =
+    "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900";
+  const activeCls = isActive
+    ? "border-purple-500 bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:border-purple-600"
+    : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950";
+
+  return (
+    <button
+      type="button"
+      className={`${base} ${activeCls}`}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+    >
+      {icon ? createElement(icon, { className: "h-4 w-4" }) : null}
+    </button>
+  );
+}
+
+export function EditorToolbar({
+  editor,
+  onInsertTable,
+  onInsertImage,
+  onInsertDate,
+}: EditorToolbarProps) {
+  const [showTextColorMenu, setShowTextColorMenu] = useState(false);
+  const [showBgColorMenu, setShowBgColorMenu] = useState(false);
+  const [showInsertMenu, setShowInsertMenu] = useState(false);
+  const [showIconsMenu, setShowIconsMenu] = useState(false);
+  const [iconsTab, setIconsTab] = useState<
+    "indicadores" | "simbolos" | "enumeration" | "herramientas"
+  >("indicadores");
+  const [showTableSubmenu, setShowTableSubmenu] = useState(false);
+  const [showDateSubmenu, setShowDateSubmenu] = useState(false);
+
+  const textMenuRef = useRef<HTMLDivElement | null>(null);
+  const bgMenuRef = useRef<HTMLDivElement | null>(null);
+  const insertMenuRef = useRef<HTMLDivElement | null>(null);
+  const iconsMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        textMenuRef.current &&
+        !textMenuRef.current.contains(event.target as Node)
+      )
+        setShowTextColorMenu(false);
+      if (
+        bgMenuRef.current &&
+        !bgMenuRef.current.contains(event.target as Node)
+      )
+        setShowBgColorMenu(false);
+      if (
+        insertMenuRef.current &&
+        !insertMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowInsertMenu(false);
+        setShowTableSubmenu(false);
+        setShowDateSubmenu(false);
+      }
+      if (
+        iconsMenuRef.current &&
+        !iconsMenuRef.current.contains(event.target as Node)
+      )
+        setShowIconsMenu(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside as any);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside as any);
+  }, []);
+
+  // helpers
+  const insertTable = (r: number, c: number) => {
+    onInsertTable?.(r, c);
+    setShowInsertMenu(false);
+    setShowTableSubmenu(false);
+  };
+
+  const insertDate = (format: string) => {
+    onInsertDate?.(format);
+    setShowInsertMenu(false);
+    setShowDateSubmenu(false);
+  };
+
+  return (
+    <div className="w-full flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-950 dark:border-slate-800">
+      {/* 1) Insert (+) */}
+      <div className="relative" ref={insertMenuRef}>
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setShowInsertMenu((s) => !s);
+            setShowIconsMenu(false);
+          }}
+          title="Insertar"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+
+        {showInsertMenu && (
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="space-y-1">
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onInsertImage();
+                  setShowInsertMenu(false);
+                }}
+              >
+                <Image className="h-4 w-4" />
+                <span>Insertar imagen</span>
+              </button>
+
+              {/* Insertar tabla -> submenu */}
+              <div className="relative">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowTableSubmenu((s) => !s)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Table className="h-4 w-4" />
+                    <span>Insertar tabla</span>
+                  </div>
+                  <span className="text-xs text-slate-400">â–·</span>
+                </button>
+
+                {showTableSubmenu && (
+                  <div className="absolute left-full top-0 ml-2 w-36 rounded-xl border bg-white p-2 shadow-md">
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertTable(2, 2)}
+                    >
+                      2x2
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertTable(3, 3)}
+                    >
+                      3x3
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertTable(4, 4)}
+                    >
+                      4x4
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertTable(5, 5)}
+                    >
+                      5x5
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Insertar fecha -> submenu */}
+              <div className="relative">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowDateSubmenu((s) => !s)}
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>Insertar fecha</span>
+                  </div>
+                  <span className="text-xs text-slate-400">â–·</span>
+                </button>
+
+                {showDateSubmenu && (
+                  <div className="absolute left-full top-0 ml-2 w-56 rounded-xl border bg-white p-2 shadow-md">
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertDate("datetime")}
+                    >
+                      Fecha y Hora
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertDate("date")}
+                    >
+                      Fecha corta
+                    </button>
+                    <button
+                      className="w-full text-left px-2 py-1 text-xs"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => insertDate("time")}
+                    >
+                      Hora
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  // Placeholder: open templates modal
+                  console.info("Abrir modal de plantillas - placeholder");
+                  setShowInsertMenu(false);
+                }}
+              >
+                <Minus className="h-4 w-4" />
+                <span>Insertar plantilla</span>
+              </button>
+
+              <button
+                type="button"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  console.info("Ver imÃ¡genes de la nota - placeholder");
+                  setShowInsertMenu(false);
+                }}
+              >
+                <Image className="h-4 w-4" />
+                <span>Ver imÃ¡genes de la nota</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 2) Header selector (H) */}
+      <div>
+        <select
+          aria-label="Formato de encabezado"
+          className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer px-2 py-1 rounded-xl border border-slate-200"
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === "p") {
+              editor?.runEditorCommand((ed) =>
+                ed
+                  .chain()
+                  .focus(undefined, { scrollIntoView: false })
+                  .setParagraph()
+                  .run(),
+              );
+            } else {
+              const level = parseInt(val) as 1 | 2 | 3 | 4 | 5 | 6;
+              editor?.runEditorCommand((ed) =>
+                ed
+                  .chain()
+                  .focus(undefined, { scrollIntoView: false })
+                  .setNode("heading", { level })
+                  .run(),
+              );
+            }
+          }}
+          defaultValue="p"
+        >
+          <option value="p">P</option>
+          <option value="1">H1</option>
+          <option value="2">H2</option>
+          <option value="3">H3</option>
+          <option value="4">H4</option>
+          <option value="5">H5</option>
+          <option value="6">H6</option>
+        </select>
+      </div>
+
+      {/* 3) Icons (Star) */}
+      <div className="relative" ref={iconsMenuRef}>
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setShowIconsMenu((s) => !s);
+            setShowInsertMenu(false);
+          }}
+        >
+          <Star className="h-4 w-4" />
+        </button>
+
+        {showIconsMenu && (
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center gap-1 mb-2">
+              <button
+                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "indicadores" ? "bg-slate-100" : ""}`}
+                onClick={() => setIconsTab("indicadores")}
+              >
+                Indicadores
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "simbolos" ? "bg-slate-100" : ""}`}
+                onClick={() => setIconsTab("simbolos")}
+              >
+                SÃ­mbolos
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "enumeration" ? "bg-slate-100" : ""}`}
+                onClick={() => setIconsTab("enumeration")}
+              >
+                EnumeraciÃ³n
+              </button>
+              <button
+                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "herramientas" ? "bg-slate-100" : ""}`}
+                onClick={() => setIconsTab("herramientas")}
+              >
+                Herramientas
+              </button>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {ICONS_MAP[iconsTab].map((icon) => (
+                <button
+                  key={icon}
+                  type="button"
+                  className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-slate-100"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    editor?.runEditorCommand((ed) =>
+                      ed
+                        .chain()
+                        .focus(undefined, { scrollIntoView: false })
+                        .insertContent(icon)
+                        .run(),
+                    );
+                    setShowIconsMenu(false);
+                  }}
+                >
+                  <span className="text-lg">{icon}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 4) Bold */}
+      {toolbarButton(Bold, "Negrita", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleBold()
+            .run(),
+        ),
+      )}
+
+      {/* 5) Italic */}
+      {toolbarButton(Italic, "Cursiva", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleItalic()
+            .run(),
+        ),
+      )}
+
+      {/* 6) Underline */}
+      <button
+        type="button"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleUnderline()
+              .run(),
+          );
+        }}
+        title="Subrayado"
+      >
+        <span className="font-semibold">U</span>
+      </button>
+
+      {/* 7) Strikethrough */}
+      <button
+        type="button"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleStrike()
+              .run(),
+          );
+        }}
+        title="Tachado"
+      >
+        <span className="font-semibold">S</span>
+      </button>
+
+      {/* 8) Text color (Palette) */}
+      <div className="relative" ref={textMenuRef}>
+        <button
+          type="button"
+          title="Color de texto"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setShowTextColorMenu((s) => !s);
+            setShowBgColorMenu(false);
+          }}
+        >
+          <Palette className="h-4 w-4" />
+        </button>
+        {showTextColorMenu && (
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="space-y-1">
+              {TEXT_COLORS.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    editor?.runEditorCommand((ed) =>
+                      ed
+                        .chain()
+                        .focus(undefined, { scrollIntoView: false })
+                        .setColor(item.color)
+                        .run(),
+                    );
+                    setShowTextColorMenu(false);
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-3.5 w-3.5 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  {item.shortcut ? (
+                    <span className="text-[10px] text-slate-400">
+                      {item.shortcut}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 9) Background color (Highlighter) */}
+      <div className="relative" ref={bgMenuRef}>
+        <button
+          type="button"
+          title="Color de fondo (Resaltador)"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setShowBgColorMenu((s) => !s);
+            setShowTextColorMenu(false);
+          }}
+        >
+          <Highlighter className="h-4 w-4" />
+        </button>
+        {showBgColorMenu && (
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="space-y-1">
+              {BG_COLORS.map((item) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    editor?.runEditorCommand((ed) => {
+                      const { selection } = ed.state;
+                      const colorHex = item.color;
+                      const isInsideCallout = ed.isActive("customQuote");
+                      const accentColor =
+                        BG_TO_BORDER_MAP[colorHex.toUpperCase()] || "#6200ee";
+                      if (isInsideCallout && selection.empty) {
+                        ed.chain()
+                          .focus(undefined, { scrollIntoView: false })
+                          .updateAttributes("customQuote", {
+                            backgroundColor: colorHex,
+                            color: accentColor,
+                          })
+                          .run();
+                      } else {
+                        handleApplyHarmonicHighlight(ed, colorHex);
+                      }
+                    });
+                    setShowBgColorMenu(false);
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-3.5 w-3.5 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  {item.shortcut ? (
+                    <span className="text-[10px] text-slate-400">
+                      {item.shortcut}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 border-t border-slate-100 pt-1">
+              <button
+                type="button"
+                className="w-full rounded-xl px-3 py-1.5 text-left text-xs font-medium text-slate-600 hover:bg-slate-100"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  editor?.runEditorCommand((ed) => {
+                    const { selection } = ed.state;
+                    if (ed.isActive("customQuote") && selection.empty) {
+                      ed.chain()
+                        .focus(undefined, { scrollIntoView: false })
+                        .updateAttributes("customQuote", {
+                          backgroundColor: "#F1F5F9",
+                          color: "#64748B",
+                        })
+                        .run();
+                    } else {
+                      ed.chain()
+                        .focus(undefined, { scrollIntoView: false })
+                        .unsetHighlight()
+                        .run();
+                    }
+                  });
+                  setShowBgColorMenu(false);
+                }}
+              >
+                Sin fondo
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 10) Transformation select (Aa) */}
+      <div>
+        <select
+          aria-label="Transformar texto"
+          className="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer px-1 py-0.5"
+          onChange={(e) => {
+            const val = e.target.value as
+              | "uppercase"
+              | "lowercase"
+              | "capitalize"
+              | "none"
+              | "highlight_combo";
+            if (val === "highlight_combo") {
+              const randomTextColor =
+                TEXT_COLORS[Math.floor(Math.random() * TEXT_COLORS.length)]
+                  .color;
+              const randomBgColor =
+                BG_COLORS[Math.floor(Math.random() * BG_COLORS.length)].color;
+              editor?.runEditorCommand((ed) => {
+                (ed.commands as any).setTextTransform("uppercase");
+                ed.chain()
+                  .focus(undefined, { scrollIntoView: false })
+                  .setBold()
+                  .setColor(randomTextColor)
+                  .run();
+                // apply harmonic highlight after setting text color
+                handleApplyHarmonicHighlight(ed, randomBgColor);
+              });
+              (e.target as HTMLSelectElement).value = "none";
+              return;
+            }
+            editor?.runEditorCommand((ed) =>
+              (ed.commands as any).setTextTransform(val),
+            );
+          }}
+          defaultValue="none"
+        >
+          <option value="none">Aa (Normal)</option>
+          <option value="uppercase">MAYÃšSCULAS</option>
+          <option value="lowercase">minÃºsculas</option>
+          <option value="capitalize">Capitalizar Palabras</option>
+          <option value="highlight_combo">âœ¨ Destacar</option>
+        </select>
+      </div>
+
+      {/* 11) Clear format (Tx) */}
+      <div>
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() =>
+            editor?.runEditorCommand((ed) =>
+              ed
+                .chain()
+                .focus(undefined, { scrollIntoView: false })
+                .clearNodes()
+                .unsetAllMarks()
+                .run(),
+            )
+          }
+          title="Limpiar formato"
+        >
+          <span className="text-xs">Tx</span>
+        </button>
+      </div>
+
+      {/* 12..15) Alignment and lists */}
+      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5">
+        {toolbarButton(AlignLeft, "Izquierda", () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .setTextAlign("left")
+              .run(),
+          ),
+        )}
+        {toolbarButton(AlignCenter, "Centrar", () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .setTextAlign("center")
+              .run(),
+          ),
+        )}
+        {toolbarButton(AlignRight, "Derecha", () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .setTextAlign("right")
+              .run(),
+          ),
+        )}
+        {toolbarButton(AlignJustify, "Justificar", () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .setTextAlign("justify")
+              .run(),
+          ),
+        )}
+
+        {toolbarButton(
+          List,
+          "Lista con viÃ±etas",
+          () =>
+            editor?.runEditorCommand((ed) =>
+              ed
+                .chain()
+                .focus(undefined, { scrollIntoView: false })
+                .toggleBulletList()
+                .run(),
+            ),
+          !!editor?.isActive("bulletList"),
+        )}
+        {toolbarButton(
+          ListOrdered,
+          "Lista numerada",
+          () =>
+            editor?.runEditorCommand((ed) =>
+              ed
+                .chain()
+                .focus(undefined, { scrollIntoView: false })
+                .toggleOrderedList()
+                .run(),
+            ),
+          !!editor?.isActive("orderedList"),
+        )}
+        {toolbarButton(CheckSquare, "Checklist", () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleTaskList()
+              .run(),
+          ),
+        )}
+      </div>
+
+      {/* 16) Quote / Callout */}
+      {toolbarButton(
+        Quote,
+        `Cita destacada`,
+        () =>
+          editor?.runEditorCommand((ed) => {
+            if (ed.isActive("customQuote")) {
+              ed.chain()
+                .focus(undefined, { scrollIntoView: false })
+                .lift("customQuote")
+                .run();
+            } else {
+              ed.chain()
+                .focus(undefined, { scrollIntoView: false })
+                .wrapIn("customQuote")
+                .run();
+            }
+          }),
+        !!editor?.isActive("customQuote"),
+      )}
+
+      {/* 17) Code block */}
+      {toolbarButton(Slash, "Bloque de CÃ³digo", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleCodeBlock()
+            .run(),
+        ),
+      )}
+
+      {/* Sub/Superscript buttons (use handlers passed from parent) */}
+      {toolbarButton(Subscript, "SubÃ­ndice", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleSubscript()
+            .run(),
+        ),
+      )}
+      {toolbarButton(Superscript, "SuperÃ­ndice", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .toggleSuperscript()
+            .run(),
+        ),
+      )}
+
+      {/* 18) Horizontal rule */}
+      {toolbarButton(Minus, "LÃ­nea horizontal separadora", () =>
+        editor?.runEditorCommand((ed) =>
+          ed
+            .chain()
+            .focus(undefined, { scrollIntoView: false })
+            .setHorizontalRule()
+            .run(),
+        ),
+      )}
+
+      {/* 19..20) Undo / Redo */}
+      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5">
+        {toolbarButton(RotateCcw, "Deshacer", () =>
+          editor?.runEditorCommand((ed) =>
+            ed.chain().focus(undefined, { scrollIntoView: false }).undo().run(),
+          ),
+        )}
+        {toolbarButton(RotateCw, "Rehacer", () =>
+          editor?.runEditorCommand((ed) =>
+            ed.chain().focus(undefined, { scrollIntoView: false }).redo().run(),
+          ),
+        )}
+      </div>
+
+      {/* Emoji quick insert removed per UI cleanup */}
+    </div>
+  );
+}
+
+
+
+
+========================================
+FILE: \src\modules\editor\components\PanelEditor.tsx
+========================================
+
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { TiptapEditor, type TiptapEditorHandle } from "./TiptapEditor";
+import { EditorHeader } from "./EditorHeader";
+import { EditorToolbar } from "./EditorToolbar";
+import { OpcionesEditorModal } from "../modals/OpcionesEditorModal";
+import { useNotifications } from "../../../core/components/useNotifications";
+import { Info, Printer } from "lucide-react";
+
+export interface PanelEditorHandle {
+  saveNow: () => Promise<void>;
+}
+
+export interface PanelEditorProps {
+  noteId?: number | null;
+  notebookId?: number | null;
+  noteTitle?: string;
+  initialHTML?: string;
+}
+
+function extractTitleFromHTML(html: string): string {
+  const headingMatch = html.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i);
+  if (headingMatch?.[1]) {
+    return headingMatch[1].replace(/<[^>]+>/g, "").trim();
+  }
+  const plain = html.replace(/<[^>]+>/g, "").trim();
+  return (
+    plain
+      .split("\n")
+      .map((line) => line.trim())
+      .find(Boolean) ?? "Nota"
+  );
+}
+
+function buildImagePayload(
+  file: File,
+): Promise<{ name: string; mimeType: string; data: Uint8Array }> {
+  return file.arrayBuffer().then((buffer) => ({
+    name: file.name,
+    mimeType: file.type || "application/octet-stream",
+    data: new Uint8Array(buffer),
+  }));
+}
+
+export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
+  function PanelEditorComponent(
+    { noteId = null, notebookId = null, noteTitle = "Nota", initialHTML = "" },
+    ref,
+  ) {
+    const editorRef = useRef<TiptapEditorHandle | null>(null);
+    const previousNoteIdRef = useRef<number | null>(noteId);
+    const [isOptionsModalOpen, setOptionsModalOpen] = useState(false);
+    const [content, setContent] = useState(initialHTML ?? "");
+    const [editorInitialHTML, setEditorInitialHTML] = useState(
+      initialHTML ?? "",
+    );
+    const [isImporting, setIsImporting] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const saveTimeoutRef = useRef<number | null>(null);
+    const { notify } = useNotifications();
+
+    useEffect(() => {
+      if (previousNoteIdRef.current !== noteId) {
+        previousNoteIdRef.current = noteId;
+        const nextHTML = initialHTML ?? "";
+        setContent(nextHTML);
+        setEditorInitialHTML(nextHTML);
+        if (noteId !== null) {
+          editorRef.current?.setContentHTML(nextHTML);
+        }
+      }
+    }, [noteId, initialHTML]);
+
+    const resolvedTitle = useMemo(
+      () => extractTitleFromHTML(content) || noteTitle || "Nota",
+      [content, noteTitle],
+    );
+
+    // Guardado efectivo usando la API de Electron o persistencia
+    const saveContent = useCallback(
+      async (htmlToSave: string, showToast = false): Promise<void> => {
+        if (noteId === null) return;
+
+        try {
+          if (window.electron?.editor?.saveContent) {
+            await window.electron.editor.saveContent(
+              noteId,
+              htmlToSave,
+              notebookId ?? null,
+            );
+          }
+          if (showToast) {
+            notify("Nota guardada correctamente", "success");
+          }
+        } catch (error) {
+          console.error("Error guardando nota:", error);
+          notify("No se pudo guardar la nota", "error");
+        }
+      },
+      [noteId, notebookId, notify],
+    );
+
+    // Permite al padre (App.tsx) invocar el guardado inmediato al presionar el disquete
+    useImperativeHandle(
+      ref,
+      () => ({
+        saveNow: async () => {
+          if (saveTimeoutRef.current) {
+            window.clearTimeout(saveTimeoutRef.current);
+          }
+          const latestHTML = editorRef.current?.getContentHTML() ?? content;
+          await saveContent(latestHTML, true);
+        },
+      }),
+      [content, saveContent],
+    );
+
+    const handleContentUpdate = useCallback(
+      (newHTML: string) => {
+        setContent(newHTML);
+
+        if (noteId === null) return;
+
+        if (saveTimeoutRef.current) {
+          window.clearTimeout(saveTimeoutRef.current);
+        }
+
+        saveTimeoutRef.current = window.setTimeout(() => {
+          void saveContent(newHTML, false);
+        }, 1000);
+      },
+      [noteId, saveContent],
+    );
+
+    useEffect(() => {
+      return () => {
+        if (saveTimeoutRef.current) {
+          window.clearTimeout(saveTimeoutRef.current);
+        }
+      };
+    }, []);
+
+    const handleImageSave = useCallback(
+      async (source: string | File | undefined): Promise<string | null> => {
+        if (!source) return null;
+        try {
+          const imageSource =
+            typeof source === "string"
+              ? source
+              : await buildImagePayload(source);
+          const fileName = await window.electron?.files?.saveImage?.(
+            imageSource as any,
+          );
+          if (!fileName) return null;
+          return `notehub://images/${fileName}`;
+        } catch (error) {
+          console.error("Error guardando imagen:", error);
+          notify("No se pudo guardar la imagen", "error");
+          return null;
+        }
+      },
+      [notify],
+    );
+
+    const handleInsertImage = useCallback(async () => {
+      const fileName = await window.electron?.files?.saveImage?.();
+      if (!fileName) return;
+      const src = `notehub://images/${fileName}`;
+      editorRef.current?.runEditorCommand((ed) =>
+        ed.chain().focus().setImage({ src }).run(),
+      );
+    }, []);
+
+    const handleExportAction = useCallback(
+      async (type: "pdf" | "txt" | "md" | "html" | "notehub") => {
+        if (!content) {
+          notify("No hay contenido para exportar", "warning");
+          return;
+        }
+        setIsExporting(true);
+        try {
+          const title = resolvedTitle;
+          let savedPath: string | null = null;
+          switch (type) {
+            case "pdf":
+              savedPath =
+                (await window.electron?.export?.toPDF(title, content)) ?? null;
+              break;
+            case "txt":
+              savedPath =
+                (await window.electron?.export?.toTXT(title, content)) ?? null;
+              break;
+            case "md":
+              savedPath =
+                (await window.electron?.export?.toMD(title, content)) ?? null;
+              break;
+            case "html":
+              savedPath =
+                (await window.electron?.export?.toHTML(title, content)) ?? null;
+              break;
+            case "notehub":
+              savedPath =
+                (await window.electron?.export?.toNoteHub({
+                  id: noteId,
+                  notebookId,
+                  title: resolvedTitle,
+                  content,
+                })) ?? null;
+              break;
+          }
+          if (savedPath) {
+            notify(`Exportado correctamente a ${savedPath}`, "success");
+          }
+        } catch (error) {
+          console.error("Error en exportaciÃ³n:", error);
+          notify("No se pudo exportar la nota", "error");
+        } finally {
+          setIsExporting(false);
+        }
+      },
+      [content, notebookId, noteId, notify, resolvedTitle],
+    );
+
+    const handleImportNoteHub = useCallback(async () => {
+      setIsImporting(true);
+      try {
+        const importedNote = await window.electron?.export?.fromNoteHub();
+        if (!importedNote || typeof importedNote !== "object") {
+          notify("No se importÃ³ un contenido vÃ¡lido", "warning");
+          return;
+        }
+
+        const importedContent =
+          "content" in importedNote && typeof importedNote.content === "string"
+            ? importedNote.content
+            : null;
+
+        if (importedContent) {
+          setContent(importedContent);
+          editorRef.current?.setContentHTML(importedContent);
+          notify("Nota importada correctamente", "success");
+        } else {
+          notify("El archivo no tiene contenido procesable", "warning");
+        }
+      } catch (error) {
+        console.error("Error importando nota:", error);
+        notify("No se pudo importar el archivo", "error");
+      } finally {
+        setIsImporting(false);
+      }
+    }, [notify]);
+
+    const handleTogglePin = useCallback(() => {
+      console.log("Fijar editor");
+    }, []);
+
+    const handleStar = useCallback(() => {
+      console.log("Marcar como favorito");
+    }, []);
+
+    const handleShare = useCallback(() => {
+      console.log("Compartir nota");
+    }, []);
+
+    const handleHistory = useCallback(() => {
+      console.log("Abrir historial");
+    }, []);
+
+    const handleExternal = useCallback(() => {
+      console.log("Abrir externamente");
+    }, []);
+
+    const handleMenu = useCallback(() => {
+      setOptionsModalOpen(true);
+    }, []);
+
+    const handleInsertTable = useCallback((r?: number, c?: number) => {
+      const rows = r ?? 2;
+      const cols = c ?? 2;
+      editorRef.current?.runEditorCommand((ed) =>
+        ed
+          .chain()
+          .focus()
+          .insertTable({ rows, cols, withHeaderRow: false })
+          .run(),
+      );
+    }, []);
+
+    const handleInsertDate = useCallback(() => {
+      const now = new Date().toLocaleDateString("es-ES");
+      editorRef.current?.insertContent(now);
+    }, []);
+
+    return (
+      <div className="flex-1 flex flex-col h-full w-full bg-white overflow-hidden">
+        <div className="flex-shrink-0 w-full bg-white z-10">
+          <EditorHeader
+            title={resolvedTitle}
+            onPin={handleTogglePin}
+            onStar={handleStar}
+            onShare={handleShare}
+            onHistory={handleHistory}
+            onExternal={handleExternal}
+            onMenu={handleMenu}
+            onToggleFocusMode={() => {}}
+          />
+        </div>
+
+        <div className="flex-1 w-full overflow-y-auto min-h-0 relative bg-white">
+          <TiptapEditor
+            ref={editorRef}
+            initialHTML={editorInitialHTML}
+            onUpdate={handleContentUpdate}
+            onImageDrop={async (file) => {
+              const src = await handleImageSave(file);
+              if (src) {
+                editorRef.current?.runEditorCommand((ed) =>
+                  ed.chain().focus().setImage({ src }).run(),
+                );
+              }
+              return src;
+            }}
+          />
+        </div>
+
+        <div className="flex-shrink-0 w-full flex flex-col bg-white border-t border-gray-200 z-10">
+          <EditorToolbar
+            editor={editorRef.current}
+            onInsertTable={handleInsertTable}
+            onInsertImage={handleInsertImage}
+            onInsertDate={handleInsertDate}
+          />
+          <footer className="w-full flex items-center justify-between border-t border-gray-100 bg-white px-4 py-2.5 text-sm text-slate-600">
+            <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs text-slate-700">
+                ðŸ“„
+              </span>
+              <span className="text-xs font-medium">
+                {notebookId ? `Cuaderno ${notebookId}` : "Sin cuaderno"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                Aa
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                aria-label="Imprimir"
+                title="Imprimir"
+              >
+                <Printer className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                aria-label="InformaciÃ³n"
+                title="InformaciÃ³n"
+              >
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </footer>
+        </div>
+
+        {isOptionsModalOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/40 z-40" />
+            <OpcionesEditorModal
+              onClose={() => setOptionsModalOpen(false)}
+              onExportToPDF={() => handleExportAction("pdf")}
+              onExportToTXT={() => handleExportAction("txt")}
+              onExportToMD={() => handleExportAction("md")}
+              onExportToHTML={() => handleExportAction("html")}
+              onExportToNoteHub={() => handleExportAction("notehub")}
+              onImportNoteHub={handleImportNoteHub}
+              isProcessing={isExporting || isImporting}
+            />
+          </>
+        )}
+      </div>
+    );
+  },
+);
+
+
+
+
+========================================
+FILE: \src\modules\editor\components\TiptapEditor.css
+========================================
+
+.tiptap-editor .editor-callout {
+  margin: 12px 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: 6px;
+  border-left: 4px solid #6200ee;
+  background-color: #f5f5f5;
+  color: #333333;
+  position: relative;
+}
+.kh-collapsible {
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  margin: 12px 0;
+}
+.kh-collapsible-header {
+  cursor: pointer;
+  padding: 14px 16px;
+  font-weight: 600;
+}
+.kh-collapsible-content {
+  padding: 0 16px 16px;
+}
+.editor-highlight {
+  background: yellow;
+  color: inherit;
+}
+.search-highlight {
+  background: rgba(250, 204, 21, 0.4);
+}
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.checklist-item {
+  margin: 0 0 8px;
+}
+
+/* TipografÃ­a y legibilidad estilo Sistema (UpNote) */
+.tiptap-editor {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #1e293b;
+  padding: 1.5rem;
+}
+
+/* PÃ¡rrafos e interlineado */
+.tiptap-editor p {
+  margin-bottom: 0.75rem;
+}
+
+/* Formato de Cita / Callout Box */
+.tiptap-editor div[data-type="custom-quote"] {
+  margin-top: 0.1rem;
+  margin-bottom: 0.1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0 0.9rem 0.75rem 0;
+  border-left-width: 4px;
+  border-left-style: solid;
+  font-size: 1.1em;
+}
+
+/* Encabezados con proporciones elegantes */
+.tiptap-editor h1 {
+  font-size: 2.1em;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.tiptap-editor h2 {
+  font-size: 1.75em;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.tiptap-editor h3 {
+  font-size: 1.4em;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Resaltados de texto limpios con bordes suaves */
+.tiptap-editor mark {
+  border-radius: 0.25rem;
+  padding: 0.1em 0.3em;
+}
+
+/* Contenedores principales expansibles */
+.tiptap-editor-wrapper,
+.tiptap-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  height: 100%;
+  width: 100%;
+}
+
+/* Ãrea de escritura con scroll vertical activo para la rueda del mouse */
+.ProseMirror {
+  flex: 1;
+  height: 100%;
+  min-height: 100%;
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow-y: auto !important; /* Habilita el desplazamiento con la rueda del mouse */
+  padding: 2rem 3rem 6rem 3rem !important; /* Espacio extra abajo para que el texto no se tape con la toolbar */
+}
+
+/* Estilos para la lÃ­nea horizontal separadora */
+.tiptap-editor hr {
+  border: none;
+  border-top: 2px solid #e2e8f0;
+  margin: 1.75rem 0;
+  border-radius: 2px;
+}
+
+.tiptap-editor-placeholder {
+  position: absolute;
+  inset: 1.5rem auto auto 1.5rem;
+  z-index: 1;
+  pointer-events: none;
+  color: #94a3b8;
+}
+
+/* Estilos para tablas en el editor TipTap */
+.ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 12px 0;
+  overflow: hidden;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  min-width: 1em;
+  border: 1px solid #d1d5db;
+  padding: 8px 10px;
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.ProseMirror th {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f3f4f6;
+}
+
+.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(200, 200, 255, 0.4);
+  pointer-events: none;
+}
+
+/* Estilos para listas en TipTap */
+.ProseMirror ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin: 0.5rem 0 !important;
+}
+
+.ProseMirror li {
+  margin-bottom: 0.25rem !important;
+}
+
+.ProseMirror li p {
+  margin: 0 !important;
+  display: inline;
+}
+
+/* Remover puntos de viÃ±eta y mÃ¡rgenes de TaskList */
+.ProseMirror ul[data-type="taskList"],
+ul.checklist {
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* Forzar alineaciÃ³n horizontal sin salto de lÃ­nea */
+.ProseMirror li[data-type="taskItem"],
+li.checklist-item {
+  display: flex !important;
+  align-items: center !important;
+  list-style-type: none !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* Estilo y espaciado de la casilla de verificaciÃ³n */
+.ProseMirror li[data-type="taskItem"] > label,
+li.checklist-item input[type="checkbox"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-right: 0.5rem !important;
+  user-select: none !important;
+  cursor: pointer !important;
+  margin-top: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  height: 18px !important;
+}
+
+/* Forzar que el input checkbox no provoque salto de lÃ­nea y se alinee centrado */
+.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
+li.checklist-item input[type="checkbox"] {
+  margin: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+  vertical-align: middle !important;
+  transform: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Forzar que el pÃ¡rrafo no rompa la lÃ­nea */
+.ProseMirror li[data-type="taskItem"] > div,
+.ProseMirror li[data-type="taskItem"] p {
+  display: inline-block !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+  vertical-align: middle !important;
+}
+
+/* Force label to keep checkbox on the left and content to flex */
+.ProseMirror li[data-type="taskItem"] > label {
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.ProseMirror li[data-type="taskItem"] > div {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* extra: reduce top/bottom padding inside paragraph to avoid misalignment */
+.ProseMirror li[data-type="taskItem"] p {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+
+
+
+========================================
+FILE: \src\modules\editor\components\TiptapEditor.tsx
+========================================
+
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import ListItem from "@tiptap/extension-list-item";
+import Color from "@tiptap/extension-color";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Highlight from "@tiptap/extension-highlight";
+import TextAlign from "@tiptap/extension-text-align";
+import Underline from "@tiptap/extension-underline";
+import Strike from "@tiptap/extension-strike";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import ImageExtension from "@tiptap/extension-image";
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
+import {
+  Collapsible,
+  CustomQuote,
+  EditorHighlight,
+  SearchHighlight,
+  TextTransform,
+} from "./CustomExtensions";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+
+// keep CustomExtensions imports that remain
+import "./TiptapEditor.css";
+
+export interface TiptapEditorHandle {
+  setContentHTML: (html: string) => void;
+  getContentHTML: () => string;
+  focus: () => void;
+  clearFormat: () => void;
+  insertContent: (html: string) => void;
+  runEditorCommand: (callback: (editor: Editor) => void) => void;
+  isActive: (name: string, attrs?: Record<string, any>) => boolean;
+}
+
+export interface TiptapEditorProps {
+  initialHTML?: string;
+  onUpdate?: (html: string) => void;
+  onImageDrop?: (file: File) => Promise<string | null>;
+}
+
+function isImageFile(file: File): boolean {
+  return file.type.startsWith("image/");
+}
+
+function isEditorEmpty(editor: Editor): boolean {
+  const isEmptyProperty = (editor as any).isEmpty;
+  if (typeof isEmptyProperty === "function") {
+    return isEmptyProperty();
+  }
+  if (typeof isEmptyProperty === "boolean") {
+    return isEmptyProperty;
+  }
+  return editor.getText().trim().length === 0;
+}
+
+function TiptapEditorComponent(
+  { initialHTML, onUpdate, onImageDrop }: TiptapEditorProps,
+  ref: React.ForwardedRef<TiptapEditorHandle>,
+) {
+  const [isEmpty, setIsEmpty] = useState(true);
+
+  const editor = useEditor({
+    editorProps: {
+      attributes: {
+        class:
+          "tiptap-editor flex-1 h-full min-h-0 w-full overflow-y-auto focus:outline-none border-none shadow-none rounded-none bg-transparent",
+      },
+      handleDrop(_view, event) {
+        const files = Array.from(event.dataTransfer?.files ?? []);
+        const imageFile = files.find(isImageFile);
+        if (!imageFile) return false;
+
+        event.preventDefault();
+        void (async () => {
+          const src = await onImageDrop?.(imageFile);
+          if (src && editor) {
+            editor.chain().focus().setImage({ src }).run();
+          }
+        })();
+        return true;
+      },
+      handlePaste(_view, event) {
+        const items = Array.from(event.clipboardData?.items ?? []);
+        const imageItem = items.find((item) => item.type.startsWith("image/"));
+        if (!imageItem) return false;
+
+        const file = imageItem.getAsFile();
+        if (!file) return false;
+
+        event.preventDefault();
+        void (async () => {
+          const src = await onImageDrop?.(file);
+          if (src && editor) {
+            editor.chain().focus().setImage({ src }).run();
+          }
+        })();
+        return true;
+      },
+    },
+    extensions: [
+      StarterKit.configure({
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        strike: false,
+      }),
+      BulletList,
+      OrderedList,
+      ListItem,
+      Underline,
+      Strike,
+      ImageExtension,
+      Subscript,
+      Superscript,
+      Table.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: "editor-table",
+        },
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      Color,
+      TextStyle,
+      Highlight.configure({ multicolor: true }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      Collapsible,
+      CustomQuote,
+      EditorHighlight,
+      SearchHighlight,
+      TextTransform,
+    ],
+    content: initialHTML ?? "",
+    onUpdate: ({ editor }) => {
+      setIsEmpty(isEditorEmpty(editor));
+      onUpdate?.(editor.getHTML());
+    },
+  });
+
+  useEffect(() => {
+    if (editor) {
+      setIsEmpty(isEditorEmpty(editor));
+    }
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor || typeof initialHTML !== "string") {
+      return;
+    }
+
+    const currentHTML = editor.getHTML();
+    const isFocused =
+      typeof (editor as any).isFocused === "function"
+        ? (editor as any).isFocused()
+        : (editor as any).isFocused;
+
+    if (currentHTML !== initialHTML && !isFocused) {
+      editor.commands.setContent(initialHTML);
+      setIsEmpty(isEditorEmpty(editor));
+    }
+  }, [editor, initialHTML]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      setContentHTML: (html: string) => {
+        editor?.commands.setContent(html);
+        if (editor) {
+          setIsEmpty(isEditorEmpty(editor));
+        }
+      },
+      getContentHTML: () => editor?.getHTML() ?? "",
+      focus: () => {
+        editor?.commands.focus();
+      },
+      clearFormat: () => {
+        editor?.chain().focus().clearNodes().unsetAllMarks().run();
+      },
+      insertContent: (html: string) => {
+        editor?.commands.insertContent(html);
+        if (editor) {
+          setIsEmpty(isEditorEmpty(editor));
+        }
+      },
+      runEditorCommand: (callback: (editor: Editor) => void) => {
+        if (editor) callback(editor);
+      },
+      isActive: (name: string, attrs?: Record<string, any>) => {
+        try {
+          return !!editor && editor.isActive(name, attrs);
+        } catch {
+          return false;
+        }
+      },
+    }),
+    [editor],
+  );
+
+  return (
+    <div className="flex flex-col flex-1 h-full w-full relative overflow-hidden">
+      {isEmpty && (
+        <div className="tiptap-editor-placeholder pointer-events-none px-6 pt-6 text-slate-400 dark:text-slate-500">
+          Escriba / para mostrar el menÃº o seleccionar de Plantillas
+        </div>
+      )}
+      <EditorContent
+        editor={editor}
+        className="flex-1 h-full w-full overflow-y-auto"
+      />
+    </div>
+  );
+}
+
+export const TiptapEditor = forwardRef(TiptapEditorComponent);
+
+
+
+
+========================================
+FILE: \src\modules\editor\modals\OpcionesEditorModal.tsx
+========================================
+
+import { type MouseEventHandler } from "react";
+import {
+  FileText,
+  FileType,
+  Code2,
+  Package,
+  UploadCloud,
+  FileDown,
+  X,
+  Sparkles,
+} from "lucide-react";
+
+export interface OpcionesEditorModalProps {
+  onClose: () => void;
+  onExportToPDF: () => Promise<void>;
+  onExportToTXT: () => Promise<void>;
+  onExportToMD: () => Promise<void>;
+  onExportToHTML: () => Promise<void>;
+  onExportToNoteHub: () => Promise<void>;
+  onImportNoteHub: () => Promise<void>;
+  isProcessing: boolean;
+}
+
+export function OpcionesEditorModal({
+  onClose,
+  onExportToPDF,
+  onExportToTXT,
+  onExportToMD,
+  onExportToHTML,
+  onExportToNoteHub,
+  onImportNoteHub,
+  isProcessing,
+}: OpcionesEditorModalProps) {
+  const stopPropagation: MouseEventHandler<HTMLDivElement> = (event) =>
+    event.stopPropagation();
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+
+      <div
+        className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-2xl transition-all dark:border-slate-800 dark:bg-slate-950"
+        onClick={stopPropagation}
+      >
+        <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Opciones de Nota
+              </h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Exporta tu contenido o restaura un respaldo
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            onClick={onClose}
+            aria-label="Cerrar modal"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <span className="mb-2.5 block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Exportar Nota
+            </span>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={onExportToPDF}
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:border-red-200 hover:bg-red-50/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-red-900/50 dark:hover:bg-red-950/20"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100/80 text-red-600 transition group-hover:scale-105 dark:bg-red-950/60 dark:text-red-400">
+                  <FileDown className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    PDF
+                  </p>
+                  <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                    Documento para imprimir
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={onExportToNoteHub}
+                className="group flex items-center gap-3 rounded-2xl border border-purple-200/80 bg-purple-50/30 p-3 text-left transition hover:border-purple-300 hover:bg-purple-50/70 disabled:cursor-not-allowed disabled:opacity-60 dark:border-purple-900/40 dark:bg-purple-950/20 dark:hover:border-purple-700/60 dark:hover:bg-purple-950/40"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 transition group-hover:scale-105 dark:bg-purple-900/50 dark:text-purple-300">
+                  <Package className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-purple-900 dark:text-purple-200">
+                    .NoteHub
+                  </p>
+                  <p className="truncate text-[11px] text-purple-600/70 dark:text-purple-400/70">
+                    Formato editable completo
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={onExportToMD}
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-blue-900/50 dark:hover:bg-blue-950/20"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100/80 text-blue-600 transition group-hover:scale-105 dark:bg-blue-950/60 dark:text-blue-400">
+                  <FileType className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Markdown
+                  </p>
+                  <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                    Texto enriquecido .md
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={onExportToHTML}
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:border-emerald-200 hover:bg-emerald-50/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-emerald-900/50 dark:hover:bg-emerald-950/20"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100/80 text-emerald-600 transition group-hover:scale-105 dark:bg-emerald-950/60 dark:text-emerald-400">
+                  <Code2 className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    HTML
+                  </p>
+                  <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                    PÃ¡gina web estÃ¡tica
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={onExportToTXT}
+                className="group col-span-2 flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:border-slate-300 hover:bg-slate-100/60 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-slate-700 dark:hover:bg-slate-900"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-600 transition group-hover:scale-105 dark:bg-slate-800 dark:text-slate-300">
+                  <FileText className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Texto Plano (.txt)
+                  </p>
+                  <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                    Sin formato ni estilos
+                  </p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-100 pt-3 dark:border-slate-800/80">
+            <span className="mb-2.5 block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              ImportaciÃ³n
+            </span>
+
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={onImportNoteHub}
+              className="group flex w-full items-center justify-between rounded-2xl border border-dashed border-purple-300 bg-purple-50/20 p-3.5 text-left transition hover:border-purple-500 hover:bg-purple-50/50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-purple-800/60 dark:bg-purple-950/10 dark:hover:border-purple-600 dark:hover:bg-purple-950/30"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500 text-white shadow-md shadow-purple-500/20 transition group-hover:scale-105">
+                  <UploadCloud className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-purple-950 dark:text-purple-100">
+                    Importar archivo .NoteHub
+                  </p>
+                  <p className="text-[11px] text-purple-700/70 dark:text-purple-300/70">
+                    Carga el contenido y sustituye la nota actual
+                  </p>
+                </div>
+              </div>
+              <span className="rounded-lg bg-purple-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:bg-purple-900/60 dark:text-purple-200">
+                Cargar
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {isProcessing && (
+          <div className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-purple-50 py-2 text-xs font-medium text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
+            Procesando archivo...
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
+
+========================================
+FILE: \src\modules\editor\modals\PlantillasMenu.tsx
+========================================
+
+
+
+
+========================================
+FILE: \src\modules\editor\modals\TagsModal.tsx
+========================================
+
+
+
+
+========================================
+FILE: \src\modules\editor\index.ts
+========================================
+
+
+
+

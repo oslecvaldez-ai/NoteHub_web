@@ -38,12 +38,36 @@ export interface TiptapEditorHandle {
   insertContent: (html: string) => void;
   runEditorCommand: (callback: (editor: Editor) => void) => void;
   isActive: (name: string, attrs?: Record<string, any>) => boolean;
+  isFocused: () => boolean;
 }
 
 export interface TiptapEditorProps {
   initialHTML?: string;
+  searchQuery?: string;
+  editable?: boolean;
   onUpdate?: (html: string) => void;
   onImageDrop?: (file: File) => Promise<string | null>;
+}
+
+function stripSearchHighlight(html: string): string {
+  return html
+    .replace(/<mark class="search-highlight"[^>]*>/gi, "")
+    .replace(/<\/mark>/gi, "");
+}
+
+function highlightSearchTerms(html: string, query: string): string {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) {
+    return stripSearchHighlight(html);
+  }
+
+  const escapedQuery = normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`(${escapedQuery})`, "gi");
+
+  return html.replace(/>([^<>]+)</g, (match, text) => {
+    if (!text.trim()) return match;
+    return `>${text.replace(pattern, '<mark class="search-highlight">$1</mark>')}<`;
+  });
 }
 
 function isImageFile(file: File): boolean {
@@ -62,12 +86,19 @@ function isEditorEmpty(editor: Editor): boolean {
 }
 
 function TiptapEditorComponent(
-  { initialHTML, onUpdate, onImageDrop }: TiptapEditorProps,
+  {
+    initialHTML,
+    searchQuery = "",
+    editable = true,
+    onUpdate,
+    onImageDrop,
+  }: TiptapEditorProps,
   ref: React.ForwardedRef<TiptapEditorHandle>,
 ) {
   const [isEmpty, setIsEmpty] = useState(true);
 
   const editor = useEditor({
+    editable,
     editorProps: {
       attributes: {
         class:
@@ -150,9 +181,10 @@ function TiptapEditorComponent(
 
   useEffect(() => {
     if (editor) {
+      editor.setEditable(editable);
       setIsEmpty(isEditorEmpty(editor));
     }
-  }, [editor]);
+  }, [editor, editable]);
 
   useEffect(() => {
     if (!editor || typeof initialHTML !== "string") {
@@ -170,6 +202,19 @@ function TiptapEditorComponent(
       setIsEmpty(isEditorEmpty(editor));
     }
   }, [editor, initialHTML]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const nextHTML = highlightSearchTerms(editor.getHTML(), searchQuery);
+    const normalizedHTML = nextHTML.replace(/\s\s+/g, " ").trim();
+    const currentHTML = editor.getHTML().replace(/\s\s+/g, " ").trim();
+
+    if (normalizedHTML !== currentHTML) {
+      editor.commands.setContent(nextHTML, { emitUpdate: false });
+      setIsEmpty(isEditorEmpty(editor));
+    }
+  }, [editor, searchQuery]);
 
   useImperativeHandle(
     ref,
@@ -199,6 +244,13 @@ function TiptapEditorComponent(
       isActive: (name: string, attrs?: Record<string, any>) => {
         try {
           return !!editor && editor.isActive(name, attrs);
+        } catch {
+          return false;
+        }
+      },
+      isFocused: () => {
+        try {
+          return !!editor && editor.isFocused;
         } catch {
           return false;
         }

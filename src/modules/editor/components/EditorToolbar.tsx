@@ -37,8 +37,19 @@ export interface EditorToolbarProps {
   editor?: TiptapEditorHandle | null;
   onInsertTable: (rows?: number, cols?: number) => void;
   onInsertImage: () => void;
-  onInsertDate: (format?: string) => void;
+  onInsertDate: (format?: "datetime" | "date" | "time") => void;
+  onOpenPlantillas?: () => void;
 }
+
+const DATE_MENU_ITEMS: Array<{
+  label: string;
+  shortcut: string;
+  type: "datetime" | "date" | "time";
+}> = [
+  { label: "Fecha y Hora", shortcut: "Ctrl+D", type: "datetime" },
+  { label: "Solo Fecha", shortcut: "Ctrl+Shift+D", type: "date" },
+  { label: "Solo Hora", shortcut: "Alt+Ctrl+Shift+D", type: "time" },
+];
 
 type ColorOption = { name: string; color: string; shortcut?: string };
 
@@ -153,6 +164,7 @@ export function EditorToolbar({
   onInsertTable,
   onInsertImage,
   onInsertDate,
+  onOpenPlantillas,
 }: EditorToolbarProps) {
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
@@ -207,8 +219,8 @@ export function EditorToolbar({
     setShowTableSubmenu(false);
   };
 
-  const insertDate = (format: string) => {
-    onInsertDate?.(format);
+  const insertDate = (type: "datetime" | "date" | "time") => {
+    onInsertDate?.(type);
     setShowInsertMenu(false);
     setShowDateSubmenu(false);
   };
@@ -311,28 +323,23 @@ export function EditorToolbar({
                 </button>
 
                 {showDateSubmenu && (
-                  <div className="absolute left-full top-0 ml-2 w-56 rounded-xl border bg-white p-2 shadow-md">
-                    <button
-                      className="w-full text-left px-2 py-1 text-xs"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => insertDate("datetime")}
-                    >
-                      Fecha y Hora
-                    </button>
-                    <button
-                      className="w-full text-left px-2 py-1 text-xs"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => insertDate("date")}
-                    >
-                      Fecha corta
-                    </button>
-                    <button
-                      className="w-full text-left px-2 py-1 text-xs"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => insertDate("time")}
-                    >
-                      Hora
-                    </button>
+                  <div className="absolute left-full top-0 ml-2 w-64 rounded-2xl border border-slate-200/90 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 z-50">
+                    {DATE_MENU_ITEMS.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          insertDate(item.type);
+                        }}
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                      >
+                        <span className="truncate">{item.label}</span>
+                        <kbd className="ml-2 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                          {item.shortcut}
+                        </kbd>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -342,8 +349,7 @@ export function EditorToolbar({
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
-                  // Placeholder: open templates modal
-                  console.info("Abrir modal de plantillas - placeholder");
+                  onOpenPlantillas?.();
                   setShowInsertMenu(false);
                 }}
               >

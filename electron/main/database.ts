@@ -1,71 +1,96 @@
-import { app, ipcMain } from 'electron'
-import Database from 'better-sqlite3'
-import fs from 'node:fs'
-import path from 'node:path'
+import { app, ipcMain } from "electron";
+import Database from "better-sqlite3";
+import fs from "node:fs";
+import path from "node:path";
 
-export type DatabaseRow = Record<string, unknown>
-export type DatabaseParams = unknown[]
+export type DatabaseRow = Record<string, unknown>;
+export type DatabaseParams = unknown[];
 
-let database: Database.Database | null = null
+let database: Database.Database | null = null;
 
 const initialSettings: Record<string, string> = {
-	theme_mode: 'light',
-	accent_color: '#8B5CF6',
-	font_family: 'System',
-	font_size: '16',
-	line_spacing: '1.5',
-	paragraph_spacing: '8',
-}
+  theme_mode: "light",
+  accent_color: "#8B5CF6",
+  font_family: "System",
+  font_size: "16",
+  line_spacing: "1.5",
+  paragraph_spacing: "8",
+};
 
 function getDatabasePath(): string {
-	return path.join(app.getPath('userData'), 'SQLite', 'NoteHub.db')
+  return path.join(app.getPath("userData"), "SQLite", "NoteHub.db");
 }
 
 function ensureWorkspaceColumns(connection: Database.Database): void {
-	const columns = connection.prepare('PRAGMA table_info(workspaces)').all() as Array<{ name: string }>
-	const existingColumns = new Set(columns.map((column) => column.name))
+  const columns = connection
+    .prepare("PRAGMA table_info(workspaces)")
+    .all() as Array<{ name: string }>;
+  const existingColumns = new Set(columns.map((column) => column.name));
 
-	if (!existingColumns.has('description')) {
-		connection.exec('ALTER TABLE workspaces ADD COLUMN description TEXT NOT NULL DEFAULT ""')
-	}
+  if (!existingColumns.has("description")) {
+    connection.exec(
+      'ALTER TABLE workspaces ADD COLUMN description TEXT NOT NULL DEFAULT ""',
+    );
+  }
 
-	if (!existingColumns.has('icon_name')) {
-		connection.exec('ALTER TABLE workspaces ADD COLUMN icon_name TEXT NOT NULL DEFAULT "layers"')
-	}
+  if (!existingColumns.has("icon_name")) {
+    connection.exec(
+      'ALTER TABLE workspaces ADD COLUMN icon_name TEXT NOT NULL DEFAULT "layers"',
+    );
+  }
 
-	if (!existingColumns.has('updated_at')) {
-		connection.exec('ALTER TABLE workspaces ADD COLUMN updated_at TEXT')
-	}
+  if (!existingColumns.has("updated_at")) {
+    connection.exec("ALTER TABLE workspaces ADD COLUMN updated_at TEXT");
+  }
 }
 
 function ensureNotebookColumns(connection: Database.Database): void {
-	const columns = connection.prepare('PRAGMA table_info(notebooks)').all() as Array<{ name: string }>
-	const existingColumns = new Set(columns.map((column) => column.name))
+  const columns = connection
+    .prepare("PRAGMA table_info(notebooks)")
+    .all() as Array<{ name: string }>;
+  const existingColumns = new Set(columns.map((column) => column.name));
 
-	if (!existingColumns.has('parent_notebook_id')) {
-		connection.exec('ALTER TABLE notebooks ADD COLUMN parent_notebook_id INTEGER REFERENCES notebooks(id) ON DELETE CASCADE')
-	}
+  if (!existingColumns.has("parent_notebook_id")) {
+    connection.exec(
+      "ALTER TABLE notebooks ADD COLUMN parent_notebook_id INTEGER REFERENCES notebooks(id) ON DELETE CASCADE",
+    );
+  }
 
-	if (!existingColumns.has('icon_type')) {
-		connection.exec('ALTER TABLE notebooks ADD COLUMN icon_type TEXT')
-	}
+  if (!existingColumns.has("icon_type")) {
+    connection.exec("ALTER TABLE notebooks ADD COLUMN icon_type TEXT");
+  }
 
-	if (!existingColumns.has('icon_color')) {
-		connection.exec('ALTER TABLE notebooks ADD COLUMN icon_color TEXT')
-	}
+  if (!existingColumns.has("icon_color")) {
+    connection.exec("ALTER TABLE notebooks ADD COLUMN icon_color TEXT");
+  }
 
-	if (!existingColumns.has('is_locked')) {
-		connection.exec('ALTER TABLE notebooks ADD COLUMN is_locked INTEGER NOT NULL DEFAULT 0')
-	}
+  if (!existingColumns.has("is_locked")) {
+    connection.exec(
+      "ALTER TABLE notebooks ADD COLUMN is_locked INTEGER NOT NULL DEFAULT 0",
+    );
+  }
 
-	if (!existingColumns.has('password_hash')) {
-		connection.exec('ALTER TABLE notebooks ADD COLUMN password_hash TEXT')
-	}
+  if (!existingColumns.has("password_hash")) {
+    connection.exec("ALTER TABLE notebooks ADD COLUMN password_hash TEXT");
+  }
+}
+
+function ensureNoteColumns(connection: Database.Database): void {
+  const columns = connection
+    .prepare("PRAGMA table_info(notes)")
+    .all() as Array<{ name: string }>;
+  const existingColumns = new Set(columns.map((column) => column.name));
+
+  if (!existingColumns.has("is_quick_access")) {
+    connection.exec(
+      "ALTER TABLE notes ADD COLUMN is_quick_access INTEGER NOT NULL DEFAULT 0 CHECK (is_quick_access IN (0, 1))",
+    );
+  }
 }
 
 function createSchema(connection: Database.Database): void {
-	connection.pragma('foreign_keys = ON')
-	connection.exec(`
+  connection.pragma("foreign_keys = ON");
+  connection.exec(`
 		CREATE TABLE IF NOT EXISTS workspaces (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT NOT NULL,
@@ -100,6 +125,7 @@ function createSchema(connection: Database.Database): void {
 			title TEXT NOT NULL DEFAULT '',
 			content TEXT NOT NULL DEFAULT '',
 			is_pinned INTEGER NOT NULL DEFAULT 0 CHECK (is_pinned IN (0, 1)),
+			is_quick_access INTEGER NOT NULL DEFAULT 0 CHECK (is_quick_access IN (0, 1)),
 			is_deleted INTEGER NOT NULL DEFAULT 0 CHECK (is_deleted IN (0, 1)),
 			pinned_at TEXT,
 			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -144,84 +170,98 @@ function createSchema(connection: Database.Database): void {
 		CREATE INDEX IF NOT EXISTS idx_notes_workspace_id ON notes(workspace_id);
 		CREATE INDEX IF NOT EXISTS idx_notes_notebook_id ON notes(notebook_id);
 		CREATE INDEX IF NOT EXISTS idx_templates_workspace_id ON templates(workspace_id);
-	`)
-	ensureWorkspaceColumns(connection)
-	ensureNotebookColumns(connection)
+	`);
+  ensureWorkspaceColumns(connection);
+  ensureNotebookColumns(connection);
+  ensureNoteColumns(connection);
 }
 
 function seedDatabase(connection: Database.Database): void {
-	const seed = connection.transaction(() => {
-		const count = connection
-			.prepare('SELECT COUNT(*) as total FROM workspaces')
-			.get() as { total: number }
+  const seed = connection.transaction(() => {
+    const count = connection
+      .prepare("SELECT COUNT(*) as total FROM workspaces")
+      .get() as { total: number };
 
-		if (count.total === 0) {
-			connection
-				.prepare(`
+    if (count.total === 0) {
+      connection
+        .prepare(
+          `
 					INSERT INTO workspaces (name, description, is_default, icon_name, color_hex)
 					VALUES (?, ?, 1, ?, ?)
-				`)
-				.run('Mi Espacio', 'Espacio principal por defecto', 'layers', '#8B5CF6')
-		}
+				`,
+        )
+        .run(
+          "Mi Espacio",
+          "Espacio principal por defecto",
+          "layers",
+          "#8B5CF6",
+        );
+    }
 
-		const insertSetting = connection.prepare(
-			'INSERT OR IGNORE INTO settings (key, value) VALUES (@key, @value)',
-		)
+    const insertSetting = connection.prepare(
+      "INSERT OR IGNORE INTO settings (key, value) VALUES (@key, @value)",
+    );
 
-		for (const [key, value] of Object.entries(initialSettings)) {
-			insertSetting.run({ key, value })
-		}
-	})
+    for (const [key, value] of Object.entries(initialSettings)) {
+      insertSetting.run({ key, value });
+    }
+  });
 
-	seed()
+  seed();
 }
 
 export function getDatabase(): Database.Database {
-	if (!database) {
-		const databasePath = getDatabasePath()
-		const dbDir = path.dirname(databasePath)
-		if (!fs.existsSync(dbDir)) {
-			fs.mkdirSync(dbDir, { recursive: true })
-		}
-		database = new Database(databasePath)
-		console.log('Base de datos conectada correctamente en:', databasePath)
-		createSchema(database)
-		seedDatabase(database)
-	}
+  if (!database) {
+    const databasePath = getDatabasePath();
+    const dbDir = path.dirname(databasePath);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+    database = new Database(databasePath);
+    console.log("Base de datos conectada correctamente en:", databasePath);
+    createSchema(database);
+    seedDatabase(database);
+  }
 
-	return database
+  return database;
 }
 
 export function closeDatabase(): void {
-	database?.close()
-	database = null
+  database?.close();
+  database = null;
 }
 
 export function registerDatabaseIpc(): void {
-	ipcMain.handle('db:query', (_event, sql: string, params: DatabaseParams = []) => {
-		const statement = getDatabase().prepare(sql)
-		return statement.all(...params) as DatabaseRow[]
-	})
+  ipcMain.handle(
+    "db:query",
+    (_event, sql: string, params: DatabaseParams = []) => {
+      const statement = getDatabase().prepare(sql);
+      return statement.all(...params) as DatabaseRow[];
+    },
+  );
 
-	ipcMain.handle('db:exec', (_event, sql: string, params: DatabaseParams = []) => {
-		const statement = getDatabase().prepare(sql)
-		return statement.run(...params)
-	})
+  ipcMain.handle(
+    "db:exec",
+    (_event, sql: string, params: DatabaseParams = []) => {
+      const statement = getDatabase().prepare(sql);
+      return statement.run(...params);
+    },
+  );
 
-	ipcMain.handle('db:get-setting', (_event, key: string) => {
-		const row = getDatabase()
-			.prepare('SELECT value FROM settings WHERE key = ?')
-			.get(key) as { value: string } | undefined
-		return row?.value ?? null
-	})
+  ipcMain.handle("db:get-setting", (_event, key: string) => {
+    const row = getDatabase()
+      .prepare("SELECT value FROM settings WHERE key = ?")
+      .get(key) as { value: string } | undefined;
+    return row?.value ?? null;
+  });
 
-	ipcMain.handle('db:set-setting', (_event, key: string, value: string) => {
-		getDatabase()
-			.prepare(
-				`INSERT INTO settings (key, value) VALUES (?, ?)
+  ipcMain.handle("db:set-setting", (_event, key: string, value: string) => {
+    getDatabase()
+      .prepare(
+        `INSERT INTO settings (key, value) VALUES (?, ?)
 				 ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-			)
-			.run(key, value)
-		return value
-	})
+      )
+      .run(key, value);
+    return value;
+  });
 }

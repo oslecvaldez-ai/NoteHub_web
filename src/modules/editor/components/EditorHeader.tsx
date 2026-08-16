@@ -18,6 +18,8 @@ export interface EditorHeaderProps {
   onExternal: () => void;
   onMenu: () => void;
   onToggleFocusMode: () => void;
+  isPinned?: boolean;
+  isQuickAccess?: boolean;
   editor?: TiptapEditorHandle | null;
 }
 
@@ -29,7 +31,20 @@ export function EditorHeader({
   onExternal,
   onMenu,
   onToggleFocusMode,
+  isPinned = false,
+  isQuickAccess = false,
 }: EditorHeaderProps) {
+  const pinTitle = isPinned ? "Desfijar nota" : "Fijar nota";
+  const pinButtonClass = isPinned
+    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500 bg-purple-100 text-purple-700 transition hover:bg-purple-200 dark:border-purple-600 dark:bg-purple-950/70 dark:text-purple-300 dark:hover:bg-purple-900/70"
+    : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
+  const quickAccessTitle = isQuickAccess
+    ? "Quitar de Acceso rápido"
+    : "Añadir a Acceso rápido";
+  const quickAccessButtonClass = isQuickAccess
+    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-400 bg-amber-100 text-amber-600 transition hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-950/70 dark:text-amber-300 dark:hover:bg-amber-900/70"
+    : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
+
   return (
     <header className="editor-header flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-200/50 dark:border-slate-700 dark:bg-slate-950 dark:shadow-none">
       <div className="flex flex-1 items-center gap-3 min-w-0">
@@ -45,20 +60,22 @@ export function EditorHeader({
           <button
             type="button"
             onClick={onPin}
-            aria-label="Pin"
-            title="Pin"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            aria-label={pinTitle}
+            title={pinTitle}
+            className={pinButtonClass}
           >
             <Pin className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={onStar}
-            aria-label="Favorito"
-            title="Favorito"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            aria-label={quickAccessTitle}
+            title={quickAccessTitle}
+            className={quickAccessButtonClass}
           >
-            <Star className="h-4 w-4" />
+            <Star
+              className={`h-4 w-4 ${isQuickAccess ? "fill-current" : ""}`}
+            />
           </button>
           <button
             type="button"

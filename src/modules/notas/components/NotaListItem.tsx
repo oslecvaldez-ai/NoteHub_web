@@ -1,5 +1,6 @@
 import type { MouseEvent } from "react";
-import { Check, Star } from "../../../core/components/Iconos";
+import { Pin } from "lucide-react";
+import { Check } from "../../../core/components/Iconos";
 import type { Note } from "../notesApi";
 import {
   extractImage,
@@ -48,7 +49,12 @@ export function NotaListItem({
       <div className="nota-list-content">
         <div className="nota-list-heading">
           <h3>{getNoteTitle(note)}</h3>
-          {note.is_pinned === 1 && <Star aria-label="Nota anclada" size={15} />}
+          {note.is_pinned === 1 && (
+            <Pin
+              aria-label="Nota fijada"
+              className="h-3.5 w-3.5 shrink-0 text-purple-600 dark:text-purple-400"
+            />
+          )}
         </div>
         <p>{excerpt || "Sin contenido todavía"}</p>
         <time dateTime={note.updated_at}>
