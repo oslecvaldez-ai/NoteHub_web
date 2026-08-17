@@ -315,68 +315,94 @@ export const ArbolCuadernos = forwardRef<
 FILE: \src\modules\notas\components\MenuContextual.tsx
 ========================================
 
-import { useEffect, type ReactElement } from 'react'
-import { createPortal } from 'react-dom'
-import { X } from '../../../core/components/Iconos'
+import { useEffect, type ReactElement } from "react";
+import { createPortal } from "react-dom";
+import { X } from "../../../core/components/Iconos";
 
 export interface ContextMenuItem {
-  id: string
-  label: string
-  destructive?: boolean
-  onSelect: () => void
+  id: string;
+  label: string;
+  destructive?: boolean;
+  icon?: React.ReactNode;
+  onSelect: () => void;
 }
 
 export interface MenuContextualProps {
-  isOpen: boolean
-  x: number
-  y: number
-  items: ContextMenuItem[]
-  onClose: () => void
+  isOpen: boolean;
+  x: number;
+  y: number;
+  items: ContextMenuItem[];
+  onClose: () => void;
 }
 
 function getMenuRoot(): HTMLElement | null {
-  if (typeof document === 'undefined') return null
-  let root = document.getElementById('menu-root')
+  if (typeof document === "undefined") return null;
+  let root = document.getElementById("menu-root");
   if (!root) {
-    root = document.createElement('div')
-    root.id = 'menu-root'
-    document.body.appendChild(root)
+    root = document.createElement("div");
+    root.id = "menu-root";
+    document.body.appendChild(root);
   }
-  return root
+  return root;
 }
 
-export function MenuContextual({ isOpen, x, y, items, onClose }: MenuContextualProps): ReactElement | null {
+export function MenuContextual({
+  isOpen,
+  x,
+  y,
+  items,
+  onClose,
+}: MenuContextualProps): ReactElement | null {
   useEffect(() => {
-    if (!isOpen) return undefined
+    if (!isOpen) return undefined;
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
-  if (!isOpen) return null
-  const root = getMenuRoot()
-  if (!root) return null
+  if (!isOpen) return null;
+  const root = getMenuRoot();
+  if (!root) return null;
 
   return createPortal(
-    <div className="notas-context-menu" onClick={(event) => event.stopPropagation()} style={{ left: x, top: y }}>
-      <button aria-label="Cerrar menÃº" className="notas-context-close" onClick={onClose} type="button">
+    <div
+      className="notas-context-menu"
+      onClick={(event) => event.stopPropagation()}
+      style={{ left: x, top: y }}
+    >
+      <button
+        aria-label="Cerrar menÃº"
+        className="notas-context-close"
+        onClick={onClose}
+        type="button"
+      >
         <X size={14} />
       </button>
       {items.map((item) => (
         <button
-          className={item.destructive ? 'is-destructive' : undefined}
+          className={item.destructive ? "is-destructive" : undefined}
           key={item.id}
-          onClick={() => { item.onSelect(); onClose() }}
+          onClick={() => {
+            item.onSelect();
+            onClose();
+          }}
           type="button"
         >
-          {item.label}
+          <span className="flex items-center gap-2.5">
+            {item.icon ? (
+              <span className="flex h-4 w-4 items-center justify-center">
+                {item.icon}
+              </span>
+            ) : null}
+            <span>{item.label}</span>
+          </span>
         </button>
       ))}
     </div>,
     root,
-  )
+  );
 }
 
 
@@ -387,7 +413,8 @@ FILE: \src\modules\notas\components\NotaListItem.tsx
 ========================================
 
 import type { MouseEvent } from "react";
-import { Check, Star } from "../../../core/components/Iconos";
+import { Pin } from "lucide-react";
+import { Check } from "../../../core/components/Iconos";
 import type { Note } from "../notesApi";
 import {
   extractImage,
@@ -418,7 +445,11 @@ export function NotaListItem({
 
   return (
     <article
-      className={`nota-list-item${isSelected ? " is-selected" : ""}${isActive ? " is-active" : ""}`}
+      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-3.5 transition ${
+        isActive || isSelected
+          ? "border-purple-300 bg-purple-50/60 shadow-sm dark:border-purple-800 dark:bg-purple-950/40"
+          : "border-slate-200/70 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-slate-700"
+      }`}
       onClick={() => onSelect(note)}
       onContextMenu={(event) => {
         event.preventDefault();
@@ -433,20 +464,36 @@ export function NotaListItem({
           {isSelected && <Check size={14} />}
         </span>
       )}
-      <div className="nota-list-content">
-        <div className="nota-list-heading">
-          <h3>{getNoteTitle(note)}</h3>
-          {note.is_pinned === 1 && <Star aria-label="Nota anclada" size={15} />}
-        </div>
-        <p>{excerpt || "Sin contenido todavÃ­a"}</p>
-        <time dateTime={note.updated_at}>
-          {formatNoteDate(note.updated_at)}
-        </time>
+
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="flex-1 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+          {getNoteTitle(note) || "Sin tÃ­tulo"}
+        </h3>
+        {note.is_pinned === 1 && (
+          <Pin
+            aria-label="Nota fijada"
+            className="h-3 w-3 shrink-0 fill-current text-purple-600 dark:text-purple-400"
+          />
+        )}
       </div>
+
+      <p className="line-clamp-2 text-[11px] font-normal leading-relaxed text-slate-400 dark:text-slate-500">
+        {excerpt || "Sin contenido adicional"}
+      </p>
+
+      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-slate-400 dark:text-slate-500">
+        <span>{formatNoteDate(note.updated_at)}</span>
+        {note.notebook_id && (
+          <span className="max-w-[100px] truncate rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">
+            {note.notebook_id}
+          </span>
+        )}
+      </div>
+
       {image && (
         <img
           alt="Miniatura de la nota"
-          className="nota-list-thumbnail"
+          className="mt-1 h-16 w-full rounded-xl object-cover"
           src={image}
         />
       )}
@@ -733,7 +780,7 @@ import {
   type MouseEvent,
   type ReactElement,
 } from "react";
-import { ArrowUpDown, MoreVertical } from "lucide-react";
+import { ArrowUpDown, MoreVertical, Star, StarOff } from "lucide-react";
 import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
 import { useNotifications } from "../../../core/components/useNotifications";
 import { MenuContextual, type ContextMenuItem } from "./MenuContextual";
@@ -877,6 +924,8 @@ export function PanelCentralNotas({
   }
 
   function noteMenuItems(note: Note): ContextMenuItem[] {
+    const isQuickAccess = note.is_quick_access === 1;
+
     return [
       {
         id: "pin",
@@ -889,12 +938,35 @@ export function PanelCentralNotas({
       },
       {
         id: "quick",
-        label: "Acceso rÃ¡pido",
-        onSelect: () =>
-          void runNoteAction(
-            () => notesApi.notes.toggleQuickAccess(note.id),
-            "Acceso rÃ¡pido actualizado",
-          ),
+        label: isQuickAccess ? "Quitar de Acceso rÃ¡pido" : "Acceso rÃ¡pido",
+        icon: isQuickAccess ? (
+          <StarOff className="h-4 w-4 text-amber-500" />
+        ) : (
+          <Star className="h-4 w-4 text-amber-500 fill-amber-500/80" />
+        ),
+        onSelect: () => {
+          void (async () => {
+            try {
+              const nextStatus = isQuickAccess ? 0 : 1;
+              await notesApi.notes.toggleQuickAccess(note.id, nextStatus);
+              window.dispatchEvent(new CustomEvent("notes:updated"));
+              showNotification(
+                nextStatus === 1
+                  ? "Nota aÃ±adida a Acceso rÃ¡pido"
+                  : "Nota quitada de Acceso rÃ¡pido",
+                "success",
+              );
+              await loadNotes();
+            } catch (error) {
+              showNotification(
+                error instanceof Error
+                  ? error.message
+                  : "No se pudo actualizar el acceso rÃ¡pido",
+                "error",
+              );
+            }
+          })();
+        },
       },
       {
         id: "duplicate",
@@ -925,6 +997,8 @@ export function PanelCentralNotas({
       () => notesApi.notes.delete(deleteTarget.id),
       "Nota eliminada correctamente",
     );
+    window.dispatchEvent(new CustomEvent("notes:updated"));
+    window.dispatchEvent(new CustomEvent("trash:updated"));
     setDeleteTarget(null);
   }
 
@@ -960,14 +1034,12 @@ export function PanelCentralNotas({
   }, [notebookId, notebooks]);
 
   return (
-    <section className="panel-central-notas h-full w-full max-w-full flex flex-col overflow-hidden bg-white">
-      <header className="panel-notas-header flex-shrink-0 w-full px-3 py-3 flex items-center justify-between border-b border-gray-100">
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-bold text-slate-800">
-            {activeNotebookName}
-          </h2>
-        </div>
-        <div className="panel-notas-header-actions flex items-center gap-1 flex-shrink-0">
+    <section className="w-80 shrink-0 border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40 flex flex-col overflow-hidden">
+      <header className="flex items-center justify-between border-b border-slate-200/80 bg-white px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="truncate pr-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+          {activeNotebookName}
+        </h2>
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             className="panel-notas-icon-button p-1 text-slate-500 hover:text-slate-800"
@@ -1087,28 +1159,35 @@ export function PanelCentralNotas({
 FILE: \src\modules\notas\components\SeleccionCuadernoModal.tsx
 ========================================
 
-import { Check, ChevronDown, ChevronRight, X } from '../../../core/components/Iconos'
-import { useState, type ReactElement } from 'react'
-import { createPortal } from 'react-dom'
-import type { Notebook } from '../notesApi'
+import {
+  BookMarked,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  X,
+} from "lucide-react";
+import { useState, type ReactElement } from "react";
+import { createPortal } from "react-dom";
+import type { Notebook } from "../notesApi";
 
 export interface SeleccionCuadernoModalProps {
-  isOpen: boolean
-  notebooks: Notebook[]
-  currentNotebookId: number | null
-  onClose: () => void
-  onSelect: (notebookId: number | null) => void
+  isOpen: boolean;
+  notebooks: Notebook[];
+  currentNotebookId: number | null;
+  onClose: () => void;
+  onSelect: (notebookId: number | null) => void;
 }
 
 function getModalRoot(): HTMLElement | null {
-  if (typeof document === 'undefined') return null
-  let root = document.getElementById('modal-root')
+  if (typeof document === "undefined") return null;
+  let root = document.getElementById("modal-root");
   if (!root) {
-    root = document.createElement('div')
-    root.id = 'modal-root'
-    document.body.appendChild(root)
+    root = document.createElement("div");
+    root.id = "modal-root";
+    document.body.appendChild(root);
   }
-  return root
+  return root;
 }
 
 export function SeleccionCuadernoModal({
@@ -1118,49 +1197,153 @@ export function SeleccionCuadernoModal({
   onClose,
   onSelect,
 }: SeleccionCuadernoModalProps): ReactElement | null {
-  const [expanded, setExpanded] = useState<Set<number>>(new Set())
-  if (!isOpen) return null
-  const root = getModalRoot()
-  if (!root) return null
-  const childrenOf = (parentId: number | null) => notebooks.filter((notebook) => notebook.parent_notebook_id === parentId)
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  if (!isOpen) return null;
+
+  const root = getModalRoot();
+  if (!root) return null;
+
+  const childrenOf = (parentId: number | null) =>
+    notebooks.filter((notebook) => notebook.parent_notebook_id === parentId);
 
   function renderTree(parentId: number | null, depth = 0): ReactElement[] {
     return childrenOf(parentId).flatMap((notebook) => {
-      const children = childrenOf(notebook.id)
-      const isExpanded = expanded.has(notebook.id)
+      const children = childrenOf(notebook.id);
+      const isExpanded = expanded.has(notebook.id);
+      const isSelected = currentNotebookId === notebook.id;
+
       return [
-        <div className="seleccion-cuaderno-row" key={notebook.id} style={{ paddingLeft: 12 + depth * 18 }}>
-          {children.length > 0 ? (
-              <button aria-label={isExpanded ? 'Contraer' : 'Expandir'} onClick={() => setExpanded((current) => { const next = new Set(current); if (isExpanded) next.delete(notebook.id); else next.add(notebook.id); return next })} type="button">
-              {isExpanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+        <div key={notebook.id} className="w-full">
+          <div
+            className="flex items-center gap-2"
+            style={{ paddingLeft: `${12 + depth * 16}px` }}
+          >
+            {children.length > 0 ? (
+              <button
+                type="button"
+                aria-label={isExpanded ? "Contraer" : "Expandir"}
+                onClick={() =>
+                  setExpanded((current) => {
+                    const next = new Set(current);
+                    if (isExpanded) next.delete(notebook.id);
+                    else next.add(notebook.id);
+                    return next;
+                  })
+                }
+                className="flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
+              </button>
+            ) : (
+              <span className="h-6 w-6" />
+            )}
+
+            <button
+              type="button"
+              onClick={() => onSelect(notebook.id)}
+              className={`group flex w-full items-center justify-between rounded-2xl border p-3 text-left transition ${
+                isSelected
+                  ? "border-purple-300 bg-purple-50/70 dark:border-purple-800 dark:bg-purple-950/40"
+                  : "border-slate-200/70 bg-slate-50/50 hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+              }`}
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+                  <Folder className="h-4 w-4" />
+                </span>
+                <span className="truncate text-xs font-bold text-slate-800 dark:text-slate-200">
+                  {notebook.name}
+                </span>
+              </span>
+
+              {isSelected && (
+                <Check className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              )}
             </button>
-          ) : <span className="seleccion-cuaderno-indent" />}
-          <button className={currentNotebookId === notebook.id ? 'is-current' : undefined} onClick={() => onSelect(notebook.id)} type="button">
-            <span>{notebook.name}</span>
-            {currentNotebookId === notebook.id && <Check size={16} />}
-          </button>
+          </div>
         </div>,
         ...(isExpanded ? renderTree(notebook.id, depth + 1) : []),
-      ]
-    })
+      ];
+    });
   }
 
   return createPortal(
-    <div className="notas-modal-overlay" onClick={(event) => event.target === event.currentTarget && onClose()}>
-      <section aria-labelledby="seleccionar-cuaderno-titulo" className="notas-modal" role="dialog">
-        <button aria-label="Cerrar modal" className="notas-modal-close" onClick={onClose} type="button"><X size={20} /></button>
-        <h2 id="seleccionar-cuaderno-titulo">Mover a un cuaderno</h2>
-        <div className="seleccion-cuaderno-list">
-          <button className={currentNotebookId === null ? 'is-current' : undefined} onClick={() => onSelect(null)} type="button">
-            <span>Sin cuaderno</span>{currentNotebookId === null && <Check size={16} />}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-2xl transition-all dark:border-slate-800 dark:bg-slate-950">
+        <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
+              <BookMarked className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Mover a un cuaderno
+              </h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Selecciona el cuaderno destino para esta nota
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            onClick={onClose}
+            aria-label="Cerrar modal"
+          >
+            <X className="h-4 w-4" />
           </button>
+        </div>
+
+        <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+          <button
+            type="button"
+            onClick={() => onSelect(null)}
+            className={`group flex w-full items-center justify-between rounded-2xl border p-3 text-left transition ${
+              currentNotebookId === null
+                ? "border-purple-300 bg-purple-50/70 dark:border-purple-800 dark:bg-purple-950/40"
+                : "border-slate-200/70 bg-slate-50/50 hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            }`}
+          >
+            <span className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <Folder className="h-4 w-4" />
+              </span>
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                Sin cuaderno
+              </span>
+            </span>
+
+            {currentNotebookId === null && (
+              <Check className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            )}
+          </button>
+
           {renderTree(null)}
         </div>
-        <div className="notas-modal-actions"><button onClick={onClose} type="button">Cancelar</button></div>
-      </section>
+
+        <div className="mt-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
     </div>,
     root,
-  )
+  );
 }
 
 
@@ -1181,26 +1364,41 @@ import {
 import { SelectorEspacios } from "../../espacios/components/SelectorEspacios";
 import { workspacesApi, type Workspace } from "../../espacios/workspacesApi";
 import { ArbolCuadernos } from "./ArbolCuadernos";
+import { type Note } from "../notesApi";
 import "../notas.css";
 
 export interface SidebarNavegacionProps {
   activeWorkspace: Workspace | null;
   selectedNotebookId: number | null;
+  activeNoteId?: number | null;
+  quickAccessNotes?: Note[];
   onWorkspaceChange: (workspace: Workspace) => void;
   onSelectNotebook: (notebookId: number | null) => void;
+  onSelectQuickNote?: (noteId: number) => void;
   onSelectAllNotes?: () => void;
+  onSelectTrash?: () => void;
+  onSelectTemplates?: () => void;
 }
 
 export function SidebarNavegacion({
   activeWorkspace,
   selectedNotebookId,
+  activeNoteId,
+  quickAccessNotes = [],
   onWorkspaceChange,
   onSelectNotebook,
+  onSelectQuickNote,
   onSelectAllNotes,
+  onSelectTrash,
+  onSelectTemplates,
 }: SidebarNavegacionProps): ReactElement {
   const [resolvedWorkspace, setResolvedWorkspace] = useState<Workspace | null>(
     activeWorkspace,
   );
+  const [trashCount, setTrashCount] = useState<number>(0);
+  const [templatesCount, setTemplatesCount] = useState<number>(0);
+
+  const workspaceId = activeWorkspace?.id ?? resolvedWorkspace?.id ?? null;
 
   useEffect(() => {
     if (activeWorkspace) {
@@ -1235,6 +1433,45 @@ export function SidebarNavegacion({
     };
   }, [activeWorkspace]);
 
+  useEffect(() => {
+    const fetchBadges = async (): Promise<void> => {
+      if (!workspaceId) {
+        setTrashCount(0);
+        setTemplatesCount(0);
+        return;
+      }
+
+      try {
+        const [trashTotal, templates] = await Promise.all([
+          window.electron?.trash?.getCount(workspaceId) ?? Promise.resolve(0),
+          window.electron?.templates?.getAll(workspaceId) ??
+            Promise.resolve([]),
+        ]);
+
+        setTrashCount(Number(trashTotal) || 0);
+        setTemplatesCount(Array.isArray(templates) ? templates.length : 0);
+      } catch (error) {
+        console.error("Error al actualizar contadores del sidebar:", error);
+      }
+    };
+
+    void fetchBadges();
+
+    const handleUpdate = (): void => {
+      void fetchBadges();
+    };
+
+    window.addEventListener("notes:updated", handleUpdate);
+    window.addEventListener("templates:updated", handleUpdate);
+    window.addEventListener("trash:updated", handleUpdate);
+
+    return () => {
+      window.removeEventListener("notes:updated", handleUpdate);
+      window.removeEventListener("templates:updated", handleUpdate);
+      window.removeEventListener("trash:updated", handleUpdate);
+    };
+  }, [workspaceId]);
+
   return (
     <aside className="notas-sidebar">
       <SelectorEspacios onWorkspaceChange={onWorkspaceChange} />
@@ -1249,14 +1486,76 @@ export function SidebarNavegacion({
         >
           <FileText size={17} /> Todas las notas
         </button>
-        <button type="button">
-          <Star size={17} /> Acceso rÃ¡pido
+
+        <div className="flex flex-col">
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+            onClick={() => {
+              if (onSelectAllNotes) onSelectAllNotes();
+              else onSelectNotebook(null);
+            }}
+          >
+            <Star size={17} />
+            <span>Acceso rÃ¡pido</span>
+          </button>
+
+          {quickAccessNotes.length > 0 && (
+            <div className="ml-5 mt-1 space-y-0.5 border-l-2 border-slate-100 pl-2 dark:border-slate-800">
+              {quickAccessNotes.map((note) => {
+                const isCurrentSelected = activeNoteId === note.id;
+
+                return (
+                  <button
+                    key={note.id}
+                    type="button"
+                    onClick={() => onSelectQuickNote?.(note.id)}
+                    className={`group flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-left text-xs transition ${
+                      isCurrentSelected
+                        ? "bg-amber-50 text-amber-900 font-semibold dark:bg-amber-950/40 dark:text-amber-300"
+                        : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-900/80"
+                    }`}
+                  >
+                    <Star className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500/80 group-hover:scale-110 transition-transform" />
+                    <span className="truncate flex-1">
+                      {note.title || "Sin tÃ­tulo"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onSelectTrash?.()}
+          className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+        >
+          <span className="flex items-center gap-2">
+            <Trash2 size={17} />
+            <span>Papelera</span>
+          </span>
+          {trashCount > 0 && (
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-100 px-1.5 text-[11px] font-bold text-red-600 dark:bg-red-950 dark:text-red-400">
+              {trashCount}
+            </span>
+          )}
         </button>
-        <button type="button">
-          <Trash2 size={17} /> Papelera
-        </button>
-        <button type="button">
-          <Archive size={17} /> Plantillas
+        <button
+          type="button"
+          onClick={() => onSelectTemplates?.()}
+          className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+        >
+          <span className="flex items-center gap-2">
+            <Archive size={17} />
+            <span>Plantillas</span>
+          </span>
+          {templatesCount > 0 && (
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-purple-100 px-1.5 text-[11px] font-bold text-purple-600 dark:bg-purple-950 dark:text-purple-400">
+              {templatesCount}
+            </span>
+          )}
         </button>
         <button type="button">
           <Settings size={17} /> Ajustes
@@ -2073,91 +2372,145 @@ FILE: \src\modules\notas\notesApi.ts
 ========================================
 
 export interface Notebook {
-  id: number
-  workspace_id: number
-  parent_notebook_id: number | null
-  name: string
-  icon_type: string | null
-  icon_color: string | null
-  is_locked: number
-  password_hash: string | null
-  note_count: number
-  created_at: string
+  id: number;
+  workspace_id: number;
+  parent_notebook_id: number | null;
+  name: string;
+  icon_type: string | null;
+  icon_color: string | null;
+  is_locked: number;
+  password_hash: string | null;
+  note_count: number;
+  created_at: string;
 }
 
 export interface Note {
-  id: number
-  workspace_id: number
-  notebook_id: number | null
-  title: string
-  content: string
-  is_pinned: number
-  is_deleted: number
-  pinned_at: string | null
-  created_at: string
-  updated_at: string
+  id: number;
+  workspace_id: number;
+  notebook_id: number | null;
+  title: string;
+  content: string;
+  is_pinned: number;
+  is_quick_access: number;
+  is_deleted: number;
+  pinned_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface NotebookInput {
-  name: string
-  parentNotebookId?: number | null
-  iconType?: string | null
-  iconColor?: string | null
-  isLocked?: boolean | number | null
-  password?: string | null
-  passwordHash?: string | null
+  name: string;
+  parentNotebookId?: number | null;
+  iconType?: string | null;
+  iconColor?: string | null;
+  isLocked?: boolean | number | null;
+  password?: string | null;
+  passwordHash?: string | null;
 }
 
 export interface NoteInput {
-  title?: string
-  content?: string
-  notebookId?: number | null
+  title?: string;
+  content?: string;
+  notebookId?: number | null;
 }
 
 interface NotesElectronApi {
   notebooks: {
-    getAll: (workspaceId: number) => Promise<Notebook[]>
-    create: (workspaceId: number, input: NotebookInput) => Promise<Notebook | undefined>
-    update: (id: number, input: NotebookInput) => Promise<Notebook | undefined>
-    delete: (id: number) => Promise<{ id: number }>
-  }
+    getAll: (workspaceId: number) => Promise<Notebook[]>;
+    create: (
+      workspaceId: number,
+      input: NotebookInput,
+    ) => Promise<Notebook | undefined>;
+    update: (id: number, input: NotebookInput) => Promise<Notebook | undefined>;
+    delete: (id: number) => Promise<{ id: number }>;
+  };
   notes: {
-    getByWorkspace: (workspaceId: number, notebookId?: number | null) => Promise<Note[]>
-    search: (workspaceId: number, search: string, notebookId?: number | null) => Promise<Note[]>
-    create: (workspaceId: number, input: NoteInput) => Promise<Note | undefined>
-    duplicate: (id: number) => Promise<Note | undefined>
-    togglePin: (id: number) => Promise<Note | undefined>
-    toggleQuickAccess: (id: number) => Promise<Note | undefined>
-    move: (id: number, notebookId: number | null) => Promise<Note | undefined>
-    delete: (id: number) => Promise<Note | undefined>
-  }
+    getById: (id: number) => Promise<Note | undefined>;
+    getByWorkspace: (
+      workspaceId: number,
+      notebookId?: number | null,
+    ) => Promise<Note[]>;
+    getQuickAccess: (workspaceId: number) => Promise<Note[]>;
+    search: (
+      workspaceId: number,
+      search: string,
+      notebookId?: number | null,
+    ) => Promise<Note[]>;
+    create: (
+      workspaceId: number,
+      input: NoteInput,
+    ) => Promise<Note | undefined>;
+    duplicate: (id: number) => Promise<Note | undefined>;
+    togglePin: (id: number) => Promise<Note | undefined>;
+    toggleQuickAccess: (
+      id: number,
+      nextStatus?: number,
+    ) => Promise<Note | undefined>;
+    move: (id: number, notebookId: number | null) => Promise<Note | undefined>;
+    delete: (id: number) => Promise<Note | undefined>;
+  };
 }
 
-type NotesWindow = Window & { electron?: Partial<NotesElectronApi> }
+type NotesWindow = Window & { electron?: Partial<NotesElectronApi> };
 
 function getApi(): Partial<NotesElectronApi> | undefined {
-  if (typeof window === 'undefined') return undefined
-  return (window as NotesWindow).electron
+  if (typeof window === "undefined") return undefined;
+  return (window as NotesWindow).electron;
 }
 
 export const notesApi = {
   notebooks: {
-    getAll: async (workspaceId: number): Promise<Notebook[]> => (await getApi()?.notebooks?.getAll(workspaceId)) ?? [],
-    create: async (workspaceId: number, input: NotebookInput): Promise<Notebook | undefined> => getApi()?.notebooks?.create(workspaceId, input),
-    update: async (id: number, input: NotebookInput): Promise<Notebook | undefined> => getApi()?.notebooks?.update(id, input),
-    delete: async (id: number): Promise<{ id: number }> => (await getApi()?.notebooks?.delete(id)) ?? { id },
+    getAll: async (workspaceId: number): Promise<Notebook[]> =>
+      (await getApi()?.notebooks?.getAll(workspaceId)) ?? [],
+    create: async (
+      workspaceId: number,
+      input: NotebookInput,
+    ): Promise<Notebook | undefined> =>
+      getApi()?.notebooks?.create(workspaceId, input),
+    update: async (
+      id: number,
+      input: NotebookInput,
+    ): Promise<Notebook | undefined> => getApi()?.notebooks?.update(id, input),
+    delete: async (id: number): Promise<{ id: number }> =>
+      (await getApi()?.notebooks?.delete(id)) ?? { id },
   },
   notes: {
-    getByWorkspace: async (workspaceId: number, notebookId?: number | null): Promise<Note[]> => (await getApi()?.notes?.getByWorkspace(workspaceId, notebookId)) ?? [],
-    search: async (workspaceId: number, search: string, notebookId?: number | null): Promise<Note[]> => (await getApi()?.notes?.search(workspaceId, search, notebookId)) ?? [],
-    create: async (workspaceId: number, input: NoteInput): Promise<Note | undefined> => getApi()?.notes?.create(workspaceId, input),
-    duplicate: async (id: number): Promise<Note | undefined> => getApi()?.notes?.duplicate(id),
-    togglePin: async (id: number): Promise<Note | undefined> => getApi()?.notes?.togglePin(id),
-    toggleQuickAccess: async (id: number): Promise<Note | undefined> => getApi()?.notes?.toggleQuickAccess(id),
-    move: async (id: number, notebookId: number | null): Promise<Note | undefined> => getApi()?.notes?.move(id, notebookId),
-    delete: async (id: number): Promise<Note | undefined> => getApi()?.notes?.delete(id),
+    getById: async (id: number): Promise<Note | undefined> =>
+      getApi()?.notes?.getById(id) as Note | undefined,
+    getByWorkspace: async (
+      workspaceId: number,
+      notebookId?: number | null,
+    ): Promise<Note[]> =>
+      (await getApi()?.notes?.getByWorkspace(workspaceId, notebookId)) ?? [],
+    getQuickAccess: async (workspaceId: number): Promise<Note[]> =>
+      (await getApi()?.notes?.getQuickAccess(workspaceId)) ?? [],
+    search: async (
+      workspaceId: number,
+      search: string,
+      notebookId?: number | null,
+    ): Promise<Note[]> =>
+      (await getApi()?.notes?.search(workspaceId, search, notebookId)) ?? [],
+    create: async (
+      workspaceId: number,
+      input: NoteInput,
+    ): Promise<Note | undefined> => getApi()?.notes?.create(workspaceId, input),
+    duplicate: async (id: number): Promise<Note | undefined> =>
+      getApi()?.notes?.duplicate(id),
+    togglePin: async (id: number): Promise<Note | undefined> =>
+      getApi()?.notes?.togglePin(id),
+    toggleQuickAccess: async (
+      id: number,
+      nextStatus?: number,
+    ): Promise<Note | undefined> =>
+      getApi()?.notes?.toggleQuickAccess(id, nextStatus),
+    move: async (
+      id: number,
+      notebookId: number | null,
+    ): Promise<Note | undefined> => getApi()?.notes?.move(id, notebookId),
+    delete: async (id: number): Promise<Note | undefined> =>
+      getApi()?.notes?.delete(id),
   },
-}
+};
 
 
 

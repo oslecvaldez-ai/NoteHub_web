@@ -2,26 +2,84 @@
 FILE: \src\modules\editor\components\BuscadorInterno.tsx
 ========================================
 
-import { type ChangeEvent } from 'react'
+import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
+import type { ChangeEvent } from "react";
 
 export interface BuscadorInternoProps {
-  query: string
-  onSearch: (query: string) => void
+  query: string;
+  currentIndex: number;
+  totalResults: number;
+  onSearch: (query: string) => void;
+  onNext: () => void;
+  onPrev: () => void;
+  onClose: () => void;
 }
 
-export function BuscadorInterno({ query, onSearch }: BuscadorInternoProps) {
+export function BuscadorInterno({
+  query,
+  currentIndex,
+  totalResults,
+  onSearch,
+  onNext,
+  onPrev,
+  onClose,
+}: BuscadorInternoProps) {
+  const counterText =
+    totalResults > 0
+      ? `${Math.min(currentIndex + 1, totalResults)} de ${totalResults}`
+      : "0 de 0";
+
   return (
-    <div className="editor-search fixed bottom-4 right-4 rounded-2xl border border-slate-300 bg-white p-4 shadow-lg dark:border-slate-700 dark:bg-slate-950">
-      <label className="text-sm font-medium text-slate-700 dark:text-slate-200">Buscar</label>
-      <input
-        className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        type="text"
-        value={query}
-        onChange={(event: ChangeEvent<HTMLInputElement>) => onSearch(event.target.value)}
-        placeholder="Buscar texto..."
-      />
+    <div className="fixed bottom-5 right-5 z-40 rounded-2xl border border-slate-200/80 bg-white/95 p-2.5 shadow-2xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/95">
+      <div className="flex items-center gap-2">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300">
+          <Search className="h-4 w-4" />
+        </div>
+
+        <input
+          className="w-52 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-purple-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          type="text"
+          value={query}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            onSearch(event.target.value)
+          }
+          placeholder="Buscar texto..."
+          aria-label="Buscar en esta nota"
+        />
+
+        <span className="min-w-12 text-right text-xs font-semibold text-slate-500 dark:text-slate-400">
+          {counterText}
+        </span>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onPrev}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            aria-label="Resultado anterior"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onNext}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+            aria-label="Siguiente resultado"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 dark:hover:bg-slate-800"
+            aria-label="Cerrar buscador"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
 
@@ -281,6 +339,8 @@ export interface EditorHeaderProps {
   onExternal: () => void;
   onMenu: () => void;
   onToggleFocusMode: () => void;
+  isPinned?: boolean;
+  isQuickAccess?: boolean;
   editor?: TiptapEditorHandle | null;
 }
 
@@ -292,7 +352,20 @@ export function EditorHeader({
   onExternal,
   onMenu,
   onToggleFocusMode,
+  isPinned = false,
+  isQuickAccess = false,
 }: EditorHeaderProps) {
+  const pinTitle = isPinned ? "Desfijar nota" : "Fijar nota";
+  const pinButtonClass = isPinned
+    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500 bg-purple-100 text-purple-700 transition hover:bg-purple-200 dark:border-purple-600 dark:bg-purple-950/70 dark:text-purple-300 dark:hover:bg-purple-900/70"
+    : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
+  const quickAccessTitle = isQuickAccess
+    ? "Quitar de Acceso rÃ¡pido"
+    : "AÃ±adir a Acceso rÃ¡pido";
+  const quickAccessButtonClass = isQuickAccess
+    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-400 bg-amber-100 text-amber-600 transition hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-950/70 dark:text-amber-300 dark:hover:bg-amber-900/70"
+    : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
+
   return (
     <header className="editor-header flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-200/50 dark:border-slate-700 dark:bg-slate-950 dark:shadow-none">
       <div className="flex flex-1 items-center gap-3 min-w-0">
@@ -308,20 +381,22 @@ export function EditorHeader({
           <button
             type="button"
             onClick={onPin}
-            aria-label="Pin"
-            title="Pin"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            aria-label={pinTitle}
+            title={pinTitle}
+            className={pinButtonClass}
           >
             <Pin className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={onStar}
-            aria-label="Favorito"
-            title="Favorito"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            aria-label={quickAccessTitle}
+            title={quickAccessTitle}
+            className={quickAccessButtonClass}
           >
-            <Star className="h-4 w-4" />
+            <Star
+              className={`h-4 w-4 ${isQuickAccess ? "fill-current" : ""}`}
+            />
           </button>
           <button
             type="button"
@@ -420,8 +495,19 @@ export interface EditorToolbarProps {
   editor?: TiptapEditorHandle | null;
   onInsertTable: (rows?: number, cols?: number) => void;
   onInsertImage: () => void;
-  onInsertDate: (format?: string) => void;
+  onInsertDate: (format?: "datetime" | "date" | "time") => void;
+  onOpenPlantillas?: () => void;
 }
+
+const DATE_MENU_ITEMS: Array<{
+  label: string;
+  shortcut: string;
+  type: "datetime" | "date" | "time";
+}> = [
+  { label: "Fecha y Hora", shortcut: "Ctrl+D", type: "datetime" },
+  { label: "Solo Fecha", shortcut: "Ctrl+Shift+D", type: "date" },
+  { label: "Solo Hora", shortcut: "Alt+Ctrl+Shift+D", type: "time" },
+];
 
 type ColorOption = { name: string; color: string; shortcut?: string };
 
@@ -536,6 +622,7 @@ export function EditorToolbar({
   onInsertTable,
   onInsertImage,
   onInsertDate,
+  onOpenPlantillas,
 }: EditorToolbarProps) {
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
@@ -590,8 +677,8 @@ export function EditorToolbar({
     setShowTableSubmenu(false);
   };
 
-  const insertDate = (format: string) => {
-    onInsertDate?.(format);
+  const insertDate = (type: "datetime" | "date" | "time") => {
+    onInsertDate?.(type);
     setShowInsertMenu(false);
     setShowDateSubmenu(false);
   };
@@ -694,28 +781,23 @@ export function EditorToolbar({
                 </button>
 
                 {showDateSubmenu && (
-                  <div className="absolute left-full top-0 ml-2 w-56 rounded-xl border bg-white p-2 shadow-md">
-                    <button
-                      className="w-full text-left px-2 py-1 text-xs"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => insertDate("datetime")}
-                    >
-                      Fecha y Hora
-                    </button>
-                    <button
-                      className="w-full text-left px-2 py-1 text-xs"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => insertDate("date")}
-                    >
-                      Fecha corta
-                    </button>
-                    <button
-                      className="w-full text-left px-2 py-1 text-xs"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => insertDate("time")}
-                    >
-                      Hora
-                    </button>
+                  <div className="absolute left-full top-0 ml-2 w-64 rounded-2xl border border-slate-200/90 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 z-50">
+                    {DATE_MENU_ITEMS.map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          insertDate(item.type);
+                        }}
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                      >
+                        <span className="truncate">{item.label}</span>
+                        <kbd className="ml-2 font-mono text-[10px] text-slate-400 dark:text-slate-500">
+                          {item.shortcut}
+                        </kbd>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -725,8 +807,7 @@ export function EditorToolbar({
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
-                  // Placeholder: open templates modal
-                  console.info("Abrir modal de plantillas - placeholder");
+                  onOpenPlantillas?.();
                   setShowInsertMenu(false);
                 }}
               >
@@ -1292,6 +1373,159 @@ export function EditorToolbar({
 
 
 ========================================
+FILE: \src\modules\editor\components\InsertarPlantillaModal.tsx
+========================================
+
+import React, { useEffect, useMemo, useState } from "react";
+import { Copy, LayoutTemplate, Search, X } from "lucide-react";
+
+interface Template {
+  id: number;
+  name: string;
+  content: string;
+}
+
+interface InsertarPlantillaModalProps {
+  isOpen: boolean;
+  workspaceId: number | null;
+  onClose: () => void;
+  onSelectTemplate: (content: string) => void;
+}
+
+export const InsertarPlantillaModal: React.FC<InsertarPlantillaModalProps> = ({
+  isOpen,
+  workspaceId,
+  onClose,
+  onSelectTemplate,
+}) => {
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !workspaceId) return;
+
+    const loadTemplates = async () => {
+      try {
+        setLoading(true);
+        const data =
+          await window.electron?.templates?.getByWorkspace(workspaceId);
+        setTemplates((data as Template[]) || []);
+      } catch (err) {
+        console.error("Error al cargar plantillas:", err);
+        setTemplates([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadTemplates();
+  }, [isOpen, workspaceId]);
+
+  const filteredTemplates = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return templates;
+    return templates.filter(
+      (template) =>
+        template.name.toLowerCase().includes(q) ||
+        template.content
+          .replace(/<[^>]*>/g, " ")
+          .toLowerCase()
+          .includes(q),
+    );
+  }, [search, templates]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+      <div
+        className="flex max-h-[80vh] w-full max-w-md flex-col rounded-3xl border border-slate-200/80 bg-white p-5 shadow-2xl transition-all dark:border-slate-800 dark:bg-slate-950"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800/80">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-400">
+              <LayoutTemplate className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Insertar plantilla
+              </h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Selecciona una plantilla para aÃ±adir a la nota
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            onClick={onClose}
+            aria-label="Cerrar modal de plantillas"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar plantilla..."
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+          />
+        </div>
+
+        <div className="max-h-[300px] flex-1 space-y-2 overflow-y-auto pr-1 scrollbar-thin">
+          {loading ? (
+            <p className="py-6 text-center text-xs text-slate-400">
+              Cargando plantillas...
+            </p>
+          ) : filteredTemplates.length === 0 ? (
+            <p className="py-6 text-center text-xs text-slate-400">
+              No hay plantillas disponibles
+            </p>
+          ) : (
+            filteredTemplates.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  onSelectTemplate(item.content);
+                  onClose();
+                }}
+                className="group flex w-full items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3 text-left transition hover:border-indigo-200 hover:bg-indigo-50/40 dark:border-slate-800/60 dark:bg-slate-900/40 dark:hover:border-indigo-900/50 dark:hover:bg-indigo-950/20"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/60 transition group-hover:scale-105 group-hover:text-indigo-600 dark:bg-slate-800 dark:ring-slate-700">
+                  <Copy className="h-4 w-4 text-slate-500 group-hover:text-indigo-600 dark:text-slate-400 dark:group-hover:text-indigo-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="truncate text-sm font-semibold text-slate-800 group-hover:text-indigo-600 dark:text-slate-200 dark:group-hover:text-indigo-400">
+                    {item.name}
+                  </h4>
+                  <p className="truncate text-xs text-slate-400">
+                    {item.content
+                      .replace(/<[^>]*>/g, " ")
+                      .replace(/\s+/g, " ")
+                      .trim() || "Sin contenido"}
+                  </p>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+
+
+========================================
 FILE: \src\modules\editor\components\PanelEditor.tsx
 ========================================
 
@@ -1308,8 +1542,17 @@ import { TiptapEditor, type TiptapEditorHandle } from "./TiptapEditor";
 import { EditorHeader } from "./EditorHeader";
 import { EditorToolbar } from "./EditorToolbar";
 import { OpcionesEditorModal } from "../modals/OpcionesEditorModal";
+import { MenuOpcionesNotaModal } from "../modals/MenuOpcionesNotaModal";
+import { TagsModal } from "../modals/TagsModal";
 import { useNotifications } from "../../../core/components/useNotifications";
-import { Info, Printer } from "lucide-react";
+import { MoverEspacioModal } from "../../espacios/components/MoverEspacioModal";
+import { SeleccionCuadernoModal } from "../../notas/components/SeleccionCuadernoModal";
+import { notesApi, type Notebook } from "../../notas/notesApi";
+import { workspacesApi, type Workspace } from "../../espacios/workspacesApi";
+import { BuscadorInterno } from "./BuscadorInterno";
+import { InsertarPlantillaModal } from "./InsertarPlantillaModal";
+import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
+import { Info, Minimize2, Printer } from "lucide-react";
 
 export interface PanelEditorHandle {
   saveNow: () => Promise<void>;
@@ -1318,8 +1561,14 @@ export interface PanelEditorHandle {
 export interface PanelEditorProps {
   noteId?: number | null;
   notebookId?: number | null;
+  workspaceId?: number | null;
   noteTitle?: string;
   initialHTML?: string;
+  isPinned?: boolean;
+  isQuickAccess?: boolean;
+  isFocusMode?: boolean;
+  onNotesChanged?: () => void;
+  onToggleFocusMode?: () => void;
 }
 
 function extractTitleFromHTML(html: string): string {
@@ -1348,13 +1597,40 @@ function buildImagePayload(
 
 export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
   function PanelEditorComponent(
-    { noteId = null, notebookId = null, noteTitle = "Nota", initialHTML = "" },
+    {
+      noteId = null,
+      notebookId = null,
+      workspaceId = null,
+      noteTitle = "Nota",
+      initialHTML = "",
+      isPinned: initialPinned = false,
+      isQuickAccess: initialQuickAccess = false,
+      isFocusMode = false,
+      onNotesChanged,
+      onToggleFocusMode,
+    },
     ref,
   ) {
     const editorRef = useRef<TiptapEditorHandle | null>(null);
     const previousNoteIdRef = useRef<number | null>(noteId);
     const [isOptionsModalOpen, setOptionsModalOpen] = useState(false);
+    const [isQuickMenuOpen, setQuickMenuOpen] = useState(false);
+    const [isPinned, setIsPinned] = useState(Boolean(initialPinned));
+    const [isQuickAccess, setIsQuickAccess] = useState(
+      Boolean(initialQuickAccess),
+    );
     const [content, setContent] = useState(initialHTML ?? "");
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
+    const [totalSearchResults, setTotalSearchResults] = useState(0);
+    const [spaces, setSpaces] = useState<Workspace[]>([]);
+    const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+    const [isMoveWorkspaceOpen, setIsMoveWorkspaceOpen] = useState(false);
+    const [isMoveNotebookOpen, setIsMoveNotebookOpen] = useState(false);
+    const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
+    const [showPlantillasModal, setShowPlantillasModal] = useState(false);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [editorInitialHTML, setEditorInitialHTML] = useState(
       initialHTML ?? "",
     );
@@ -1362,6 +1638,29 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
     const [isExporting, setIsExporting] = useState(false);
     const saveTimeoutRef = useRef<number | null>(null);
     const { notify } = useNotifications();
+
+    useEffect(() => {
+      setIsPinned(Boolean(initialPinned));
+    }, [initialPinned, noteId]);
+
+    useEffect(() => {
+      setIsQuickAccess(Boolean(initialQuickAccess));
+    }, [initialQuickAccess, noteId]);
+
+    useEffect(() => {
+      if (!workspaceId) return;
+      void Promise.all([
+        workspacesApi.getAll(),
+        notesApi.notebooks.getAll(workspaceId),
+      ])
+        .then(([loadedSpaces, loadedNotebooks]) => {
+          setSpaces(loadedSpaces);
+          setNotebooks(loadedNotebooks);
+        })
+        .catch((error) => {
+          console.error("No se pudieron cargar espacios/cuadernos:", error);
+        });
+    }, [workspaceId]);
 
     useEffect(() => {
       if (previousNoteIdRef.current !== noteId) {
@@ -1554,13 +1853,76 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
       }
     }, [notify]);
 
-    const handleTogglePin = useCallback(() => {
-      console.log("Fijar editor");
-    }, []);
+    const handleTogglePin = useCallback(async () => {
+      if (noteId === null) return;
 
-    const handleStar = useCallback(() => {
-      console.log("Marcar como favorito");
-    }, []);
+      try {
+        const updatedNote = (await window.electron?.notes?.togglePin?.(
+          noteId,
+        )) as { is_pinned?: number } | undefined;
+        const nextPinned = updatedNote
+          ? updatedNote.is_pinned === 1
+          : !isPinned;
+        setIsPinned(nextPinned);
+        onNotesChanged?.();
+        notify(
+          nextPinned
+            ? "Nota fijada correctamente"
+            : "Nota desfijada correctamente",
+          "success",
+        );
+      } catch (error) {
+        console.error("Error al fijar/desfijar nota:", error);
+        notify("No se pudo actualizar el estado de fijado", "error");
+      }
+    }, [isPinned, noteId, notify, onNotesChanged]);
+
+    const handleDuplicateNote = useCallback(async () => {
+      if (noteId === null) return;
+
+      try {
+        const duplicatedNote = (await window.electron?.notes?.duplicate?.(
+          noteId,
+        )) as { title?: string } | undefined;
+        if (!duplicatedNote) {
+          notify("No se pudo duplicar la nota", "warning");
+          return;
+        }
+
+        onNotesChanged?.();
+        notify(
+          `Nota duplicada como "${duplicatedNote.title ?? "copia"}"`,
+          "success",
+        );
+      } catch (error) {
+        console.error("Error al duplicar la nota:", error);
+        notify("No se pudo duplicar la nota", "error");
+      }
+    }, [noteId, notify]);
+
+    const handleStar = useCallback(async () => {
+      if (noteId === null) return;
+
+      try {
+        const updatedNote = (await window.electron?.notes?.toggleQuickAccess?.(
+          noteId,
+        )) as { is_quick_access?: number } | undefined;
+        const nextQuickAccess = updatedNote
+          ? updatedNote.is_quick_access === 1
+          : !isQuickAccess;
+        setIsQuickAccess(nextQuickAccess);
+        onNotesChanged?.();
+        notify(
+          nextQuickAccess
+            ? "Nota aÃ±adida a Acceso rÃ¡pido"
+            : "Nota quitada de Acceso rÃ¡pido",
+          "success",
+        );
+      } catch (error) {
+        console.error("Error al actualizar Acceso rÃ¡pido:", error);
+        notify("No se pudo actualizar Acceso rÃ¡pido", "error");
+      }
+    }, [isQuickAccess, noteId, notify, onNotesChanged]);
 
     const handleShare = useCallback(() => {
       console.log("Compartir nota");
@@ -1575,8 +1937,155 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
     }, []);
 
     const handleMenu = useCallback(() => {
+      setQuickMenuOpen(true);
+    }, []);
+
+    const handleOpenExport = useCallback(() => {
+      setQuickMenuOpen(false);
       setOptionsModalOpen(true);
     }, []);
+
+    const countMatchingTerms = useCallback((html: string, query: string) => {
+      const normalizedQuery = query.trim();
+      if (!normalizedQuery) return 0;
+      const pattern = new RegExp(
+        normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "gi",
+      );
+      return (html.match(pattern) ?? []).length;
+    }, []);
+
+    useEffect(() => {
+      const nextTotal = countMatchingTerms(content, searchQuery);
+      setTotalSearchResults(nextTotal);
+      setCurrentSearchIndex((current) =>
+        nextTotal === 0 ? 0 : Math.min(current, nextTotal - 1),
+      );
+    }, [content, countMatchingTerms, searchQuery]);
+
+    const handleOpenSearch = useCallback(() => {
+      setIsSearchOpen(true);
+    }, []);
+
+    const handleCopyToTemplates = useCallback(async () => {
+      if (!noteId || !workspaceId) return;
+      try {
+        const template = await window.electron?.templates?.create({
+          workspaceId,
+          name: noteTitle || resolvedTitle || "Plantilla",
+          content: content,
+        });
+        if (!template) {
+          notify("No se pudo crear la plantilla", "error");
+          return;
+        }
+        window.dispatchEvent(new CustomEvent("templates:updated"));
+        notify("Plantilla creada a partir de la nota", "success");
+      } catch (error) {
+        console.error("Error creando plantilla:", error);
+        notify("No se pudo crear la plantilla", "error");
+      }
+    }, [content, noteId, noteTitle, notify, resolvedTitle, workspaceId]);
+
+    const handleDeleteNote = useCallback(() => {
+      if (!noteId) return;
+      setIsDeleteConfirmOpen(true);
+    }, [noteId]);
+
+    const handleConfirmDeleteNote = useCallback(async () => {
+      if (!noteId) return;
+      try {
+        await window.electron?.notes?.delete(noteId);
+        window.dispatchEvent(new CustomEvent("notes:updated"));
+        window.dispatchEvent(new CustomEvent("trash:updated"));
+        notify("Nota enviada a la papelera", "success");
+        setIsDeleteConfirmOpen(false);
+        onNotesChanged?.();
+      } catch (error) {
+        console.error("Error eliminando nota:", error);
+        notify("No se pudo enviar la nota a la papelera", "error");
+      }
+    }, [noteId, notify, onNotesChanged]);
+
+    const handleToggleFocusMode = useCallback(() => {
+      onToggleFocusMode?.();
+    }, [onToggleFocusMode]);
+
+    const handleClearFormat = useCallback(() => {
+      editorRef.current?.clearFormat();
+      notify("Formato de texto limpiado", "success");
+    }, [notify]);
+
+    const handleSearch = useCallback((value: string) => {
+      setSearchQuery(value);
+      if (value.trim()) setIsSearchOpen(true);
+    }, []);
+
+    const handleSearchNext = useCallback(() => {
+      if (!totalSearchResults) return;
+      setCurrentSearchIndex((current) =>
+        current >= totalSearchResults - 1 ? 0 : current + 1,
+      );
+    }, [totalSearchResults]);
+
+    const handleSearchPrev = useCallback(() => {
+      if (!totalSearchResults) return;
+      setCurrentSearchIndex((current) =>
+        current <= 0 ? totalSearchResults - 1 : current - 1,
+      );
+    }, [totalSearchResults]);
+
+    const handleMoveWorkspace = useCallback(async () => {
+      if (!noteId) return;
+      setQuickMenuOpen(false);
+      setIsMoveWorkspaceOpen(true);
+    }, [noteId]);
+
+    const handleMoveNotebook = useCallback(async () => {
+      if (!noteId) return;
+      setQuickMenuOpen(false);
+      setIsMoveNotebookOpen(true);
+    }, [noteId]);
+
+    const handleManageTags = useCallback(async () => {
+      if (!noteId || !workspaceId) return;
+      setQuickMenuOpen(false);
+      setIsTagsModalOpen(true);
+    }, [noteId, workspaceId]);
+
+    const handleMoveToWorkspace = useCallback(
+      async (targetWorkspaceId: number) => {
+        if (!noteId) return;
+        try {
+          await window.electron?.workspaces?.moveElement(
+            "note",
+            noteId,
+            targetWorkspaceId,
+          );
+          onNotesChanged?.();
+          notify("Nota movida al espacio seleccionado", "success");
+        } catch (error) {
+          console.error("Error moviendo nota de espacio:", error);
+          notify("No se pudo mover la nota a ese espacio", "error");
+        }
+      },
+      [noteId, notify, onNotesChanged],
+    );
+
+    const handleMoveToNotebook = useCallback(
+      async (targetNotebookId: number | null) => {
+        if (!noteId) return;
+        try {
+          await window.electron?.notes?.move(noteId, targetNotebookId);
+          onNotesChanged?.();
+          notify("Nota movida al cuaderno seleccionado", "success");
+        } catch (error) {
+          console.error("Error moviendo nota a cuaderno:", error);
+          notify("No se pudo mover la nota a ese cuaderno", "error");
+        }
+      },
+      [noteId, notify, onNotesChanged],
+    );
 
     const handleInsertTable = useCallback((r?: number, c?: number) => {
       const rows = r ?? 2;
@@ -1590,10 +2099,168 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
       );
     }, []);
 
-    const handleInsertDate = useCallback(() => {
-      const now = new Date().toLocaleDateString("es-ES");
-      editorRef.current?.insertContent(now);
-    }, []);
+    const formatDateValue = useCallback(
+      (type: "datetime" | "date" | "time"): string => {
+        const now = new Date();
+
+        if (type === "datetime") {
+          const datePart = new Intl.DateTimeFormat("es-ES", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+            .format(now)
+            .replace(/\./g, "");
+          const timePart = new Intl.DateTimeFormat("es-ES", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }).format(now);
+          return `${datePart}, ${timePart}`;
+        }
+
+        if (type === "date") {
+          return new Intl.DateTimeFormat("es-ES", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+            .format(now)
+            .replace(/\./g, "");
+        }
+
+        return new Intl.DateTimeFormat("es-ES", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }).format(now);
+      },
+      [],
+    );
+
+    const handleInsertDate = useCallback(
+      (type: "datetime" | "date" | "time" = "datetime") => {
+        editorRef.current?.insertContent(formatDateValue(type));
+      },
+      [formatDateValue],
+    );
+
+    useEffect(() => {
+      const handleKeyboardShortcuts = (event: KeyboardEvent) => {
+        const key = event.key.toLowerCase();
+        const isModifierPressed = event.ctrlKey || event.metaKey;
+
+        if (!editorRef.current?.isFocused()) {
+          if (event.key === "Escape" && isSearchOpen) {
+            setIsSearchOpen(false);
+            setSearchQuery("");
+          }
+          return;
+        }
+
+        if (isModifierPressed && key === "f") {
+          event.preventDefault();
+          setIsSearchOpen(true);
+        }
+
+        if (event.key === "F11") {
+          event.preventDefault();
+          onToggleFocusMode?.();
+        }
+
+        if (
+          event.altKey &&
+          isModifierPressed &&
+          event.shiftKey &&
+          (key === "d" || key === "D")
+        ) {
+          event.preventDefault();
+          handleInsertDate("time");
+          return;
+        }
+
+        if (
+          isModifierPressed &&
+          event.shiftKey &&
+          !event.altKey &&
+          (key === "d" || key === "D")
+        ) {
+          event.preventDefault();
+          handleInsertDate("date");
+          return;
+        }
+
+        if (
+          isModifierPressed &&
+          !event.shiftKey &&
+          !event.altKey &&
+          (key === "d" || key === "D")
+        ) {
+          event.preventDefault();
+          handleInsertDate("datetime");
+          return;
+        }
+
+        if (event.key === "Escape" && isSearchOpen) {
+          setIsSearchOpen(false);
+          setSearchQuery("");
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyboardShortcuts);
+      return () =>
+        window.removeEventListener("keydown", handleKeyboardShortcuts);
+    }, [handleInsertDate, isSearchOpen, onToggleFocusMode]);
+
+    const handleInsertTemplateContent = useCallback(
+      (templateContent: string) => {
+        editorRef.current?.runEditorCommand((ed) => {
+          ed.chain()
+            .focus(undefined, { scrollIntoView: false })
+            .insertContent(templateContent)
+            .run();
+        });
+      },
+      [],
+    );
+
+    if (isFocusMode) {
+      return (
+        <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-white dark:bg-slate-950">
+          <div className="fixed top-4 right-6 z-50 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onToggleFocusMode?.()}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+              Salir del modo foco
+            </button>
+          </div>
+
+          <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 md:px-8 md:py-10">
+            <div className="prose prose-slate max-w-none dark:prose-invert">
+              <TiptapEditor
+                ref={editorRef}
+                initialHTML={editorInitialHTML}
+                searchQuery={searchQuery}
+                editable={false}
+                onUpdate={handleContentUpdate}
+                onImageDrop={async (file) => {
+                  const src = await handleImageSave(file);
+                  if (src) {
+                    editorRef.current?.runEditorCommand((ed) =>
+                      ed.chain().focus().setImage({ src }).run(),
+                    );
+                  }
+                  return src;
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="flex-1 flex flex-col h-full w-full bg-white overflow-hidden">
@@ -1606,7 +2273,9 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
             onHistory={handleHistory}
             onExternal={handleExternal}
             onMenu={handleMenu}
-            onToggleFocusMode={() => {}}
+            onToggleFocusMode={handleToggleFocusMode}
+            isPinned={isPinned}
+            isQuickAccess={isQuickAccess}
           />
         </div>
 
@@ -1614,6 +2283,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
           <TiptapEditor
             ref={editorRef}
             initialHTML={editorInitialHTML}
+            searchQuery={searchQuery}
             onUpdate={handleContentUpdate}
             onImageDrop={async (file) => {
               const src = await handleImageSave(file);
@@ -1633,6 +2303,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
             onInsertTable={handleInsertTable}
             onInsertImage={handleInsertImage}
             onInsertDate={handleInsertDate}
+            onOpenPlantillas={() => setShowPlantillasModal(true)}
           />
           <footer className="w-full flex items-center justify-between border-t border-gray-100 bg-white px-4 py-2.5 text-sm text-slate-600">
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
@@ -1669,6 +2340,95 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
             </div>
           </footer>
         </div>
+
+        {isQuickMenuOpen && (
+          <MenuOpcionesNotaModal
+            onClose={() => setQuickMenuOpen(false)}
+            onTogglePin={handleTogglePin}
+            onDuplicate={handleDuplicateNote}
+            onOpenExport={handleOpenExport}
+            onOpenSearch={handleOpenSearch}
+            onToggleFocusMode={handleToggleFocusMode}
+            onClearFormat={handleClearFormat}
+            onMoveWorkspace={handleMoveWorkspace}
+            onMoveNotebook={handleMoveNotebook}
+            onManageTags={handleManageTags}
+            onCopyToTemplates={handleCopyToTemplates}
+            onDeleteNote={handleDeleteNote}
+            isPinned={isPinned}
+          />
+        )}
+
+        {isDeleteConfirmOpen && (
+          <ConfirmacionEliminacionModal
+            isOpen={isDeleteConfirmOpen}
+            title="Eliminar nota"
+            message="Â¿EstÃ¡s seguro de que deseas enviar esta nota a la papelera?"
+            onCancel={() => setIsDeleteConfirmOpen(false)}
+            onConfirm={() => void handleConfirmDeleteNote()}
+            confirmLabel="Eliminar"
+            cancelLabel="Cancelar"
+          />
+        )}
+
+        {showPlantillasModal && (
+          <InsertarPlantillaModal
+            isOpen={showPlantillasModal}
+            workspaceId={workspaceId}
+            onClose={() => setShowPlantillasModal(false)}
+            onSelectTemplate={handleInsertTemplateContent}
+          />
+        )}
+
+        {isSearchOpen && (
+          <BuscadorInterno
+            query={searchQuery}
+            currentIndex={currentSearchIndex}
+            totalResults={totalSearchResults}
+            onSearch={handleSearch}
+            onNext={handleSearchNext}
+            onPrev={handleSearchPrev}
+            onClose={() => {
+              setIsSearchOpen(false);
+              setSearchQuery("");
+            }}
+          />
+        )}
+
+        {isMoveWorkspaceOpen && noteId && (
+          <MoverEspacioModal
+            isOpen={isMoveWorkspaceOpen}
+            spaces={spaces}
+            currentWorkspaceId={workspaceId ?? 0}
+            elementId={noteId}
+            elementType="note"
+            onClose={() => setIsMoveWorkspaceOpen(false)}
+            onMoved={handleMoveToWorkspace}
+          />
+        )}
+
+        {isMoveNotebookOpen && noteId && (
+          <SeleccionCuadernoModal
+            isOpen={isMoveNotebookOpen}
+            notebooks={notebooks}
+            currentNotebookId={notebookId}
+            onClose={() => setIsMoveNotebookOpen(false)}
+            onSelect={(targetNotebookId) => {
+              void handleMoveToNotebook(targetNotebookId);
+              setIsMoveNotebookOpen(false);
+            }}
+          />
+        )}
+
+        {isTagsModalOpen && noteId && workspaceId && (
+          <TagsModal
+            isOpen={isTagsModalOpen}
+            workspaceId={workspaceId}
+            noteId={noteId}
+            onClose={() => setIsTagsModalOpen(false)}
+            onSaved={() => onNotesChanged?.()}
+          />
+        )}
 
         {isOptionsModalOpen && (
           <>
@@ -2009,12 +2769,36 @@ export interface TiptapEditorHandle {
   insertContent: (html: string) => void;
   runEditorCommand: (callback: (editor: Editor) => void) => void;
   isActive: (name: string, attrs?: Record<string, any>) => boolean;
+  isFocused: () => boolean;
 }
 
 export interface TiptapEditorProps {
   initialHTML?: string;
+  searchQuery?: string;
+  editable?: boolean;
   onUpdate?: (html: string) => void;
   onImageDrop?: (file: File) => Promise<string | null>;
+}
+
+function stripSearchHighlight(html: string): string {
+  return html
+    .replace(/<mark class="search-highlight"[^>]*>/gi, "")
+    .replace(/<\/mark>/gi, "");
+}
+
+function highlightSearchTerms(html: string, query: string): string {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) {
+    return stripSearchHighlight(html);
+  }
+
+  const escapedQuery = normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`(${escapedQuery})`, "gi");
+
+  return html.replace(/>([^<>]+)</g, (match, text) => {
+    if (!text.trim()) return match;
+    return `>${text.replace(pattern, '<mark class="search-highlight">$1</mark>')}<`;
+  });
 }
 
 function isImageFile(file: File): boolean {
@@ -2033,12 +2817,19 @@ function isEditorEmpty(editor: Editor): boolean {
 }
 
 function TiptapEditorComponent(
-  { initialHTML, onUpdate, onImageDrop }: TiptapEditorProps,
+  {
+    initialHTML,
+    searchQuery = "",
+    editable = true,
+    onUpdate,
+    onImageDrop,
+  }: TiptapEditorProps,
   ref: React.ForwardedRef<TiptapEditorHandle>,
 ) {
   const [isEmpty, setIsEmpty] = useState(true);
 
   const editor = useEditor({
+    editable,
     editorProps: {
       attributes: {
         class:
@@ -2121,9 +2912,10 @@ function TiptapEditorComponent(
 
   useEffect(() => {
     if (editor) {
+      editor.setEditable(editable);
       setIsEmpty(isEditorEmpty(editor));
     }
-  }, [editor]);
+  }, [editor, editable]);
 
   useEffect(() => {
     if (!editor || typeof initialHTML !== "string") {
@@ -2141,6 +2933,19 @@ function TiptapEditorComponent(
       setIsEmpty(isEditorEmpty(editor));
     }
   }, [editor, initialHTML]);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const nextHTML = highlightSearchTerms(editor.getHTML(), searchQuery);
+    const normalizedHTML = nextHTML.replace(/\s\s+/g, " ").trim();
+    const currentHTML = editor.getHTML().replace(/\s\s+/g, " ").trim();
+
+    if (normalizedHTML !== currentHTML) {
+      editor.commands.setContent(nextHTML, { emitUpdate: false });
+      setIsEmpty(isEditorEmpty(editor));
+    }
+  }, [editor, searchQuery]);
 
   useImperativeHandle(
     ref,
@@ -2174,6 +2979,13 @@ function TiptapEditorComponent(
           return false;
         }
       },
+      isFocused: () => {
+        try {
+          return !!editor && editor.isFocused;
+        } catch {
+          return false;
+        }
+      },
     }),
     [editor],
   );
@@ -2194,6 +3006,344 @@ function TiptapEditorComponent(
 }
 
 export const TiptapEditor = forwardRef(TiptapEditorComponent);
+
+
+
+
+========================================
+FILE: \src\modules\editor\modals\MenuOpcionesNotaModal.tsx
+========================================
+
+import type { MouseEvent } from "react";
+import {
+  Copy,
+  Eraser,
+  FileDown,
+  FolderInput,
+  FolderPlus,
+  Pin,
+  PinOff,
+  Search,
+  SlidersHorizontal,
+  Tag,
+  X,
+  Maximize2,
+  LayoutTemplate,
+  Trash2,
+} from "lucide-react";
+
+export interface MenuOpcionesNotaModalProps {
+  onClose: () => void;
+  onTogglePin: () => Promise<void> | void;
+  onDuplicate: () => Promise<void> | void;
+  onOpenExport: () => void;
+  onOpenSearch: () => void;
+  onToggleFocusMode: () => void;
+  onClearFormat: () => void;
+  onMoveWorkspace: () => Promise<void> | void;
+  onMoveNotebook: () => Promise<void> | void;
+  onManageTags: () => Promise<void> | void;
+  onCopyToTemplates?: () => void | Promise<void>;
+  onDeleteNote?: () => void | Promise<void>;
+  isPinned?: boolean;
+}
+
+export function MenuOpcionesNotaModal({
+  onClose,
+  onTogglePin,
+  onDuplicate,
+  onOpenExport,
+  onOpenSearch,
+  onToggleFocusMode,
+  onClearFormat,
+  onMoveWorkspace,
+  onMoveNotebook,
+  onManageTags,
+  onCopyToTemplates,
+  onDeleteNote,
+  isPinned = false,
+}: MenuOpcionesNotaModalProps) {
+  const pinLabel = isPinned
+    ? "Desfijar de Acceso RÃ¡pido"
+    : "Fijar en Acceso RÃ¡pido";
+  const pinButtonClass = isPinned
+    ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-200 text-purple-700 transition group-hover:scale-105 dark:bg-purple-800/80 dark:text-purple-200"
+    : "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 transition group-hover:scale-105 dark:bg-purple-900/50 dark:text-purple-300";
+
+  const stopPropagation = (event: MouseEvent<HTMLDivElement>) => {
+    event.stopPropagation();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+      <div
+        className="absolute inset-0"
+        onClick={onClose}
+        aria-label="Cerrar menÃº de opciones"
+      />
+
+      <div
+        className="relative z-10 flex w-full max-w-sm flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 shadow-2xl transition-all dark:border-slate-800 dark:bg-slate-950"
+        onClick={stopPropagation}
+      >
+        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800/80">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
+              <SlidersHorizontal className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Opciones de nota
+              </h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Acciones rÃ¡pidas para la nota actual
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            onClick={onClose}
+            aria-label="Cerrar modal"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="flex max-h-[380px] flex-1 space-y-2 overflow-y-auto pr-1 scrollbar-thin">
+          <div className="w-full space-y-2">
+            <button
+              type="button"
+              onClick={() => {
+                void onTogglePin();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className={pinButtonClass}>
+                {isPinned ? (
+                  <PinOff className="h-4 w-4" />
+                ) : (
+                  <Pin className="h-4 w-4" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  {pinLabel}
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                void onDuplicate();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 transition group-hover:scale-105 dark:bg-blue-900/50 dark:text-blue-300">
+                <Copy className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Duplicar nota
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                onOpenSearch();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 transition group-hover:scale-105 dark:bg-blue-900/50 dark:text-blue-300">
+                <Search className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Buscar en esta nota
+                </p>
+                <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  Encontrar y resaltar texto dentro del documento (Ctrl + F)
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                onToggleFocusMode();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 transition group-hover:scale-105 dark:bg-purple-900/50 dark:text-purple-300">
+                <Maximize2 className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Modo Lectura / Foco
+                </p>
+                <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  Ocultar paneles laterales para concentrarse (F11)
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                onClearFormat();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-slate-600 transition group-hover:scale-105 dark:bg-slate-800 dark:text-slate-300">
+                <Eraser className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Limpiar Formato
+                </p>
+                <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  Eliminar estilos, colores y fuentes del texto seleccionado
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                void onMoveWorkspace();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 transition group-hover:scale-105 dark:bg-blue-900/50 dark:text-blue-300">
+                <FolderInput className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Mover a otro espacio
+                </p>
+                <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  Reasignar nota a otro espacio de trabajo
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                void onMoveNotebook();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 transition group-hover:scale-105 dark:bg-amber-900/50 dark:text-amber-300">
+                <FolderPlus className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  AÃ±adir a Cuadernos
+                </p>
+                <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  Asignar a un cuaderno o subcuaderno
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                void onManageTags();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 transition group-hover:scale-105 dark:bg-emerald-900/50 dark:text-emerald-300">
+                <Tag className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Gestionar Etiquetas
+                </p>
+                <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  Asociar o crear tags (#) para la nota
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                onCopyToTemplates?.();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 transition group-hover:scale-105 dark:bg-indigo-900/50 dark:text-indigo-300">
+                <LayoutTemplate className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Copiar a Plantillas
+                </p>
+                <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  Guardar estructura y contenido como plantilla reutilizable
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                onDeleteNote?.();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:border-red-200 hover:bg-red-50/40 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-red-900/50 dark:hover:bg-red-950/20"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100/80 text-red-600 transition group-hover:scale-105 dark:bg-red-950/60 dark:text-red-400">
+                <Trash2 className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Eliminar nota
+                </p>
+                <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
+                  Mover esta nota a la papelera
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                onOpenExport();
+                onClose();
+              }}
+              className="group flex w-full items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 transition group-hover:scale-105 dark:bg-emerald-900/50 dark:text-emerald-300">
+                <FileDown className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Exportar / Importar nota
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 
 
@@ -2432,6 +3582,237 @@ FILE: \src\modules\editor\modals\PlantillasMenu.tsx
 ========================================
 FILE: \src\modules\editor\modals\TagsModal.tsx
 ========================================
+
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { Check, Plus, Tag, X } from "lucide-react";
+import { useNotifications } from "../../../core/components/useNotifications";
+
+export interface NoteTag {
+  id: number;
+  name: string;
+  workspace_id: number;
+  color_hex?: string | null;
+}
+
+export interface TagsModalProps {
+  isOpen: boolean;
+  workspaceId: number | null;
+  noteId: number | null;
+  onClose: () => void;
+  onSaved?: () => void;
+}
+
+function getModalRoot(): HTMLElement | null {
+  if (typeof document === "undefined") return null;
+  let root = document.getElementById("modal-root");
+  if (!root) {
+    root = document.createElement("div");
+    root.id = "modal-root";
+    document.body.appendChild(root);
+  }
+  return root;
+}
+
+export function TagsModal({
+  isOpen,
+  workspaceId,
+  noteId,
+  onClose,
+  onSaved,
+}: TagsModalProps) {
+  const [allTags, setAllTags] = useState<NoteTag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [newTagName, setNewTagName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { notify } = useNotifications();
+
+  const refreshTags = async (): Promise<void> => {
+    if (!workspaceId || !noteId) return;
+    setIsLoading(true);
+    try {
+      const [workspaceTags, currentTags] = await Promise.all([
+        window.electron?.tags?.getAllForWorkspace(workspaceId) ?? [],
+        window.electron?.tags?.getForNote(noteId) ?? [],
+      ]);
+      setAllTags(
+        Array.isArray(workspaceTags) ? (workspaceTags as NoteTag[]) : [],
+      );
+      setSelectedTagIds(
+        Array.isArray(currentTags)
+          ? (currentTags as NoteTag[]).map((tag) => tag.id)
+          : [],
+      );
+    } catch (error) {
+      console.error("Error cargando etiquetas:", error);
+      notify("No se pudieron cargar las etiquetas", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    void refreshTags();
+  }, [isOpen, workspaceId, noteId]);
+
+  const tagOptions = useMemo(
+    () =>
+      allTags.map((tag) => ({
+        ...tag,
+        selected: selectedTagIds.includes(tag.id),
+      })),
+    [allTags, selectedTagIds],
+  );
+
+  async function handleSave(): Promise<void> {
+    if (!noteId) return;
+
+    setIsSaving(true);
+    try {
+      await window.electron?.tags?.setForNote(noteId, selectedTagIds);
+      notify("Etiquetas actualizadas correctamente", "success");
+      onSaved?.();
+      onClose();
+    } catch (error) {
+      console.error("Error guardando etiquetas:", error);
+      notify("No se pudieron guardar las etiquetas", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleCreateTag(): Promise<void> {
+    if (!workspaceId || !newTagName.trim()) return;
+
+    try {
+      await window.electron?.tags?.create(workspaceId, newTagName);
+      setNewTagName("");
+      await refreshTags();
+    } catch (error) {
+      console.error("Error creando etiqueta:", error);
+      notify("No se pudo crear la etiqueta", "error");
+    }
+  }
+
+  if (!isOpen) return null;
+  const root = getModalRoot();
+  if (!root) return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-950">
+        <button
+          type="button"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          onClick={onClose}
+          aria-label="Cerrar etiquetas"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
+            <Tag className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Etiquetas de la nota
+            </h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500">
+              Organiza tus notas con tags rÃ¡pidos
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-4 flex gap-2">
+          <input
+            value={newTagName}
+            onChange={(event) => setNewTagName(event.target.value)}
+            placeholder="Nueva etiqueta"
+            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none ring-0 transition focus:border-purple-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          />
+          <button
+            type="button"
+            onClick={() => void handleCreateTag()}
+            className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-500"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            AÃ±adir
+          </button>
+        </div>
+
+        <div className="space-y-2">
+          {isLoading ? (
+            <p className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
+              Cargando etiquetas...
+            </p>
+          ) : tagOptions.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-slate-200 py-5 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
+              AÃºn no hay etiquetas para este espacio.
+            </p>
+          ) : (
+            tagOptions.map((tag) => {
+              const selected = tag.selected;
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() =>
+                    setSelectedTagIds((current) =>
+                      current.includes(tag.id)
+                        ? current.filter((id) => id !== tag.id)
+                        : [...current, tag.id],
+                    )
+                  }
+                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left transition ${
+                    selected
+                      ? "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-200"
+                      : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <span
+                      className="inline-block h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: tag.color_hex || "#8B5CF6" }}
+                    />
+                    #{tag.name}
+                  </span>
+                  {selected && <Check className="h-4 w-4" />}
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="rounded-xl bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSaving ? "Guardando..." : "Guardar"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    root,
+  );
+}
 
 
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FileText } from "lucide-react";
 import { AppWrapper } from "./core";
 import { GlobalHeader } from "./core/components/GlobalHeader";
 import {
@@ -263,7 +264,7 @@ function WorkspaceShell() {
 
         {!isFocusMode && activeView !== "papelera" && (
           <div
-            className={`h-full flex flex-col border-r border-gray-200 flex-shrink-0 bg-white overflow-hidden transition-all duration-200 ${
+            className={`flex h-full max-h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-200 ${
               activeView === "plantillas" ? "w-[360px]" : "w-52"
             }`}
           >
@@ -364,15 +365,17 @@ function WorkspaceShell() {
               onToggleFocusMode={handleToggleFocusMode}
             />
           ) : (
-            <div className="flex h-full min-h-0 items-center justify-center bg-white p-8 text-center text-slate-500 overflow-hidden">
-              <div>
-                <h2 className="mb-2 text-xl font-medium text-slate-700">
-                  Selecciona o crea una nota
-                </h2>
-                <p className="text-sm">
-                  La nota recién creada se abrirá automáticamente aquí.
-                </p>
+            <div className="flex h-full flex-col items-center justify-center gap-3 bg-white p-8 text-center dark:bg-slate-950">
+              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-purple-50 text-purple-500 shadow-sm dark:bg-purple-950/40 dark:text-purple-400">
+                <FileText className="h-8 w-8" />
               </div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                Selecciona o crea una nota
+              </h3>
+              <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
+                Elige una nota de la lista izquierda o pulsa "Nueva Nota" para
+                comenzar a escribir.
+              </p>
             </div>
           )}
         </div>

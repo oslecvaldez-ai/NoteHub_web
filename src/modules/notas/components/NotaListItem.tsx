@@ -31,7 +31,11 @@ export function NotaListItem({
 
   return (
     <article
-      className={`nota-list-item${isSelected ? " is-selected" : ""}${isActive ? " is-active" : ""}`}
+      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-3.5 transition ${
+        isActive || isSelected
+          ? "border-purple-300 bg-purple-50/60 shadow-sm dark:border-purple-800 dark:bg-purple-950/40"
+          : "border-slate-200/70 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-slate-700"
+      }`}
       onClick={() => onSelect(note)}
       onContextMenu={(event) => {
         event.preventDefault();
@@ -46,25 +50,36 @@ export function NotaListItem({
           {isSelected && <Check size={14} />}
         </span>
       )}
-      <div className="nota-list-content">
-        <div className="nota-list-heading">
-          <h3>{getNoteTitle(note)}</h3>
-          {note.is_pinned === 1 && (
-            <Pin
-              aria-label="Nota fijada"
-              className="h-3.5 w-3.5 shrink-0 text-purple-600 dark:text-purple-400"
-            />
-          )}
-        </div>
-        <p>{excerpt || "Sin contenido todavía"}</p>
-        <time dateTime={note.updated_at}>
-          {formatNoteDate(note.updated_at)}
-        </time>
+
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="flex-1 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+          {getNoteTitle(note) || "Sin título"}
+        </h3>
+        {note.is_pinned === 1 && (
+          <Pin
+            aria-label="Nota fijada"
+            className="h-3 w-3 shrink-0 fill-current text-purple-600 dark:text-purple-400"
+          />
+        )}
       </div>
+
+      <p className="line-clamp-2 text-[11px] font-normal leading-relaxed text-slate-400 dark:text-slate-500">
+        {excerpt || "Sin contenido adicional"}
+      </p>
+
+      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-slate-400 dark:text-slate-500">
+        <span>{formatNoteDate(note.updated_at)}</span>
+        {note.notebook_id && (
+          <span className="max-w-[100px] truncate rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">
+            {note.notebook_id}
+          </span>
+        )}
+      </div>
+
       {image && (
         <img
           alt="Miniatura de la nota"
-          className="nota-list-thumbnail"
+          className="mt-1 h-16 w-full rounded-xl object-cover"
           src={image}
         />
       )}

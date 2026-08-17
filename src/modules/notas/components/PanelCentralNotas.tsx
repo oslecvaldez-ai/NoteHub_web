@@ -260,24 +260,22 @@ export function PanelCentralNotas({
   }, [notebookId, notebooks]);
 
   return (
-    <section className="panel-central-notas h-full w-full max-w-full flex flex-col overflow-hidden bg-white">
-      <header className="panel-notas-header flex-shrink-0 w-full px-3 py-3 flex items-center justify-between border-b border-gray-100">
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-sm font-bold text-slate-800">
-            {activeNotebookName}
-          </h2>
-        </div>
-        <div className="panel-notas-header-actions flex items-center gap-1 flex-shrink-0">
+    <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
+      <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="truncate pr-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+          {activeNotebookName}
+        </h2>
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
-            className="panel-notas-icon-button p-1 text-slate-500 hover:text-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
             aria-label="Ordenar"
           >
             <ArrowUpDown size={16} />
           </button>
           <button
             type="button"
-            className="panel-notas-icon-button p-1 text-slate-500 hover:text-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
             aria-label="Más opciones"
           >
             <MoreVertical size={16} />
@@ -285,59 +283,25 @@ export function PanelCentralNotas({
         </div>
       </header>
 
-      {selectionMode && selectedIds.length > 0 && (
-        <div className="panel-notas-bulk-actions flex-shrink-0 p-2 text-xs bg-slate-50 border-b border-gray-100">
-          <span>{selectedIds.length} seleccionada(s)</span>
-          <button
-            onClick={() =>
-              setMoveNote(
-                notes.find((note) => note.id === selectedIds[0]) ?? null,
-              )
-            }
-            type="button"
-          >
-            Mover seleccionadas
-          </button>
-          <button
-            onClick={() =>
-              setDeleteTarget(
-                notes.find((note) => note.id === selectedIds[0]) ?? null,
-              )
-            }
-            type="button"
-          >
-            Eliminar seleccionadas
-          </button>
-        </div>
-      )}
-
-      {/* Contenedor de lista con ancho estrictamente contenido y scroll vertical únicamente */}
-      <div className="panel-notas-list flex-1 w-full max-w-full overflow-y-auto overflow-x-hidden p-2 space-y-2">
+      <div
+        className="flex-1 min-h-0 h-full w-full overflow-y-auto overflow-x-hidden p-3 space-y-2.5 scrollbar-thin"
+        style={{ overflowY: "auto", overflowX: "hidden" }}
+      >
         {workspaceId === null ? (
-          <div className="panel-notas-empty text-center p-4">
-            <h3 className="text-sm font-semibold text-slate-700">
-              Selecciona un espacio
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Elige un espacio en la barra lateral para ver tus notas.
-            </p>
+          <div className="p-6 text-center text-slate-400">
+            <p className="text-sm font-semibold">Selecciona un espacio</p>
           </div>
         ) : isLoading ? (
-          <p className="panel-notas-status text-xs text-slate-400 p-3 text-center">
+          <p className="p-6 text-center text-xs text-slate-400">
             Cargando notas...
           </p>
         ) : notes.length === 0 ? (
-          <div className="panel-notas-empty text-center p-4">
-            <h3 className="text-sm font-semibold text-slate-700">
-              No hay notas todavía
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Crea una nota nueva para comenzar.
-            </p>
+          <div className="p-6 text-center text-slate-400">
+            <p className="text-sm font-semibold">No hay notas todavía</p>
           </div>
         ) : (
           notes.map((note) => (
-            <div key={note.id} className="w-full max-w-full overflow-hidden">
+            <div key={note.id} className="w-full shrink-0">
               <NotaListItem
                 isSelected={selectedIds.includes(note.id)}
                 isActive={note.id === activeNoteId}
