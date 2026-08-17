@@ -7,9 +7,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Compilación y artefactos (Vite y Electron)
 dist
 dist-ssr
+dist-electron
+release
+build
 *.local
 
 # Editor directories and files
@@ -22,3 +30,19 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+Thumbs.db
+
+# Archivos de entorno local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporales de SQLite y módulo de respaldos
+*.db-journal
+*.db-wal
+*.db-shm
+temp_backup/
+temp_restore/
+*.zip
