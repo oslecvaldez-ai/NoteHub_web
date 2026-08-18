@@ -12,6 +12,16 @@ const electronApi = {
     setSetting: (key: string, value: string) =>
       ipcRenderer.invoke("db:set-setting", key, value),
   },
+  backup: {
+    create: () => ipcRenderer.invoke("backup:create"),
+    restore: () => ipcRenderer.invoke("backup:restore"),
+  },
+  settings: {
+    getAll: () => ipcRenderer.invoke("settings:get-all"),
+    get: (key: string) => ipcRenderer.invoke("settings:get", key),
+    set: (key: string, value: string) =>
+      ipcRenderer.invoke("settings:set", key, value),
+  },
   files: {
     copyImage: (sourcePath?: string | null) =>
       ipcRenderer.invoke("files:copy-image", sourcePath ?? null),

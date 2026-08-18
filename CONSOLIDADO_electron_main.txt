@@ -1,0 +1,1738 @@
+========================================
+FILE: electron/main/backup.ts
+========================================
+
+
+========================================
+FILE: electron/main/database.ts
+========================================
+import { app, ipcMain } from "electron";
+import Database from "better-sqlite3";
+import fs from "node:fs";
+import path from "node:path";
+
+export type DatabaseRow = Record<string, unknown>;
+export type DatabaseParams = unknown[];
+
+let database: Database.Database | null = null;
+
+const initialSettings: Record<string, string> = {
+  theme_mode: "light",
+  accent_color: "#8B5CF6",
+  font_family: "System",
+  font_size: "16",
+  line_spacing: "1.5",
+  paragraph_spacing: "8",
+};
+
+function getDatabasePath(): string {
+  return path.join(app.getPath("userData"), "SQLite", "NoteHub.db");
+}
+
+function ensureWorkspaceColumns(connection: Database.Database): void {
+  const columns = connection
+    .prepare("PRAGMA table_info(workspaces)")
+    .all() as Array<{ name: string }>;
+  const existingColumns = new Set(columns.map((column) => column.name));
+
+  if (!existingColumns.has("description")) {
+    connection.exec(
+      'ALTER TABLE workspaces ADD COLUMN description TEXT NOT NULL DEFAULT ""',
+    );
+  }
+
+  if (!existingColumns.has("icon_name")) {
+    connection.exec(
+      'ALTER TABLE workspaces ADD COLUMN icon_name TEXT NOT NULL DEFAULT "layers"',
+    );
+  }
+
+  if (!existingColumns.has("updated_at")) {
+    connection.exec("ALTER TABLE workspaces ADD COLUMN updated_at TEXT");
+  }
+}
+
+function ensureNotebookColumns(connection: Database.Database): void {
+  const columns = connection
+    .prepare("PRAGMA table_info(notebooks)")
+    .all() as Array<{ name: string }>;
+  const existingColumns = new Set(columns.map((column) => column.name));
+
+  if (!existingColumns.has("parent_notebook_id")) {
+    connection.exec(
+      "ALTER TABLE notebooks ADD COLUMN parent_notebook_id INTEGER REFERENCES notebooks(id) ON DELETE CASCADE",
+    );
+  }
+
+  if (!existingColumns.has("icon_type")) {
+    connection.exec("ALTER TABLE notebooks ADD COLUMN icon_type TEXT");
+  }
+
+  if (!existingColumns.has("icon_color")) {
+    connection.exec("ALTER TABLE notebooks ADD COLUMN icon_color TEXT");
+  }
+
+  if (!existingColumns.has("is_locked")) {
+    connection.exec(
+      "ALTER TABLE notebooks ADD COLUMN is_locked INTEGER NOT NULL DEFAULT 0",
+    );
+  }
+
+  if (!existingColumns.has("password_hash")) {
+    connection.exec("ALTER TABLE notebooks ADD COLUMN password_hash TEXT");
+  }
+}
+
+function ensureNoteColumns(connection: Database.Database): void {
+  const columns = connection
+    .prepare("PRAGMA table_info(notes)")
+    .all() as Array<{ name: string }>;
+  const existingColumns = new Set(columns.map((column) => column.name));
+
+  if (!existingColumns.has("is_quick_access")) {
+    connection.exec(
+      "ALTER TABLE notes ADD COLUMN is_quick_access INTEGER NOT NULL DEFAULT 0 CHECK (is_quick_access IN (0, 1))",
+    );
+  }
+}
+
+function createSchema(connection: Database.Database): void {
+  connection.pragma("foreign_keys = ON");
+  connection.exec(`
+		CREATE TABLE IF NOT EXISTS workspaces (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			name TEXT NOT NULL,
+			description TEXT NOT NULL DEFAULT '',
+			is_default INTEGER NOT NULL DEFAULT 0 CHECK (is_default IN (0, 1)),
+			icon_name TEXT NOT NULL DEFAULT 'layers',
+			color_hex TEXT NOT NULL DEFAULT '#8B5CF6',
+			is_locked INTEGER NOT NULL DEFAULT 0 CHECK (is_locked IN (0, 1)),
+			password_hash TEXT,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+		);
+
+		CREATE TABLE IF NOT EXISTS notebooks (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			workspace_id INTEGER NOT NULL,
+			parent_notebook_id INTEGER,
+			name TEXT NOT NULL,
+			icon_type TEXT,
+			icon_color TEXT,
+			is_locked INTEGER NOT NULL DEFAULT 0 CHECK (is_locked IN (0, 1)),
+			password_hash TEXT,
+			note_count INTEGER NOT NULL DEFAULT 0,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+			FOREIGN KEY (parent_notebook_id) REFERENCES notebooks(id) ON DELETE CASCADE
+		);
+
+		CREATE TABLE IF NOT EXISTS notes (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			workspace_id INTEGER NOT NULL,
+			notebook_id INTEGER,
+			title TEXT NOT NULL DEFAULT '',
+			content TEXT NOT NULL DEFAULT '',
+			is_pinned INTEGER NOT NULL DEFAULT 0 CHECK (is_pinned IN (0, 1)),
+			is_quick_access INTEGER NOT NULL DEFAULT 0 CHECK (is_quick_access IN (0, 1)),
+			is_deleted INTEGER NOT NULL DEFAULT 0 CHECK (is_deleted IN (0, 1)),
+			pinned_at TEXT,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+			FOREIGN KEY (notebook_id) REFERENCES notebooks(id) ON DELETE SET NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS templates (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			workspace_id INTEGER NOT NULL,
+			name TEXT NOT NULL,
+			content TEXT NOT NULL DEFAULT '',
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+		);
+
+		CREATE TABLE IF NOT EXISTS tags (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			workspace_id INTEGER NOT NULL,
+			name TEXT NOT NULL,
+			color_hex TEXT,
+			created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE (workspace_id, name),
+			FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+		);
+
+		CREATE TABLE IF NOT EXISTS note_tags (
+			note_id INTEGER NOT NULL,
+			tag_id INTEGER NOT NULL,
+			PRIMARY KEY (note_id, tag_id),
+			FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
+			FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+		);
+
+		CREATE TABLE IF NOT EXISTS settings (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL
+		);
+
+		CREATE INDEX IF NOT EXISTS idx_notebooks_workspace_id ON notebooks(workspace_id);
+		CREATE INDEX IF NOT EXISTS idx_notes_workspace_id ON notes(workspace_id);
+		CREATE INDEX IF NOT EXISTS idx_notes_notebook_id ON notes(notebook_id);
+		CREATE INDEX IF NOT EXISTS idx_templates_workspace_id ON templates(workspace_id);
+	`);
+  ensureWorkspaceColumns(connection);
+  ensureNotebookColumns(connection);
+  ensureNoteColumns(connection);
+}
+
+function seedDatabase(connection: Database.Database): void {
+  const seed = connection.transaction(() => {
+    const count = connection
+      .prepare("SELECT COUNT(*) as total FROM workspaces")
+      .get() as { total: number };
+
+    if (count.total === 0) {
+      connection
+        .prepare(
+          `
+					INSERT INTO workspaces (name, description, is_default, icon_name, color_hex)
+					VALUES (?, ?, 1, ?, ?)
+				`,
+        )
+        .run(
+          "Mi Espacio",
+          "Espacio principal por defecto",
+          "layers",
+          "#8B5CF6",
+        );
+    }
+
+    const insertSetting = connection.prepare(
+      "INSERT OR IGNORE INTO settings (key, value) VALUES (@key, @value)",
+    );
+
+    for (const [key, value] of Object.entries(initialSettings)) {
+      insertSetting.run({ key, value });
+    }
+  });
+
+  seed();
+}
+
+export function getDatabase(): Database.Database {
+  if (!database) {
+    const databasePath = getDatabasePath();
+    const dbDir = path.dirname(databasePath);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
+    database = new Database(databasePath);
+    console.log("Base de datos conectada correctamente en:", databasePath);
+    createSchema(database);
+    seedDatabase(database);
+  }
+
+  return database;
+}
+
+export function closeDatabase(): void {
+  database?.close();
+  database = null;
+}
+
+export function registerDatabaseIpc(): void {
+  ipcMain.handle(
+    "db:query",
+    (_event, sql: string, params: DatabaseParams = []) => {
+      const statement = getDatabase().prepare(sql);
+      return statement.all(...params) as DatabaseRow[];
+    },
+  );
+
+  ipcMain.handle(
+    "db:exec",
+    (_event, sql: string, params: DatabaseParams = []) => {
+      const statement = getDatabase().prepare(sql);
+      return statement.run(...params);
+    },
+  );
+
+  ipcMain.handle("db:get-setting", (_event, key: string) => {
+    const row = getDatabase()
+      .prepare("SELECT value FROM settings WHERE key = ?")
+      .get(key) as { value: string } | undefined;
+    return row?.value ?? null;
+  });
+
+  ipcMain.handle("db:set-setting", (_event, key: string, value: string) => {
+    getDatabase()
+      .prepare(
+        `INSERT INTO settings (key, value) VALUES (?, ?)
+				 ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      )
+      .run(key, value);
+    return value;
+  });
+}
+
+
+========================================
+FILE: electron/main/editor.ts
+========================================
+import { ipcMain } from 'electron'
+import { getDatabase } from './database'
+
+interface NoteRecord {
+	id: number
+	title: string
+	content: string
+	notebook_id: number | null
+}
+
+function getNoteById(id: number): NoteRecord | undefined {
+	return getDatabase()
+		.prepare('SELECT id, title, content, notebook_id FROM notes WHERE id = ?')
+		.get(id) as NoteRecord | undefined
+}
+
+function normalizeHtmlText(value: string): string {
+	return value
+		.replace(/&nbsp;|&#160;/g, ' ')
+		.replace(/&amp;/g, '&')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;|&#34;/g, '"')
+		.replace(/&#39;|&#x27;/g, "'")
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<\/p>/gi, '\n')
+		.replace(/<[^>]+>/g, '')
+		.replace(/\s+/g, ' ')
+		.trim()
+}
+
+function extractTitleFromContent(content: string): string {
+	const headingMatch = content.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/i)
+	const rawTitle = headingMatch?.[1] ? normalizeHtmlText(headingMatch[1]) : normalizeHtmlText(content)
+	const title = rawTitle.split('\n').map((line) => line.trim()).find(Boolean) ?? ''
+	return title.slice(0, 120) || 'Nota sin título'
+}
+
+export function registerEditorIpc(): void {
+	ipcMain.handle('notes:save-content', (_event, noteId: number, content: string, notebookId?: number | null) => {
+		const note = getNoteById(noteId)
+		if (!note) {
+			throw new Error('La nota no existe')
+		}
+
+		const title = extractTitleFromContent(content) || note.title || 'Nota sin título'
+		const targetNotebookId = notebookId === undefined ? note.notebook_id : notebookId
+
+		getDatabase()
+			.prepare(
+				`UPDATE notes
+				 SET title = ?, content = ?, notebook_id = ?, updated_at = CURRENT_TIMESTAMP
+				 WHERE id = ?`,
+			)
+			.run(title, content, targetNotebookId, noteId)
+
+		return getNoteById(noteId)
+	})
+}
+
+
+========================================
+FILE: electron/main/export.ts
+========================================
+import { BrowserWindow, dialog, ipcMain } from "electron";
+import fs from "node:fs";
+import path from "node:path";
+
+function sanitizeFileName(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9-_\. ]+/g, "_")
+    .replace(/\s+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .substring(0, 120);
+}
+
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<li[^>]*>/gi, "- ")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<h([1-6])[^>]*>(.*?)<\/h\1>/gi, (_match, level, content) => {
+      return "#".repeat(Number(level)) + " " + content + "\n\n";
+    })
+    .replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, "[$2]($1)")
+    .replace(/<img[^>]*alt="([^"]*)"[^>]*src="([^"]*)"[^>]*>/gi, "![$1]($2)")
+    .replace(/<strong>|<b>/gi, "**")
+    .replace(/<\/strong>|<\/b>/gi, "**")
+    .replace(/<em>|<i>/gi, "*")
+    .replace(/<\/em>|<\/i>/gi, "*")
+    .replace(/<u>/gi, "_")
+    .replace(/<\/u>/gi, "_")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;|&#160;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;|&#34;/g, '"')
+    .replace(/&#39;|&#x27;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function buildHtmlDocument(title: string, content: string): string {
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>${title}</title>
+<style>
+body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; color: #111827; background: #fff; }
+img { max-width: 100%; height: auto; }
+pre { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>${title}</h1>
+${content}
+</body>
+</html>`;
+}
+
+function getSaveFileName(title: string, extension: string): string {
+  const safeName = sanitizeFileName(title) || "Nota";
+  return `${safeName}.${extension}`;
+}
+
+function writeFile(filePath: string, contents: string | Buffer): string {
+  fs.writeFileSync(filePath, contents, "utf8");
+  return filePath;
+}
+
+async function createHiddenWindow(html: string): Promise<BrowserWindow> {
+  const exportWindow = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: false,
+    },
+  });
+
+  await exportWindow.loadURL(
+    `data:text/html;charset=utf-8,${encodeURIComponent(html)}`,
+  );
+  return exportWindow;
+}
+
+function getActiveWindow(): BrowserWindow | null {
+  return (
+    BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0] ?? null
+  );
+}
+
+export function registerExportIpc(): void {
+  ipcMain.handle(
+    "export:toTXT",
+    async (_event, title: string, content: string) => {
+      const defaultPath = getSaveFileName(title, "txt");
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: "Exportar nota como TXT",
+        defaultPath,
+        filters: [{ name: "Texto", extensions: ["txt"] }],
+      });
+      if (canceled || !filePath) return null;
+      return writeFile(filePath, htmlToPlainText(content));
+    },
+  );
+
+  ipcMain.handle(
+    "export:toMD",
+    async (_event, title: string, content: string) => {
+      const defaultPath = getSaveFileName(title, "md");
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: "Exportar nota como Markdown",
+        defaultPath,
+        filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
+      });
+      if (canceled || !filePath) return null;
+      return writeFile(filePath, htmlToPlainText(content));
+    },
+  );
+
+  ipcMain.handle(
+    "export:toHTML",
+    async (_event, title: string, content: string) => {
+      const defaultPath = getSaveFileName(title, "html");
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: "Exportar nota como HTML",
+        defaultPath,
+        filters: [{ name: "HTML", extensions: ["html", "htm"] }],
+      });
+      if (canceled || !filePath) return null;
+      return writeFile(filePath, buildHtmlDocument(title, content));
+    },
+  );
+
+  ipcMain.handle(
+    "export:toPDF",
+    async (_event, title: string, content: string) => {
+      const defaultPath = getSaveFileName(title, "pdf");
+      const { canceled, filePath } = await dialog.showSaveDialog({
+        title: "Exportar nota como PDF",
+        defaultPath,
+        filters: [{ name: "PDF", extensions: ["pdf"] }],
+      });
+      if (canceled || !filePath) return null;
+
+      const html = buildHtmlDocument(title, content);
+      const printWindow = await createHiddenWindow(html);
+      try {
+        const data = await printWindow.webContents.printToPDF({
+          printBackground: true,
+          pageSize: "A4",
+          marginsType: 1,
+        });
+        fs.writeFileSync(filePath, data);
+        return filePath;
+      } finally {
+        printWindow.close();
+      }
+    },
+  );
+
+  ipcMain.handle(
+    "export:toNoteHub",
+    async (_event, noteData: Record<string, unknown>) => {
+      const title =
+        typeof noteData.title === "string" ? noteData.title : "nota";
+      const { filePath } = await dialog.showSaveDialog({
+        title: "Exportar Nota NoteHub",
+        defaultPath: `${title || "nota"}.notehub`,
+        filters: [{ name: "Paquete NoteHub", extensions: ["notehub"] }],
+      });
+
+      if (!filePath) return null;
+
+      const payload = {
+        app: "NoteHub",
+        version: "1.0",
+        exportedAt: new Date().toISOString(),
+        data: {
+          id: noteData.id ?? null,
+          workspaceId: noteData.workspaceId ?? null,
+          notebookId: noteData.notebookId ?? null,
+          title:
+            typeof noteData.title === "string" ? noteData.title : "Sin título",
+          content: typeof noteData.content === "string" ? noteData.content : "",
+          isPinned:
+            typeof noteData.isPinned === "number"
+              ? noteData.isPinned
+              : noteData.isPinned
+                ? 1
+                : 0,
+          isFavorite:
+            typeof noteData.isFavorite === "number"
+              ? noteData.isFavorite
+              : noteData.isFavorite
+                ? 1
+                : 0,
+          isQuickAccess:
+            typeof noteData.isQuickAccess === "number"
+              ? noteData.isQuickAccess
+              : noteData.isQuickAccess
+                ? 1
+                : 0,
+          isDeleted:
+            typeof noteData.isDeleted === "number"
+              ? noteData.isDeleted
+              : noteData.isDeleted
+                ? 1
+                : 0,
+          pinnedAt: noteData.pinnedAt ?? null,
+          createdAt: noteData.createdAt ?? new Date().toISOString(),
+          updatedAt: noteData.updatedAt ?? new Date().toISOString(),
+          tags: Array.isArray(noteData.tags) ? noteData.tags : [],
+        },
+      };
+
+      return writeFile(filePath, JSON.stringify(payload, null, 2));
+    },
+  );
+
+  ipcMain.handle("import:fromNoteHub", async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: "Importar nota desde archivo NoteHub",
+      properties: ["openFile"],
+      filters: [{ name: "NoteHub", extensions: ["notehub", "json"] }],
+    });
+    if (canceled || filePaths.length === 0) return null;
+
+    const filePath = filePaths[0];
+
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+      const parsed = JSON.parse(content) as Record<string, unknown>;
+      const noteData =
+        (parsed && typeof parsed === "object" && "data" in parsed
+          ? parsed.data
+          : "note" in parsed
+            ? parsed.note
+            : parsed) ?? parsed;
+
+      if (
+        !noteData ||
+        typeof noteData !== "object" ||
+        (!("content" in noteData && typeof noteData.content === "string") &&
+          !("title" in noteData && typeof noteData.title === "string"))
+      ) {
+        throw new Error("Formato de archivo NoteHub no válido");
+      }
+
+      const normalizedNote = noteData as Record<string, unknown>;
+      return {
+        title:
+          typeof normalizedNote.title === "string" &&
+          normalizedNote.title.trim()
+            ? normalizedNote.title
+            : "Nota importada",
+        content:
+          typeof normalizedNote.content === "string"
+            ? normalizedNote.content
+            : "",
+        notebookId:
+          typeof normalizedNote.notebookId === "number"
+            ? normalizedNote.notebookId
+            : (normalizedNote.notebookId ?? null),
+        workspaceId:
+          typeof normalizedNote.workspaceId === "number"
+            ? normalizedNote.workspaceId
+            : (normalizedNote.workspaceId ?? null),
+      };
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new Error("El archivo JSON no es válido o está corrupto.");
+      }
+
+      if (
+        error instanceof Error &&
+        error.message === "Formato de archivo NoteHub no válido"
+      ) {
+        throw error;
+      }
+
+      throw new Error(
+        "No se pudo importar la nota. El formato del archivo no es válido.",
+      );
+    }
+  });
+}
+
+
+========================================
+FILE: electron/main/files.ts
+========================================
+import { app, dialog, ipcMain } from 'electron'
+import fs from 'node:fs'
+import path from 'node:path'
+
+export type ImagePayload = {
+	name: string
+	mimeType: string
+	data: Uint8Array
+}
+
+function sanitizeFileName(value: string): string {
+	return value
+		.normalize('NFKD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-zA-Z0-9-_\. ]+/g, '_')
+		.replace(/\s+/g, '_')
+		.replace(/^_+|_+$/g, '')
+}
+
+function buildDestinationName(sourceName: string, sourceType?: string): string {
+	const extension = path.extname(sourceName).toLowerCase() || (sourceType?.startsWith('image/') ? `.${sourceType.split('/')[1]}` : '.png')
+	const baseName = path.basename(sourceName, path.extname(sourceName))
+	const sanitizedBaseName = sanitizeFileName(baseName) || 'imagen'
+	return `${Date.now()}-${sanitizedBaseName}${extension}`
+}
+
+function writeImageToUserData(payload: string | ImagePayload): string {
+	const imagesDirectory = path.join(app.getPath('userData'), 'images')
+	fs.mkdirSync(imagesDirectory, { recursive: true })
+
+	let fileName: string
+	let destinationPath: string
+
+	if (typeof payload === 'string') {
+		const absoluteSourcePath = path.resolve(payload)
+		if (!fs.existsSync(absoluteSourcePath)) {
+			throw new Error('No se encontró el archivo seleccionado')
+		}
+		fileName = buildDestinationName(absoluteSourcePath)
+		destinationPath = path.join(imagesDirectory, fileName)
+		fs.copyFileSync(absoluteSourcePath, destinationPath)
+		return fileName
+	}
+
+	fileName = buildDestinationName(payload.name, payload.mimeType)
+	destinationPath = path.join(imagesDirectory, fileName)
+	fs.writeFileSync(destinationPath, Buffer.from(payload.data))
+	return fileName
+}
+
+export function registerFilesIpc(): void {
+	ipcMain.handle('files:copy-image', async (_event, sourcePath?: string | null) => {
+		let selectedPath = sourcePath?.trim() ?? ''
+		if (!selectedPath) {
+			const { canceled, filePaths } = await dialog.showOpenDialog({
+				title: 'Selecciona una imagen',
+				properties: ['openFile'],
+				filters: [{ name: 'Imágenes', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
+			})
+			if (canceled || filePaths.length === 0) {
+				return null
+			}
+			selectedPath = filePaths[0]
+		}
+		return writeImageToUserData(selectedPath)
+	})
+
+	ipcMain.handle('files:save-image', async (_event, source) => {
+		if (!source) {
+			const { canceled, filePaths } = await dialog.showOpenDialog({
+				title: 'Selecciona una imagen',
+				properties: ['openFile'],
+				filters: [{ name: 'Imágenes', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
+			})
+			if (canceled || filePaths.length === 0) {
+				return null
+			}
+			return writeImageToUserData(filePaths[0])
+		}
+
+		return writeImageToUserData(source as string | ImagePayload)
+	})
+}
+
+
+========================================
+FILE: electron/main/notebooks.ts
+========================================
+import { createHash } from 'node:crypto'
+import { ipcMain } from 'electron'
+import { getDatabase } from './database'
+
+export interface Notebook {
+	id: number
+	workspace_id: number
+	parent_notebook_id: number | null
+	name: string
+	icon_type: string | null
+	icon_color: string | null
+	is_locked: number
+	password_hash: string | null
+	note_count: number
+	created_at: string
+}
+
+export interface NotebookInput {
+	name?: string
+	parentNotebookId?: number | null
+	iconType?: string | null
+	iconTypeValue?: string | null
+	icon?: string | null
+	icon_type?: string | null
+	iconColor?: string | null
+	isLocked?: boolean | number | null
+	password?: string | null
+	passwordHash?: string | null
+	workspaceId?: number
+}
+
+function hashPassword(password: string): string {
+	return createHash('sha256').update(password).digest('hex')
+}
+
+function getNotebook(id: number): Notebook | undefined {
+	return getDatabase()
+		.prepare(
+			`SELECT notebooks.*, COUNT(notes.id) AS note_count
+			 FROM notebooks
+			 LEFT JOIN notes ON notes.notebook_id = notebooks.id AND notes.is_deleted = 0
+			 WHERE notebooks.id = ?
+			 GROUP BY notebooks.id`,
+		)
+		.get(id) as Notebook | undefined
+}
+
+function resolveNotebookIcon(input: NotebookInput): string {
+	return input.iconType ?? input.iconTypeValue ?? input.icon ?? input.icon_type ?? 'folder'
+}
+
+function buildNotebookPassword(input: NotebookInput): { isLocked: number; passwordHash: string | null } {
+	const isLocked = input.isLocked === true || input.isLocked === 1 ? 1 : 0
+	if (isLocked) {
+		const passwordHash = input.password
+			? hashPassword(input.password)
+			: input.passwordHash ?? null
+		if (!passwordHash) {
+			throw new Error('La contraseña es obligatoria para bloquear el cuaderno')
+		}
+		return { isLocked, passwordHash }
+	}
+
+	return { isLocked: 0, passwordHash: null }
+}
+
+function logNotebookError(context: string, error: unknown): void {
+	console.error(`[notebooks] ${context} failed`, error instanceof Error ? error.message : error)
+	if (error instanceof Error && error.stack) {
+		console.error(error.stack)
+	}
+}
+
+function ensureUniqueNotebookName(workspaceId: number, name: string, parentNotebookId: number | null): void {
+	const existing = getDatabase()
+		.prepare(
+			`SELECT id FROM notebooks
+			 WHERE workspace_id = ?
+			   AND name = ?
+			   AND (
+					(? IS NULL AND parent_notebook_id IS NULL)
+					OR (? IS NOT NULL AND parent_notebook_id = ?)
+				)`,
+		)
+		.get(workspaceId, name, parentNotebookId, parentNotebookId, parentNotebookId) as { id: number } | undefined
+
+	if (existing) {
+		throw new Error('Ya existe un cuaderno con este nombre en esta ubicación')
+	}
+}
+
+export function registerNotebooksIpc(): void {
+	ipcMain.handle('notebooks:get-all', (_event, workspaceId: number) => {
+		try {
+			return getDatabase()
+				.prepare(
+					`SELECT notebooks.*, COUNT(notes.id) AS note_count
+					 FROM notebooks
+					 LEFT JOIN notes ON notes.notebook_id = notebooks.id AND notes.is_deleted = 0
+					 WHERE notebooks.workspace_id = ?
+					 GROUP BY notebooks.id
+					 ORDER BY notebooks.parent_notebook_id IS NOT NULL, notebooks.name COLLATE NOCASE ASC`,
+				)
+				.all(workspaceId) as Notebook[]
+		} catch (error) {
+			logNotebookError('notebooks:get-all', error)
+			throw error
+		}
+	})
+
+	ipcMain.handle(
+		'notebooks:create',
+		(_event, workspaceId: number, input: NotebookInput) => {
+			try {
+				console.log('[notebooks] create request', { workspaceId, input })
+				const name = input.name?.trim()
+				if (!name) throw new Error('El nombre del cuaderno es obligatorio')
+				const parentNotebookId = input.parentNotebookId ?? null
+				ensureUniqueNotebookName(workspaceId, name, parentNotebookId)
+				const iconType = resolveNotebookIcon(input)
+				const { isLocked, passwordHash } = buildNotebookPassword(input)
+				const result = getDatabase()
+					.prepare(
+						`INSERT INTO notebooks
+						 (workspace_id, parent_notebook_id, name, icon_type, icon_color, is_locked, password_hash)
+						 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+					)
+					.run(
+						workspaceId,
+						parentNotebookId,
+						name,
+						iconType,
+						input.iconColor ?? null,
+						isLocked,
+						passwordHash,
+					)
+				return getNotebook(Number(result.lastInsertRowid))
+			} catch (error) {
+				logNotebookError('notebooks:create', error)
+				throw error
+			}
+		},
+	)
+
+	ipcMain.handle(
+		'notebooks:update',
+		(_event, id: number, input: NotebookInput) => {
+			try {
+				const name = input.name?.trim()
+				if (!name) throw new Error('El nombre del cuaderno es obligatorio')
+				const iconType = resolveNotebookIcon(input)
+				const { isLocked, passwordHash } = buildNotebookPassword(input)
+				const result = getDatabase()
+					.prepare(
+						`UPDATE notebooks
+						 SET name = ?, parent_notebook_id = ?, icon_type = ?, icon_color = ?, is_locked = ?, password_hash = ?
+						 WHERE id = ?`,
+					)
+					.run(
+						name,
+						input.parentNotebookId ?? null,
+						iconType,
+						input.iconColor ?? null,
+						isLocked,
+						passwordHash,
+						id,
+					)
+				if (result.changes === 0) throw new Error('El cuaderno no existe')
+				return getNotebook(id)
+			} catch (error) {
+				logNotebookError('notebooks:update', error)
+				throw error
+			}
+		},
+	)
+
+	ipcMain.handle('notebooks:delete', (_event, id: number) => {
+		try {
+			const result = getDatabase().prepare('DELETE FROM notebooks WHERE id = ?').run(id)
+			if (result.changes === 0) throw new Error('El cuaderno no existe')
+			return { id }
+		} catch (error) {
+			logNotebookError('notebooks:delete', error)
+			throw error
+		}
+	})
+}
+
+
+========================================
+FILE: electron/main/notes.ts
+========================================
+import { ipcMain } from "electron";
+import { getDatabase } from "./database";
+
+export interface Note {
+  id: number;
+  workspace_id: number;
+  notebook_id: number | null;
+  title: string;
+  content: string;
+  is_pinned: number;
+  is_quick_access: number;
+  is_deleted: number;
+  pinned_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NoteInput {
+  title?: string;
+  content?: string;
+  notebookId?: number | null;
+}
+
+function getNote(id: number): Note | undefined {
+  return getDatabase().prepare("SELECT * FROM notes WHERE id = ?").get(id) as
+    | Note
+    | undefined;
+}
+
+function listNotes(
+  workspaceId: number,
+  notebookId?: number | null,
+  search = "",
+): Note[] {
+  const clauses = ["workspace_id = ?", "is_deleted = 0"];
+  const params: unknown[] = [workspaceId];
+  if (notebookId !== undefined && notebookId !== null) {
+    clauses.push("notebook_id = ?");
+    params.push(notebookId);
+  }
+  if (search.trim()) {
+    clauses.push("(title LIKE ? OR content LIKE ?)");
+    const term = `%${search.trim()}%`;
+    params.push(term, term);
+  }
+  return getDatabase()
+    .prepare(
+      `SELECT * FROM notes
+			 WHERE ${clauses.join(" AND ")}
+			 ORDER BY is_pinned DESC, updated_at DESC`,
+    )
+    .all(...params) as Note[];
+}
+
+export function registerNotesIpc(): void {
+  ipcMain.handle("notes:get-by-id", (_event, id: number) => getNote(id));
+
+  ipcMain.handle(
+    "notes:get-by-workspace",
+    (_event, workspaceId: number, notebookId?: number | null) =>
+      listNotes(workspaceId, notebookId),
+  );
+
+  ipcMain.handle("notes:get-quick-access", (_event, workspaceId: number) => {
+    return getDatabase()
+      .prepare(
+        `SELECT id, workspace_id, notebook_id, title, content, is_pinned, is_quick_access, is_deleted, pinned_at, created_at, updated_at
+				 FROM notes
+				 WHERE workspace_id = ? AND (is_quick_access = 1 OR is_pinned = 1) AND is_deleted = 0
+				 ORDER BY updated_at DESC`,
+      )
+      .all(workspaceId) as Note[];
+  });
+
+  ipcMain.handle(
+    "notes:search",
+    (_event, workspaceId: number, search: string, notebookId?: number | null) =>
+      listNotes(workspaceId, notebookId, search),
+  );
+
+  ipcMain.handle(
+    "notes:create",
+    (_event, workspaceId: number, input: NoteInput = {}) => {
+      const result = getDatabase()
+        .prepare(
+          `INSERT INTO notes (workspace_id, notebook_id, title, content)
+				 VALUES (?, ?, ?, ?)`,
+        )
+        .run(
+          workspaceId,
+          input.notebookId ?? null,
+          input.title?.trim() ?? "",
+          input.content ?? "",
+        );
+      return getNote(Number(result.lastInsertRowid));
+    },
+  );
+
+  ipcMain.handle("notes:duplicate", (_event, id: number) => {
+    const note = getNote(id);
+    if (!note) throw new Error("La nota no existe");
+    const result = getDatabase()
+      .prepare(
+        `INSERT INTO notes (workspace_id, notebook_id, title, content)
+				 VALUES (?, ?, ?, ?)`,
+      )
+      .run(
+        note.workspace_id,
+        note.notebook_id,
+        `${note.title} (copia)`,
+        note.content,
+      );
+    return getNote(Number(result.lastInsertRowid));
+  });
+
+  ipcMain.handle("notes:toggle-pin", (_event, id: number) => {
+    const note = getNote(id);
+    if (!note) throw new Error("La nota no existe");
+    const nextPinned = note.is_pinned === 1 ? 0 : 1;
+    getDatabase()
+      .prepare(
+        `UPDATE notes SET is_pinned = ?, is_quick_access = ?, pinned_at = CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE NULL END, updated_at = CURRENT_TIMESTAMP
+				 WHERE id = ?`,
+      )
+      .run(nextPinned, nextPinned, nextPinned, id);
+    return getNote(id);
+  });
+
+  ipcMain.handle(
+    "notes:toggle-quick-access",
+    (_event, id: number, nextStatus?: number) => {
+      const note = getNote(id);
+      if (!note) throw new Error("La nota no existe");
+      const resolvedNextStatus =
+        nextStatus === 0 || nextStatus === 1
+          ? nextStatus
+          : note.is_quick_access === 1
+            ? 0
+            : 1;
+      getDatabase()
+        .prepare(
+          `UPDATE notes SET is_quick_access = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        )
+        .run(resolvedNextStatus, id);
+      return getNote(id);
+    },
+  );
+
+  ipcMain.handle(
+    "notes:move",
+    (_event, id: number, notebookId: number | null) => {
+      const result = getDatabase()
+        .prepare(
+          "UPDATE notes SET notebook_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        )
+        .run(notebookId, id);
+      if (result.changes === 0) throw new Error("La nota no existe");
+      return getNote(id);
+    },
+  );
+
+  ipcMain.handle("notes:delete", (_event, id: number) => {
+    const result = getDatabase()
+      .prepare(
+        "UPDATE notes SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      )
+      .run(id);
+    if (result.changes === 0) throw new Error("La nota no existe");
+    return getNote(id);
+  });
+}
+
+
+========================================
+FILE: electron/main/preload.ts
+========================================
+import { contextBridge, ipcRenderer } from "electron";
+
+console.log("--- PRELOAD CARGADO CORRECTAMENTE ---");
+
+const electronApi = {
+  db: {
+    query: (sql: string, params: unknown[] = []) =>
+      ipcRenderer.invoke("db:query", sql, params),
+    exec: (sql: string, params: unknown[] = []) =>
+      ipcRenderer.invoke("db:exec", sql, params),
+    getSetting: (key: string) => ipcRenderer.invoke("db:get-setting", key),
+    setSetting: (key: string, value: string) =>
+      ipcRenderer.invoke("db:set-setting", key, value),
+  },
+  files: {
+    copyImage: (sourcePath?: string | null) =>
+      ipcRenderer.invoke("files:copy-image", sourcePath ?? null),
+    saveImage: (
+      sourcePath?:
+        | string
+        | { name: string; mimeType: string; data: Uint8Array }
+        | null,
+    ) => ipcRenderer.invoke("files:save-image", sourcePath ?? null),
+  },
+  editor: {
+    saveContent: (
+      noteId: number,
+      content: string,
+      notebookId?: number | null,
+    ) => ipcRenderer.invoke("notes:save-content", noteId, content, notebookId),
+  },
+  export: {
+    toTXT: (title: string, content: string) =>
+      ipcRenderer.invoke("export:toTXT", title, content),
+    toMD: (title: string, content: string) =>
+      ipcRenderer.invoke("export:toMD", title, content),
+    toHTML: (title: string, content: string) =>
+      ipcRenderer.invoke("export:toHTML", title, content),
+    toPDF: (title: string, content: string) =>
+      ipcRenderer.invoke("export:toPDF", title, content),
+    toNoteHub: (note: unknown) => ipcRenderer.invoke("export:toNoteHub", note),
+    fromNoteHub: () => ipcRenderer.invoke("import:fromNoteHub"),
+  },
+  workspaces: {
+    getAll: () => ipcRenderer.invoke("workspaces:get-all"),
+    create: (name: string) => ipcRenderer.invoke("workspaces:create", name),
+    update: (id: number, name: string) =>
+      ipcRenderer.invoke("workspaces:update", id, name),
+    delete: (id: number) => ipcRenderer.invoke("workspaces:delete", id),
+    moveElement: (
+      type: "note" | "notebook",
+      elementId: number,
+      targetWorkspaceId: number,
+    ) =>
+      ipcRenderer.invoke(
+        "workspaces:move-element",
+        type,
+        elementId,
+        targetWorkspaceId,
+      ),
+  },
+  notebooks: {
+    getAll: (workspaceId: number) =>
+      ipcRenderer.invoke("notebooks:get-all", workspaceId),
+    create: (workspaceId: number, input: unknown) =>
+      ipcRenderer.invoke("notebooks:create", workspaceId, input),
+    update: (id: number, input: unknown) =>
+      ipcRenderer.invoke("notebooks:update", id, input),
+    delete: (id: number) => ipcRenderer.invoke("notebooks:delete", id),
+  },
+  tags: {
+    getAllForWorkspace: (workspaceId: number) =>
+      ipcRenderer.invoke("tags:get-all-for-workspace", workspaceId),
+    getForNote: (noteId: number) =>
+      ipcRenderer.invoke("tags:get-for-note", noteId),
+    setForNote: (noteId: number, tagIds: number[]) =>
+      ipcRenderer.invoke("tags:set-for-note", noteId, tagIds),
+    create: (workspaceId: number, name: string) =>
+      ipcRenderer.invoke("tags:create", workspaceId, name),
+  },
+  notes: {
+    getById: (id: number) => ipcRenderer.invoke("notes:get-by-id", id),
+    getByWorkspace: (workspaceId: number, notebookId?: number | null) =>
+      ipcRenderer.invoke("notes:get-by-workspace", workspaceId, notebookId),
+    getQuickAccess: (workspaceId: number) =>
+      ipcRenderer.invoke("notes:get-quick-access", workspaceId),
+    search: (workspaceId: number, search: string, notebookId?: number | null) =>
+      ipcRenderer.invoke("notes:search", workspaceId, search, notebookId),
+    create: (workspaceId: number, input: unknown) =>
+      ipcRenderer.invoke("notes:create", workspaceId, input),
+    duplicate: (id: number) => ipcRenderer.invoke("notes:duplicate", id),
+    togglePin: (id: number) => ipcRenderer.invoke("notes:toggle-pin", id),
+    toggleQuickAccess: (id: number, nextStatus?: number) =>
+      ipcRenderer.invoke("notes:toggle-quick-access", id, nextStatus),
+    move: (id: number, notebookId: number | null) =>
+      ipcRenderer.invoke("notes:move", id, notebookId),
+    delete: (id: number) => ipcRenderer.invoke("notes:delete", id),
+  },
+  trash: {
+    getAll: (workspaceId: number) =>
+      ipcRenderer.invoke("trash:get-all", workspaceId),
+    restore: (noteId: number) => ipcRenderer.invoke("trash:restore", noteId),
+    deletePermanent: (noteId: number) =>
+      ipcRenderer.invoke("trash:delete-permanent", noteId),
+    empty: (workspaceId: number) =>
+      ipcRenderer.invoke("trash:empty", workspaceId),
+    getCount: (workspaceId: number) =>
+      ipcRenderer.invoke("trash:get-count", workspaceId),
+  },
+  templates: {
+    getAll: (workspaceId: number) =>
+      ipcRenderer.invoke("templates:get-all", workspaceId),
+    getById: (templateId: number) =>
+      ipcRenderer.invoke("templates:get-by-id", templateId),
+    getByWorkspace: (workspaceId: number) =>
+      ipcRenderer.invoke("templates:get-by-workspace", workspaceId),
+    create: (input: { workspaceId: number; name: string; content: string }) =>
+      ipcRenderer.invoke("templates:create", input),
+    update: (input: { id: number; name: string; content: string }) =>
+      ipcRenderer.invoke("templates:update", input),
+    delete: (templateId: number) =>
+      ipcRenderer.invoke("templates:delete", templateId),
+    createNoteFromTemplate: (input: {
+      templateId: number;
+      workspaceId: number;
+      notebookId?: number | null;
+    }) => ipcRenderer.invoke("templates:create-note-from-template", input),
+  },
+};
+
+contextBridge.exposeInMainWorld("electron", electronApi);
+
+
+========================================
+FILE: electron/main/settings.ts
+========================================
+
+
+========================================
+FILE: electron/main/tags.ts
+========================================
+import { ipcMain } from "electron";
+import { getDatabase } from "./database";
+
+export interface Tag {
+  id: number;
+  workspace_id: number;
+  name: string;
+  color_hex: string | null;
+  created_at: string;
+}
+
+function getTag(id: number): Tag | undefined {
+  return getDatabase().prepare("SELECT * FROM tags WHERE id = ?").get(id) as
+    | Tag
+    | undefined;
+}
+
+function listTagsForWorkspace(workspaceId: number): Tag[] {
+  return getDatabase()
+    .prepare(
+      "SELECT * FROM tags WHERE workspace_id = ? ORDER BY name COLLATE NOCASE ASC",
+    )
+    .all(workspaceId) as Tag[];
+}
+
+function listTagsForNote(noteId: number): Tag[] {
+  return getDatabase()
+    .prepare(
+      `SELECT t.*
+       FROM tags t
+       INNER JOIN note_tags nt ON nt.tag_id = t.id
+       WHERE nt.note_id = ?
+       ORDER BY t.name COLLATE NOCASE ASC`,
+    )
+    .all(noteId) as Tag[];
+}
+
+function ensureTagName(name: string): string {
+  const normalized = name.trim().replace(/^#+/, "").trim();
+  if (!normalized) throw new Error("El nombre del tag no puede estar vacío");
+  return normalized;
+}
+
+export function registerTagsIpc(): void {
+  ipcMain.handle(
+    "tags:get-all-for-workspace",
+    (_event, workspaceId: number) => {
+      return listTagsForWorkspace(workspaceId);
+    },
+  );
+
+  ipcMain.handle("tags:get-for-note", (_event, noteId: number) => {
+    return listTagsForNote(noteId);
+  });
+
+  ipcMain.handle("tags:create", (_event, workspaceId: number, name: string) => {
+    const normalized = ensureTagName(name);
+    const existing = getDatabase()
+      .prepare(
+        "SELECT id FROM tags WHERE workspace_id = ? AND name = ? COLLATE NOCASE",
+      )
+      .get(workspaceId, normalized) as { id: number } | undefined;
+
+    if (existing) {
+      return getTag(existing.id);
+    }
+
+    const result = getDatabase()
+      .prepare(
+        "INSERT INTO tags (workspace_id, name, color_hex) VALUES (?, ?, ?)",
+      )
+      .run(workspaceId, normalized, "#8B5CF6");
+
+    return getTag(Number(result.lastInsertRowid));
+  });
+
+  ipcMain.handle(
+    "tags:set-for-note",
+    (_event, noteId: number, tagIds: number[]) => {
+      const database = getDatabase();
+      database.prepare("DELETE FROM note_tags WHERE note_id = ?").run(noteId);
+
+      if (!Array.isArray(tagIds) || tagIds.length === 0) {
+        return listTagsForNote(noteId);
+      }
+
+      const validIds = [
+        ...new Set(tagIds.filter((id) => Number.isFinite(Number(id)))),
+      ].map(Number);
+      for (const tagId of validIds) {
+        const tag = getTag(tagId);
+        if (!tag) continue;
+        database
+          .prepare(
+            "INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)",
+          )
+          .run(noteId, tagId);
+      }
+
+      return listTagsForNote(noteId);
+    },
+  );
+}
+
+
+========================================
+FILE: electron/main/templates.ts
+========================================
+import { ipcMain } from "electron";
+import { getDatabase } from "./database";
+
+export interface TemplateRecord {
+  id: number;
+  workspace_id: number;
+  name: string;
+  content: string;
+  created_at: string;
+}
+
+export interface CreateTemplateInput {
+  workspaceId: number;
+  name: string;
+  content: string;
+}
+
+function getTemplate(id: number): TemplateRecord | undefined {
+  return getDatabase()
+    .prepare("SELECT * FROM templates WHERE id = ?")
+    .get(id) as TemplateRecord | undefined;
+}
+
+function listTemplates(workspaceId: number): TemplateRecord[] {
+  return getDatabase()
+    .prepare(
+      `SELECT * FROM templates
+       WHERE workspace_id = ?
+       ORDER BY created_at DESC`,
+    )
+    .all(workspaceId) as TemplateRecord[];
+}
+
+export function registerTemplatesIpc(): void {
+  ipcMain.handle("templates:get-all", (_event, workspaceId: number) => {
+    if (!workspaceId) return [];
+    return listTemplates(Number(workspaceId));
+  });
+
+  ipcMain.handle("templates:get-by-id", (_event, templateId: number) => {
+    return getTemplate(Number(templateId));
+  });
+
+  ipcMain.handle(
+    "templates:get-by-workspace",
+    (_event, workspaceId: number) => {
+      if (!workspaceId) return [];
+      return listTemplates(Number(workspaceId));
+    },
+  );
+
+  ipcMain.handle("templates:create", (_event, input: CreateTemplateInput) => {
+    const workspaceId = Number(input?.workspaceId ?? 0);
+    const name = String(input?.name ?? "").trim();
+    const content = String(input?.content ?? "");
+
+    if (!workspaceId || !name) {
+      throw new Error("Se requiere un espacio y un nombre para la plantilla");
+    }
+
+    const result = getDatabase()
+      .prepare(
+        `INSERT INTO templates (workspace_id, name, content)
+         VALUES (?, ?, ?)`,
+      )
+      .run(workspaceId, name, content);
+
+    return getTemplate(Number(result.lastInsertRowid));
+  });
+
+  ipcMain.handle(
+    "templates:update",
+    (_event, input: { id: number; name: string; content: string }) => {
+      const templateId = Number(input?.id ?? 0);
+      const name = String(input?.name ?? "").trim();
+      const content = String(input?.content ?? "");
+
+      if (!templateId || !name) {
+        throw new Error("Se requiere una plantilla y un nombre válidos");
+      }
+
+      getDatabase()
+        .prepare("UPDATE templates SET name = ?, content = ? WHERE id = ?")
+        .run(name, content, templateId);
+
+      return { success: true };
+    },
+  );
+
+  ipcMain.handle("templates:delete", (_event, templateId: number) => {
+    getDatabase().prepare("DELETE FROM templates WHERE id = ?").run(templateId);
+    return { success: true };
+  });
+
+  ipcMain.handle(
+    "templates:create-note-from-template",
+    (
+      _event,
+      input: {
+        templateId: number;
+        workspaceId: number;
+        notebookId?: number | null;
+      },
+    ) => {
+      const database = getDatabase();
+      const templateId = Number(input?.templateId ?? 0);
+      const workspaceId = Number(input?.workspaceId ?? 0);
+      const notebookId = input?.notebookId ?? null;
+
+      const template = database
+        .prepare("SELECT * FROM templates WHERE id = ?")
+        .get(templateId) as TemplateRecord | undefined;
+
+      if (!template) {
+        throw new Error("No se encontró la plantilla especificada");
+      }
+
+      const result = database
+        .prepare(
+          `INSERT INTO notes (workspace_id, notebook_id, title, content, is_pinned, is_quick_access, is_deleted, created_at, updated_at)
+           VALUES (?, ?, ?, ?, 0, 0, 0, datetime('now', 'localtime'), datetime('now', 'localtime'))`,
+        )
+        .run(workspaceId, notebookId ?? null, template.name, template.content);
+
+      const newNoteId = Number(result.lastInsertRowid);
+
+      if (notebookId) {
+        database
+          .prepare(
+            `UPDATE notebooks
+             SET note_count = (
+               SELECT COUNT(*) FROM notes WHERE notebook_id = ? AND is_deleted = 0
+             )
+             WHERE id = ?`,
+          )
+          .run(notebookId, notebookId);
+      }
+
+      return {
+        id: newNoteId,
+        title: template.name,
+        content: template.content,
+        workspaceId,
+        notebookId,
+      };
+    },
+  );
+}
+
+
+========================================
+FILE: electron/main/trash.ts
+========================================
+import { ipcMain } from "electron";
+import type Database from "better-sqlite3";
+import { getDatabase } from "./database";
+
+export interface TrashedNoteRow {
+  id: number;
+  workspace_id: number;
+  notebook_id: number | null;
+  title: string;
+  content: string;
+  is_pinned: number;
+  is_quick_access: number;
+  is_deleted: number;
+  pinned_at: string | null;
+  created_at: string;
+  updated_at: string;
+  notebookName?: string | null;
+}
+
+function listTrashedNotes(workspaceId: number): TrashedNoteRow[] {
+  return getDatabase()
+    .prepare(
+      `SELECT n.*, b.name AS notebookName
+       FROM notes n
+       LEFT JOIN notebooks b ON b.id = n.notebook_id
+       WHERE n.is_deleted = 1 AND n.workspace_id = ?
+       ORDER BY n.updated_at DESC`,
+    )
+    .all(workspaceId) as TrashedNoteRow[];
+}
+
+function getNoteById(
+  noteId: number,
+): { notebook_id: number | null } | undefined {
+  return getDatabase()
+    .prepare("SELECT notebook_id FROM notes WHERE id = ?")
+    .get(noteId) as { notebook_id: number | null } | undefined;
+}
+
+export function registerTrashIpc(): void {
+  ipcMain.handle("trash:get-all", (_event, workspaceId: number) => {
+    return listTrashedNotes(Number(workspaceId));
+  });
+
+  ipcMain.handle("trash:restore", (_event, noteId: number) => {
+    const database = getDatabase();
+    database
+      .prepare(
+        `UPDATE notes
+         SET is_deleted = 0, updated_at = datetime('now', 'localtime')
+         WHERE id = ?`,
+      )
+      .run(noteId);
+
+    const note = getNoteById(Number(noteId));
+    if (note?.notebook_id) {
+      database
+        .prepare(
+          `UPDATE notebooks
+           SET note_count = (
+             SELECT COUNT(*) FROM notes WHERE notebook_id = ? AND is_deleted = 0
+           )
+           WHERE id = ?`,
+        )
+        .run(note.notebook_id, note.notebook_id);
+    }
+
+    return { success: true };
+  });
+
+  ipcMain.handle("trash:delete-permanent", (_event, noteId: number) => {
+    const database = getDatabase();
+    database.prepare("DELETE FROM note_tags WHERE note_id = ?").run(noteId);
+    database.prepare("DELETE FROM notes WHERE id = ?").run(noteId);
+    return { success: true };
+  });
+
+  ipcMain.handle("trash:empty", (_event, workspaceId: number) => {
+    const database = getDatabase();
+    const deletedNotes = database
+      .prepare("SELECT id FROM notes WHERE workspace_id = ? AND is_deleted = 1")
+      .all(Number(workspaceId)) as Array<{ id: number }>;
+
+    const deleteTagsStmt = database.prepare(
+      "DELETE FROM note_tags WHERE note_id = ?",
+    );
+    const deleteNoteStmt = database.prepare("DELETE FROM notes WHERE id = ?");
+
+    const transaction = database.transaction(() => {
+      for (const note of deletedNotes) {
+        deleteTagsStmt.run(note.id);
+        deleteNoteStmt.run(note.id);
+      }
+    });
+
+    transaction();
+    return { success: true, count: deletedNotes.length };
+  });
+
+  ipcMain.handle("trash:get-count", (_event, workspaceId: number) => {
+    const row = getDatabase()
+      .prepare(
+        "SELECT COUNT(*) AS count FROM notes WHERE workspace_id = ? AND is_deleted = 1",
+      )
+      .get(Number(workspaceId)) as { count: number } | undefined;
+
+    return row?.count ?? 0;
+  });
+}
+
+
+========================================
+FILE: electron/main/workspaces.ts
+========================================
+import { ipcMain } from 'electron'
+import { getDatabase } from './database'
+
+export interface Workspace {
+	id: number
+	name: string
+	is_default: number
+	color_hex: string
+	is_locked: number
+	password_hash: string | null
+	created_at: string
+}
+
+export type WorkspaceElementType = 'note' | 'notebook'
+
+function getWorkspace(id: number): Workspace | undefined {
+	return getDatabase()
+		.prepare('SELECT * FROM workspaces WHERE id = ?')
+		.get(id) as Workspace | undefined
+}
+
+export function registerWorkspacesIpc(): void {
+	ipcMain.handle('workspaces:get-all', () => {
+		return getDatabase()
+			.prepare('SELECT * FROM workspaces ORDER BY is_default DESC, name COLLATE NOCASE ASC')
+			.all() as Workspace[]
+	})
+
+	ipcMain.handle('workspaces:create', (_event, name: string) => {
+		try {
+			const normalizedName = name.trim()
+			if (!normalizedName) {
+				throw new Error('El nombre del espacio es obligatorio')
+			}
+
+			const result = getDatabase()
+				.prepare('INSERT INTO workspaces (name, is_default, color_hex) VALUES (?, 0, ?)')
+				.run(normalizedName, '#8B5CF6')
+			return getWorkspace(Number(result.lastInsertRowid))
+		} catch (error) {
+			console.error('Error al crear espacio:', error)
+			throw error
+		}
+	})
+
+	ipcMain.handle('workspaces:update', (_event, id: number, name: string) => {
+		const normalizedName = name.trim()
+		if (!normalizedName) {
+			throw new Error('El nombre del espacio es obligatorio')
+		}
+		if (!getWorkspace(id)) {
+			throw new Error('El espacio no existe')
+		}
+
+		getDatabase().prepare('UPDATE workspaces SET name = ? WHERE id = ?').run(normalizedName, id)
+		return getWorkspace(id)
+	})
+
+	ipcMain.handle('workspaces:delete', (_event, id: number) => {
+		const database = getDatabase()
+		const workspace = getWorkspace(id)
+		if (!workspace) {
+			throw new Error('El espacio no existe')
+		}
+		if (workspace.is_default === 1) {
+			throw new Error('El espacio por defecto no se puede eliminar')
+		}
+
+		const defaultWorkspace = database
+			.prepare('SELECT id FROM workspaces WHERE is_default = 1 LIMIT 1')
+			.get() as { id: number } | undefined
+		if (!defaultWorkspace) {
+			throw new Error('No existe un espacio por defecto para reasignar el contenido')
+		}
+
+		const removeWorkspace = database.transaction(() => {
+			database
+				.prepare('UPDATE notebooks SET workspace_id = ? WHERE workspace_id = ?')
+				.run(defaultWorkspace.id, id)
+			database
+				.prepare('UPDATE notes SET workspace_id = ? WHERE workspace_id = ?')
+				.run(defaultWorkspace.id, id)
+			database
+				.prepare('UPDATE templates SET workspace_id = ? WHERE workspace_id = ?')
+				.run(defaultWorkspace.id, id)
+			database
+				.prepare('UPDATE tags SET workspace_id = ? WHERE workspace_id = ?')
+				.run(defaultWorkspace.id, id)
+			database.prepare('DELETE FROM workspaces WHERE id = ?').run(id)
+		})
+
+		removeWorkspace()
+		return { id }
+	})
+
+	ipcMain.handle(
+		'workspaces:move-element',
+		(_event, type: WorkspaceElementType, elementId: number, targetWorkspaceId: number) => {
+			const database = getDatabase()
+			if (!getWorkspace(targetWorkspaceId)) {
+				throw new Error('El espacio de destino no existe')
+			}
+
+			if (type === 'note') {
+				const result = database
+					.prepare('UPDATE notes SET workspace_id = ? WHERE id = ?')
+					.run(targetWorkspaceId, elementId)
+				if (result.changes === 0) {
+					throw new Error('La nota no existe')
+				}
+				return { type, elementId, targetWorkspaceId }
+			}
+
+			if (type === 'notebook') {
+				const result = database
+					.prepare('UPDATE notebooks SET workspace_id = ? WHERE id = ?')
+					.run(targetWorkspaceId, elementId)
+				if (result.changes === 0) {
+					throw new Error('El cuaderno no existe')
+				}
+				return { type, elementId, targetWorkspaceId }
+			}
+
+			throw new Error('Tipo de elemento no válido')
+		},
+	)
+}
+
+

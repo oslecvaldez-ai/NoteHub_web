@@ -23,6 +23,7 @@ import {
   PanelEditor,
   type PanelEditorHandle,
 } from "./modules/editor/components/PanelEditor";
+import { PanelRespaldos } from "./modules/respaldos";
 
 function WorkspaceShell() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
@@ -44,7 +45,7 @@ function WorkspaceShell() {
   >("idle");
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
   const [activeView, setActiveView] = useState<
-    "notas" | "papelera" | "plantillas"
+    "notas" | "papelera" | "plantillas" | "respaldos"
   >("notas");
 
   const toggleSidebar = useCallback(() => {
@@ -258,6 +259,7 @@ function WorkspaceShell() {
               }}
               onSelectTrash={() => setActiveView("papelera")}
               onSelectTemplates={() => setActiveView("plantillas")}
+              onSelectBackups={() => setActiveView("respaldos")}
             />
           </div>
         )}
@@ -348,6 +350,8 @@ function WorkspaceShell() {
                 }}
               />
             )
+          ) : activeView === "respaldos" ? (
+            <PanelRespaldos />
           ) : selectedNote ? (
             <PanelEditor
               ref={panelEditorRef}
