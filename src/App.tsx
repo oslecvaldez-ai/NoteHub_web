@@ -294,6 +294,7 @@ function WorkspaceShell() {
                 notebookId={selectedNotebookId}
                 workspaceId={activeWorkspace?.id ?? null}
                 searchQuery={searchQuery}
+                onSearch={setSearchQuery}
                 onReloadReady={handleReloadReady}
                 onNoteSelect={handleNoteSelect}
                 activeNoteId={selectedNote?.id ?? null}

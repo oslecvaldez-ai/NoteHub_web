@@ -29,7 +29,7 @@ export function GlobalHeader({
   onToggleSidebar,
 }: GlobalHeaderProps): ReactElement {
   return (
-    <header className="flex h-14 w-full items-center justify-between gap-4 border-b border-gray-200 bg-white px-4">
+    <header className="flex h-14 w-full items-center justify-between gap-4 bg-white/85 dark:bg-slate-950/85 backdrop-blur-md border-b border-slate-200/70 dark:border-slate-800/70 px-4">
       <div className="flex items-center gap-2 text-slate-600">
         <button
           type="button"

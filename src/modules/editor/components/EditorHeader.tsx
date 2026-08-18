@@ -6,6 +6,7 @@ import {
   Pin,
   Share2,
   Star,
+  BookOpen,
 } from "lucide-react";
 import { type TiptapEditorHandle } from "./TiptapEditor";
 
@@ -24,6 +25,7 @@ export interface EditorHeaderProps {
 }
 
 export function EditorHeader({
+  title,
   onPin,
   onStar,
   onShare,
@@ -35,95 +37,72 @@ export function EditorHeader({
   isQuickAccess = false,
 }: EditorHeaderProps) {
   const pinTitle = isPinned ? "Desfijar nota" : "Fijar nota";
-  const pinButtonClass = isPinned
-    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500 bg-purple-100 text-purple-700 transition hover:bg-purple-200 dark:border-purple-600 dark:bg-purple-950/70 dark:text-purple-300 dark:hover:bg-purple-900/70"
-    : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
   const quickAccessTitle = isQuickAccess
     ? "Quitar de Acceso rápido"
     : "Añadir a Acceso rápido";
-  const quickAccessButtonClass = isQuickAccess
-    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-400 bg-amber-100 text-amber-600 transition hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-950/70 dark:text-amber-300 dark:hover:bg-amber-900/70"
-    : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
 
   return (
-    <header className="editor-header flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-200/50 dark:border-slate-700 dark:bg-slate-950 dark:shadow-none">
-      <div className="flex flex-1 items-center gap-3 min-w-0">
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-            Editor
-          </p>
-          {/* <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-            {title}
-          </h1> */}
+    <div className="mx-4 mt-3 mb-1 px-4 py-2.5 flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
+      {/* Left: metadata */}
+      <div className="flex items-center gap-3">
+        <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 border border-slate-200 dark:bg-slate-950 dark:border-slate-800">
+          <BookOpen className="h-4 w-4 text-slate-700 dark:text-slate-200" />
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[200px]">
+            {title || "Cuaderno"}
+          </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onPin}
-            aria-label={pinTitle}
-            title={pinTitle}
-            className={pinButtonClass}
-          >
-            <Pin className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onStar}
-            aria-label={quickAccessTitle}
-            title={quickAccessTitle}
-            className={quickAccessButtonClass}
-          >
-            <Star
-              className={`h-4 w-4 ${isQuickAccess ? "fill-current" : ""}`}
-            />
-          </button>
-          <button
-            type="button"
-            onClick={onShare}
-            aria-label="Compartir"
-            title="Compartir"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <Share2 className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onHistory}
-            aria-label="Historial"
-            title="Historial"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <Clock className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onExternal}
-            aria-label="Abrir externamente"
-            title="Abrir externamente"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onMenu}
-            aria-label="Más opciones"
-            title="Más opciones"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span className="text-xs text-slate-600 dark:text-slate-300">
+            Guardado local
+          </span>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onToggleFocusMode}
-        aria-label="Pantalla completa"
-        title="Pantalla completa"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-      >
-        <Maximize2 className="h-4 w-4" />
-      </button>
-    </header>
+
+      {/* Right: actions */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPin}
+          title={pinTitle}
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        >
+          <Pin className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onStar}
+          title={quickAccessTitle}
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        >
+          <Star className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onHistory}
+          title="Historial"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        >
+          <Clock className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onExternal}
+          title="Exportar"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleFocusMode}
+          title="Modo foco"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-purple-200 bg-white text-purple-600 hover:bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-300"
+        >
+          <Maximize2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }
