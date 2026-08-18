@@ -38,7 +38,14 @@ function createWindow(): void {
     : path.join(currentDirectory, "..", "public");
 
   // Prefer formats that work well as native icons on Windows/Linux (png, ico), fallback to svg
-  const iconCandidates = ["notehub.png", "notehub.ico", "notehub.svg"];
+  const iconCandidates = [
+    "notehub.png",
+    "notehub.ico",
+    "notehub.svg",
+    "favicon.png",
+    "splash-icon.png",
+    "icon.png",
+  ];
   let resolvedIcon: string | undefined;
   for (const candidate of iconCandidates) {
     const candidatePath = path.join(publicPath, candidate);

@@ -41,6 +41,7 @@ export function PanelCentralNotas({
   workspaceId,
   notebookId,
   searchQuery,
+  onSearch,
   activeNoteId,
   onCreateNoteReady,
   onReloadReady,
@@ -267,8 +268,8 @@ export function PanelCentralNotas({
   }, [notebookId, notebooks]);
 
   return (
-    <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
-      <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 dark:border-slate-800 dark:bg-slate-900">
+    <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col box-border border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
+      <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 dark:border-slate-800 dark:bg-slate-900 box-border">
         <h2 className="truncate pr-2 text-sm font-bold text-slate-800 dark:text-slate-100">
           {activeNotebookName}
         </h2>
@@ -290,21 +291,22 @@ export function PanelCentralNotas({
         </div>
       </header>
 
-      {/* Search bar sticky below header */}
-      <div className="px-3 pt-3 pb-2">
-        <div className="flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200/80 focus-within:border-purple-400 p-2">
-          <LucideSearch className="h-4 w-4 text-slate-400" />
+      {/* Barra de búsqueda contenida */}
+      <div className="w-full px-3 pt-3 pb-1 box-border">
+        <div className="flex w-full items-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-3 py-2 text-xs shadow-none dark:border-slate-800 dark:bg-slate-900 box-border focus-within:border-purple-400">
+          <LucideSearch className="h-4 w-4 shrink-0 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearch?.(e.target.value)}
             placeholder="Buscar en notas o #etiq"
-            className="w-full min-w-0 h-9 rounded-full bg-slate-50 border-0 text-sm outline-none placeholder:text-slate-400 text-slate-800 px-3 box-border"
+            className="w-full min-w-0 bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
           />
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-3 scrollbar-thin">
+      {/* Lista con margen simétrico y sin desborde */}
+      <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 box-border">
         {workspaceId === null && (
           <div className="p-6 text-center text-slate-400">
             <p className="text-sm font-semibold">Selecciona un espacio</p>
@@ -312,7 +314,9 @@ export function PanelCentralNotas({
         )}
 
         {workspaceId !== null && isLoading && (
-          <p className="p-6 text-center text-xs text-slate-400">Cargando notas...</p>
+          <p className="p-6 text-center text-xs text-slate-400">
+            Cargando notas...
+          </p>
         )}
 
         {workspaceId !== null && !isLoading && notes.length === 0 && (
@@ -324,7 +328,7 @@ export function PanelCentralNotas({
         {workspaceId !== null && !isLoading && notes.length > 0 && (
           <>
             {notes.map((note) => (
-              <div key={note.id} className="w-full min-w-0">
+              <div key={note.id} className="w-full min-w-0 box-border">
                 <NotaListItem
                   isSelected={selectedIds.includes(note.id)}
                   isActive={note.id === activeNoteId}

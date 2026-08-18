@@ -267,7 +267,7 @@ function WorkspaceShell() {
         {!isFocusMode && activeView !== "papelera" && (
           <div
             className={`flex h-full max-h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-200 ${
-              activeView === "plantillas" ? "w-[360px]" : "w-52"
+              activeView === "plantillas" ? "w-[360px]" : "w-80"
             }`}
           >
             {activeView === "plantillas" ? (

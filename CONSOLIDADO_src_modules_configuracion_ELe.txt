@@ -1,0 +1,35 @@
+========================================
+FILE: src/modules/configuracion/components/MenuAjustes.tsx
+========================================
+
+
+========================================
+FILE: src/modules/configuracion/index.ts
+========================================
+
+
+========================================
+FILE: src/modules/configuracion/sections/SeccionEditor.tsx
+========================================
+
+
+========================================
+FILE: src/modules/configuracion/sections/SeccionEspacios.tsx
+========================================
+
+
+========================================
+FILE: src/modules/configuracion/sections/SeccionGeneral.tsx
+========================================
+
+
+========================================
+FILE: src/modules/configuracion/sections/SeccionTemas.tsx
+========================================
+
+
+========================================
+FILE: src/modules/configuracion/views/VistaConfiguracion.tsx
+========================================
+
+
