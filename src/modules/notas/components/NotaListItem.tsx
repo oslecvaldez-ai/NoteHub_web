@@ -31,7 +31,7 @@ export function NotaListItem({
 
   return (
     <article
-      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-3.5 transition ${
+      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-3.5 transition w-full overflow-hidden ${
         isActive || isSelected
           ? "border-purple-300 bg-purple-50/60 shadow-sm dark:border-purple-800 dark:bg-purple-950/40"
           : "border-slate-200/70 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-slate-700"
@@ -51,8 +51,8 @@ export function NotaListItem({
         </span>
       )}
 
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="flex-1 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+      <div className="flex items-start justify-between gap-2 min-w-0 w-full">
+        <h3 className="min-w-0 flex-1 line-clamp-2 text-xs font-bold text-slate-800 dark:text-slate-100 break-words">
           {getNoteTitle(note) || "Sin título"}
         </h3>
         {note.is_pinned === 1 && (
@@ -63,14 +63,14 @@ export function NotaListItem({
         )}
       </div>
 
-      <p className="line-clamp-2 text-[11px] font-normal leading-relaxed text-slate-400 dark:text-slate-500">
+      <p className="min-w-0 break-words line-clamp-2 text-[11px] font-normal leading-relaxed text-slate-400 dark:text-slate-500">
         {excerpt || "Sin contenido adicional"}
       </p>
 
-      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-slate-400 dark:text-slate-500">
-        <span>{formatNoteDate(note.updated_at)}</span>
+      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-slate-400 dark:text-slate-500 w-full">
+        <span className="shrink-0">{formatNoteDate(note.updated_at)}</span>
         {note.notebook_id && (
-          <span className="max-w-[100px] truncate rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">
+          <span className="truncate max-w-[120px] rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">
             {note.notebook_id}
           </span>
         )}

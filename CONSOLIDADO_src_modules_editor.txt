@@ -1,7 +1,6 @@
-﻿========================================
-FILE: \src\modules\editor\components\BuscadorInterno.tsx
 ========================================
-
+FILE: src/modules/editor/components/BuscadorInterno.tsx
+========================================
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import type { ChangeEvent } from "react";
 
@@ -83,12 +82,9 @@ export function BuscadorInterno({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\editor\components\CustomExtensions.ts
+FILE: src/modules/editor/components/CustomExtensions.ts
 ========================================
-
 import { mergeAttributes, Mark, Node, Extension } from "@tiptap/core";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
@@ -313,12 +309,9 @@ export const ChecklistItem = TaskItem.extend({
 });
 
 
-
-
 ========================================
-FILE: \src\modules\editor\components\EditorHeader.tsx
+FILE: src/modules/editor/components/EditorHeader.tsx
 ========================================
-
 import {
   Clock,
   ExternalLink,
@@ -360,8 +353,8 @@ export function EditorHeader({
     ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500 bg-purple-100 text-purple-700 transition hover:bg-purple-200 dark:border-purple-600 dark:bg-purple-950/70 dark:text-purple-300 dark:hover:bg-purple-900/70"
     : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
   const quickAccessTitle = isQuickAccess
-    ? "Quitar de Acceso rÃ¡pido"
-    : "AÃ±adir a Acceso rÃ¡pido";
+    ? "Quitar de Acceso rápido"
+    : "Añadir a Acceso rápido";
   const quickAccessButtonClass = isQuickAccess
     ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-400 bg-amber-100 text-amber-600 transition hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-950/70 dark:text-amber-300 dark:hover:bg-amber-900/70"
     : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
@@ -428,8 +421,8 @@ export function EditorHeader({
           <button
             type="button"
             onClick={onMenu}
-            aria-label="MÃ¡s opciones"
-            title="MÃ¡s opciones"
+            aria-label="Más opciones"
+            title="Más opciones"
             className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             <MoreHorizontal className="h-4 w-4" />
@@ -450,12 +443,9 @@ export function EditorHeader({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\editor\components\EditorToolbar.tsx
+FILE: src/modules/editor/components/EditorToolbar.tsx
 ========================================
-
 import {
   createElement,
   useState,
@@ -518,7 +508,7 @@ const TEXT_COLORS: ColorOption[] = [
   { name: "Verde", color: "#51B837" },
   { name: "Azul", color: "#478AF6" },
   { name: "Rosa", color: "#F86BD7" },
-  { name: "PÃºrpura", color: "#9B51E0" },
+  { name: "Púrpura", color: "#9B51E0" },
   { name: "Gris", color: "#707070" },
 ];
 
@@ -529,7 +519,7 @@ const BG_COLORS: ColorOption[] = [
   { name: "Verde", color: "#C2F18E" },
   { name: "Azul", color: "#85C8FF" },
   { name: "Rosa", color: "#FFB2E6" },
-  { name: "PÃºrpura", color: "#CFA5FF" },
+  { name: "Púrpura", color: "#CFA5FF" },
   { name: "Gris", color: "#CCCCCC" },
 ];
 
@@ -544,7 +534,7 @@ const BG_TO_BORDER_MAP: Record<string, string> = {
   "#CCCCCC": "#707070",
 };
 
-// Mapa de Pares ArmÃ³nicos: Fondo Pastel -> Texto ArmÃ³nico Oscuro
+// Mapa de Pares Armónicos: Fondo Pastel -> Texto Armónico Oscuro
 const HARMONIC_PAIRS: Record<string, string> = {
   "#FF8B8B": "#5A0000",
   "#FFC085": "#4A2800",
@@ -568,27 +558,27 @@ const handleApplyHarmonicHighlight = (ed: any, bgColor: string) => {
 };
 
 const ICONS_MAP: Record<string, string[]> = {
-  indicadores: ["ðŸŸ¢", "ðŸ”´", "ðŸŸ¡", "âœ…", "ðŸ›¡ï¸"],
+  indicadores: ["🟢", "🔴", "🟡", "✅", "🛡️"],
   simbolos: [
-    "ðŸŽ¯",
-    "ðŸ‘‰",
-    "ðŸ”‘",
-    "ðŸ“–",
-    "ðŸ’¡",
-    "ðŸ“˜",
-    "ðŸ“š",
-    "ðŸ“œ",
-    "ðŸ™",
-    "ðŸ•Šï¸",
-    "ðŸ”¥",
-    "ðŸ”",
-    "ðŸ’¬",
-    "ðŸ",
-    "â¬†ï¸",
-    "â¬‡ï¸",
+    "🎯",
+    "👉",
+    "🔑",
+    "📖",
+    "💡",
+    "📘",
+    "📚",
+    "📜",
+    "🙏",
+    "🕊️",
+    "🔥",
+    "🔍",
+    "💬",
+    "🏁",
+    "⬆️",
+    "⬇️",
   ],
-  enumeration: ["1ï¸âƒ£", "2ï¸âƒ£", "3ï¸âƒ£", "4ï¸âƒ£", "5ï¸âƒ£", "6ï¸âƒ£", "7ï¸âƒ£", "8ï¸âƒ£", "9ï¸âƒ£", "ðŸ”Ÿ"],
-  herramientas: ["ðŸ‘‰", "ðŸ“–", "ðŸ“š", "ðŸ“œ", "ðŸ“", "ðŸ”‘", "ðŸŽ¯", "ðŸ’¡"],
+  enumeration: ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"],
+  herramientas: ["👉", "📖", "📚", "📜", "📝", "🔑", "🎯", "💡"],
 };
 
 function toolbarButton(
@@ -728,7 +718,7 @@ export function EditorToolbar({
                     <Table className="h-4 w-4" />
                     <span>Insertar tabla</span>
                   </div>
-                  <span className="text-xs text-slate-400">â–·</span>
+                  <span className="text-xs text-slate-400">▷</span>
                 </button>
 
                 {showTableSubmenu && (
@@ -777,7 +767,7 @@ export function EditorToolbar({
                     <Calendar className="h-4 w-4" />
                     <span>Insertar fecha</span>
                   </div>
-                  <span className="text-xs text-slate-400">â–·</span>
+                  <span className="text-xs text-slate-400">▷</span>
                 </button>
 
                 {showDateSubmenu && (
@@ -820,12 +810,12 @@ export function EditorToolbar({
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
-                  console.info("Ver imÃ¡genes de la nota - placeholder");
+                  console.info("Ver imágenes de la nota - placeholder");
                   setShowInsertMenu(false);
                 }}
               >
                 <Image className="h-4 w-4" />
-                <span>Ver imÃ¡genes de la nota</span>
+                <span>Ver imágenes de la nota</span>
               </button>
             </div>
           </div>
@@ -897,13 +887,13 @@ export function EditorToolbar({
                 className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "simbolos" ? "bg-slate-100" : ""}`}
                 onClick={() => setIconsTab("simbolos")}
               >
-                SÃ­mbolos
+                Símbolos
               </button>
               <button
                 className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "enumeration" ? "bg-slate-100" : ""}`}
                 onClick={() => setIconsTab("enumeration")}
               >
-                EnumeraciÃ³n
+                Enumeración
               </button>
               <button
                 className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "herramientas" ? "bg-slate-100" : ""}`}
@@ -1182,10 +1172,10 @@ export function EditorToolbar({
           defaultValue="none"
         >
           <option value="none">Aa (Normal)</option>
-          <option value="uppercase">MAYÃšSCULAS</option>
-          <option value="lowercase">minÃºsculas</option>
+          <option value="uppercase">MAYÚSCULAS</option>
+          <option value="lowercase">minúsculas</option>
           <option value="capitalize">Capitalizar Palabras</option>
-          <option value="highlight_combo">âœ¨ Destacar</option>
+          <option value="highlight_combo">✨ Destacar</option>
         </select>
       </div>
 
@@ -1252,7 +1242,7 @@ export function EditorToolbar({
 
         {toolbarButton(
           List,
-          "Lista con viÃ±etas",
+          "Lista con viñetas",
           () =>
             editor?.runEditorCommand((ed) =>
               ed
@@ -1309,7 +1299,7 @@ export function EditorToolbar({
       )}
 
       {/* 17) Code block */}
-      {toolbarButton(Slash, "Bloque de CÃ³digo", () =>
+      {toolbarButton(Slash, "Bloque de Código", () =>
         editor?.runEditorCommand((ed) =>
           ed
             .chain()
@@ -1320,7 +1310,7 @@ export function EditorToolbar({
       )}
 
       {/* Sub/Superscript buttons (use handlers passed from parent) */}
-      {toolbarButton(Subscript, "SubÃ­ndice", () =>
+      {toolbarButton(Subscript, "Subíndice", () =>
         editor?.runEditorCommand((ed) =>
           ed
             .chain()
@@ -1329,7 +1319,7 @@ export function EditorToolbar({
             .run(),
         ),
       )}
-      {toolbarButton(Superscript, "SuperÃ­ndice", () =>
+      {toolbarButton(Superscript, "Superíndice", () =>
         editor?.runEditorCommand((ed) =>
           ed
             .chain()
@@ -1340,7 +1330,7 @@ export function EditorToolbar({
       )}
 
       {/* 18) Horizontal rule */}
-      {toolbarButton(Minus, "LÃ­nea horizontal separadora", () =>
+      {toolbarButton(Minus, "Línea horizontal separadora", () =>
         editor?.runEditorCommand((ed) =>
           ed
             .chain()
@@ -1370,12 +1360,9 @@ export function EditorToolbar({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\editor\components\InsertarPlantillaModal.tsx
+FILE: src/modules/editor/components/InsertarPlantillaModal.tsx
 ========================================
-
 import React, { useEffect, useMemo, useState } from "react";
 import { Copy, LayoutTemplate, Search, X } from "lucide-react";
 
@@ -1453,7 +1440,7 @@ export const InsertarPlantillaModal: React.FC<InsertarPlantillaModalProps> = ({
                 Insertar plantilla
               </h2>
               <p className="text-xs text-slate-400 dark:text-slate-500">
-                Selecciona una plantilla para aÃ±adir a la nota
+                Selecciona una plantilla para añadir a la nota
               </p>
             </div>
           </div>
@@ -1523,12 +1510,9 @@ export const InsertarPlantillaModal: React.FC<InsertarPlantillaModalProps> = ({
 };
 
 
-
-
 ========================================
-FILE: \src\modules\editor\components\PanelEditor.tsx
+FILE: src/modules/editor/components/PanelEditor.tsx
 ========================================
-
 import {
   forwardRef,
   useCallback,
@@ -1815,7 +1799,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
             notify(`Exportado correctamente a ${savedPath}`, "success");
           }
         } catch (error) {
-          console.error("Error en exportaciÃ³n:", error);
+          console.error("Error en exportación:", error);
           notify("No se pudo exportar la nota", "error");
         } finally {
           setIsExporting(false);
@@ -1829,7 +1813,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
       try {
         const importedNote = await window.electron?.export?.fromNoteHub();
         if (!importedNote || typeof importedNote !== "object") {
-          notify("No se importÃ³ un contenido vÃ¡lido", "warning");
+          notify("No se importó un contenido válido", "warning");
           return;
         }
 
@@ -1914,13 +1898,13 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
         onNotesChanged?.();
         notify(
           nextQuickAccess
-            ? "Nota aÃ±adida a Acceso rÃ¡pido"
-            : "Nota quitada de Acceso rÃ¡pido",
+            ? "Nota añadida a Acceso rápido"
+            : "Nota quitada de Acceso rápido",
           "success",
         );
       } catch (error) {
-        console.error("Error al actualizar Acceso rÃ¡pido:", error);
-        notify("No se pudo actualizar Acceso rÃ¡pido", "error");
+        console.error("Error al actualizar Acceso rápido:", error);
+        notify("No se pudo actualizar Acceso rápido", "error");
       }
     }, [isQuickAccess, noteId, notify, onNotesChanged]);
 
@@ -2308,7 +2292,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
           <footer className="w-full flex items-center justify-between border-t border-gray-100 bg-white px-4 py-2.5 text-sm text-slate-600">
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs text-slate-700">
-                ðŸ“„
+                📄
               </span>
               <span className="text-xs font-medium">
                 {notebookId ? `Cuaderno ${notebookId}` : "Sin cuaderno"}
@@ -2332,8 +2316,8 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
               <button
                 type="button"
                 className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                aria-label="InformaciÃ³n"
-                title="InformaciÃ³n"
+                aria-label="Información"
+                title="Información"
               >
                 <Info className="h-3.5 w-3.5" />
               </button>
@@ -2363,7 +2347,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
           <ConfirmacionEliminacionModal
             isOpen={isDeleteConfirmOpen}
             title="Eliminar nota"
-            message="Â¿EstÃ¡s seguro de que deseas enviar esta nota a la papelera?"
+            message="¿Estás seguro de que deseas enviar esta nota a la papelera?"
             onCancel={() => setIsDeleteConfirmOpen(false)}
             onConfirm={() => void handleConfirmDeleteNote()}
             confirmLabel="Eliminar"
@@ -2451,12 +2435,9 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
 );
 
 
-
-
 ========================================
-FILE: \src\modules\editor\components\TiptapEditor.css
+FILE: src/modules/editor/components/TiptapEditor.css
 ========================================
-
 .tiptap-editor .editor-callout {
   margin: 12px 0;
   width: 100%;
@@ -2498,7 +2479,7 @@ FILE: \src\modules\editor\components\TiptapEditor.css
   margin: 0 0 8px;
 }
 
-/* TipografÃ­a y legibilidad estilo Sistema (UpNote) */
+/* Tipografía y legibilidad estilo Sistema (UpNote) */
 .tiptap-editor {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
@@ -2509,7 +2490,7 @@ FILE: \src\modules\editor\components\TiptapEditor.css
   padding: 1.5rem;
 }
 
-/* PÃ¡rrafos e interlineado */
+/* Párrafos e interlineado */
 .tiptap-editor p {
   margin-bottom: 0.75rem;
 }
@@ -2564,7 +2545,7 @@ FILE: \src\modules\editor\components\TiptapEditor.css
   width: 100%;
 }
 
-/* Ãrea de escritura con scroll vertical activo para la rueda del mouse */
+/* Área de escritura con scroll vertical activo para la rueda del mouse */
 .ProseMirror {
   flex: 1;
   height: 100%;
@@ -2578,7 +2559,7 @@ FILE: \src\modules\editor\components\TiptapEditor.css
   padding: 2rem 3rem 6rem 3rem !important; /* Espacio extra abajo para que el texto no se tape con la toolbar */
 }
 
-/* Estilos para la lÃ­nea horizontal separadora */
+/* Estilos para la línea horizontal separadora */
 .tiptap-editor hr {
   border: none;
   border-top: 2px solid #e2e8f0;
@@ -2653,7 +2634,7 @@ FILE: \src\modules\editor\components\TiptapEditor.css
   display: inline;
 }
 
-/* Remover puntos de viÃ±eta y mÃ¡rgenes de TaskList */
+/* Remover puntos de viñeta y márgenes de TaskList */
 .ProseMirror ul[data-type="taskList"],
 ul.checklist {
   list-style-type: none !important;
@@ -2661,7 +2642,7 @@ ul.checklist {
   margin: 0.5rem 0 !important;
 }
 
-/* Forzar alineaciÃ³n horizontal sin salto de lÃ­nea */
+/* Forzar alineación horizontal sin salto de línea */
 .ProseMirror li[data-type="taskItem"],
 li.checklist-item {
   display: flex !important;
@@ -2670,7 +2651,7 @@ li.checklist-item {
   margin-bottom: 0.25rem !important;
 }
 
-/* Estilo y espaciado de la casilla de verificaciÃ³n */
+/* Estilo y espaciado de la casilla de verificación */
 .ProseMirror li[data-type="taskItem"] > label,
 li.checklist-item input[type="checkbox"] {
   display: inline-flex !important;
@@ -2684,7 +2665,7 @@ li.checklist-item input[type="checkbox"] {
   height: 18px !important;
 }
 
-/* Forzar que el input checkbox no provoque salto de lÃ­nea y se alinee centrado */
+/* Forzar que el input checkbox no provoque salto de línea y se alinee centrado */
 .ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
 li.checklist-item input[type="checkbox"] {
   margin: 0 !important;
@@ -2695,7 +2676,7 @@ li.checklist-item input[type="checkbox"] {
   box-sizing: border-box !important;
 }
 
-/* Forzar que el pÃ¡rrafo no rompa la lÃ­nea */
+/* Forzar que el párrafo no rompa la línea */
 .ProseMirror li[data-type="taskItem"] > div,
 .ProseMirror li[data-type="taskItem"] p {
   display: inline-block !important;
@@ -2723,12 +2704,9 @@ li.checklist-item input[type="checkbox"] {
 }
 
 
-
-
 ========================================
-FILE: \src\modules\editor\components\TiptapEditor.tsx
+FILE: src/modules/editor/components/TiptapEditor.tsx
 ========================================
-
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -2994,7 +2972,7 @@ function TiptapEditorComponent(
     <div className="flex flex-col flex-1 h-full w-full relative overflow-hidden">
       {isEmpty && (
         <div className="tiptap-editor-placeholder pointer-events-none px-6 pt-6 text-slate-400 dark:text-slate-500">
-          Escriba / para mostrar el menÃº o seleccionar de Plantillas
+          Escriba / para mostrar el menú o seleccionar de Plantillas
         </div>
       )}
       <EditorContent
@@ -3008,12 +2986,14 @@ function TiptapEditorComponent(
 export const TiptapEditor = forwardRef(TiptapEditorComponent);
 
 
+========================================
+FILE: src/modules/editor/index.ts
+========================================
 
 
 ========================================
-FILE: \src\modules\editor\modals\MenuOpcionesNotaModal.tsx
+FILE: src/modules/editor/modals/MenuOpcionesNotaModal.tsx
 ========================================
-
 import type { MouseEvent } from "react";
 import {
   Copy,
@@ -3064,8 +3044,8 @@ export function MenuOpcionesNotaModal({
   isPinned = false,
 }: MenuOpcionesNotaModalProps) {
   const pinLabel = isPinned
-    ? "Desfijar de Acceso RÃ¡pido"
-    : "Fijar en Acceso RÃ¡pido";
+    ? "Desfijar de Acceso Rápido"
+    : "Fijar en Acceso Rápido";
   const pinButtonClass = isPinned
     ? "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-200 text-purple-700 transition group-hover:scale-105 dark:bg-purple-800/80 dark:text-purple-200"
     : "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 transition group-hover:scale-105 dark:bg-purple-900/50 dark:text-purple-300";
@@ -3079,7 +3059,7 @@ export function MenuOpcionesNotaModal({
       <div
         className="absolute inset-0"
         onClick={onClose}
-        aria-label="Cerrar menÃº de opciones"
+        aria-label="Cerrar menú de opciones"
       />
 
       <div
@@ -3096,7 +3076,7 @@ export function MenuOpcionesNotaModal({
                 Opciones de nota
               </h2>
               <p className="text-xs text-slate-400 dark:text-slate-500">
-                Acciones rÃ¡pidas para la nota actual
+                Acciones rápidas para la nota actual
               </p>
             </div>
           </div>
@@ -3250,7 +3230,7 @@ export function MenuOpcionesNotaModal({
               </div>
               <div className="min-w-0 flex-1 text-left">
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  AÃ±adir a Cuadernos
+                  Añadir a Cuadernos
                 </p>
                 <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
                   Asignar a un cuaderno o subcuaderno
@@ -3346,12 +3326,9 @@ export function MenuOpcionesNotaModal({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\editor\modals\OpcionesEditorModal.tsx
+FILE: src/modules/editor/modals/OpcionesEditorModal.tsx
 ========================================
-
 import { type MouseEventHandler } from "react";
 import {
   FileText,
@@ -3501,7 +3478,7 @@ export function OpcionesEditorModal({
                     HTML
                   </p>
                   <p className="truncate text-[11px] text-slate-400 dark:text-slate-500">
-                    PÃ¡gina web estÃ¡tica
+                    Página web estática
                   </p>
                 </div>
               </button>
@@ -3529,7 +3506,7 @@ export function OpcionesEditorModal({
 
           <div className="border-t border-slate-100 pt-3 dark:border-slate-800/80">
             <span className="mb-2.5 block text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              ImportaciÃ³n
+              Importación
             </span>
 
             <button
@@ -3570,19 +3547,14 @@ export function OpcionesEditorModal({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\editor\modals\PlantillasMenu.tsx
+FILE: src/modules/editor/modals/PlantillasMenu.tsx
 ========================================
 
 
-
-
 ========================================
-FILE: \src\modules\editor\modals\TagsModal.tsx
+FILE: src/modules/editor/modals/TagsModal.tsx
 ========================================
-
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Plus, Tag, X } from "lucide-react";
@@ -3726,7 +3698,7 @@ export function TagsModal({
               Etiquetas de la nota
             </h2>
             <p className="text-xs text-slate-400 dark:text-slate-500">
-              Organiza tus notas con tags rÃ¡pidos
+              Organiza tus notas con tags rápidos
             </p>
           </div>
         </div>
@@ -3744,7 +3716,7 @@ export function TagsModal({
             className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-500"
           >
             <Plus className="h-3.5 w-3.5" />
-            AÃ±adir
+            Añadir
           </button>
         </div>
 
@@ -3755,7 +3727,7 @@ export function TagsModal({
             </p>
           ) : tagOptions.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-slate-200 py-5 text-center text-xs text-slate-400 dark:border-slate-700 dark:text-slate-500">
-              AÃºn no hay etiquetas para este espacio.
+              Aún no hay etiquetas para este espacio.
             </p>
           ) : (
             tagOptions.map((tag) => {
@@ -3813,14 +3785,5 @@ export function TagsModal({
     root,
   );
 }
-
-
-
-
-========================================
-FILE: \src\modules\editor\index.ts
-========================================
-
-
 
 

@@ -1,7 +1,6 @@
-﻿========================================
-FILE: \src\modules\notas\components\ArbolCuadernos.tsx
 ========================================
-
+FILE: src/modules/notas/components/ArbolCuadernos.tsx
+========================================
 import {
   forwardRef,
   useCallback,
@@ -273,7 +272,7 @@ export const ArbolCuadernos = forwardRef<
         {workspaceId === null ? (
           <p className="notas-sidebar-empty">Selecciona un espacio</p>
         ) : tree.length === 0 ? (
-          <p className="notas-sidebar-empty">AÃºn no hay cuadernos</p>
+          <p className="notas-sidebar-empty">Aún no hay cuadernos</p>
         ) : (
           tree.map((node) => renderNode(node))
         )}
@@ -298,7 +297,7 @@ export const ArbolCuadernos = forwardRef<
         />
         <ConfirmacionEliminacionModal
           isOpen={Boolean(deleteTarget)}
-          message="Â¿EstÃ¡s seguro de que deseas eliminar este cuaderno? Sus notas quedarÃ¡n sin cuaderno."
+          message="¿Estás seguro de que deseas eliminar este cuaderno? Sus notas quedarán sin cuaderno."
           onCancel={() => setDeleteTarget(null)}
           onConfirm={() => void deleteNotebook()}
           title="Eliminar cuaderno"
@@ -309,12 +308,9 @@ export const ArbolCuadernos = forwardRef<
 );
 
 
-
-
 ========================================
-FILE: \src\modules\notas\components\MenuContextual.tsx
+FILE: src/modules/notas/components/MenuContextual.tsx
 ========================================
-
 import { useEffect, type ReactElement } from "react";
 import { createPortal } from "react-dom";
 import { X } from "../../../core/components/Iconos";
@@ -373,7 +369,7 @@ export function MenuContextual({
       style={{ left: x, top: y }}
     >
       <button
-        aria-label="Cerrar menÃº"
+        aria-label="Cerrar menú"
         className="notas-context-close"
         onClick={onClose}
         type="button"
@@ -406,12 +402,9 @@ export function MenuContextual({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\notas\components\NotaListItem.tsx
+FILE: src/modules/notas/components/NotaListItem.tsx
 ========================================
-
 import type { MouseEvent } from "react";
 import { Pin } from "lucide-react";
 import { Check } from "../../../core/components/Iconos";
@@ -467,7 +460,7 @@ export function NotaListItem({
 
       <div className="flex items-start justify-between gap-2">
         <h3 className="flex-1 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
-          {getNoteTitle(note) || "Sin tÃ­tulo"}
+          {getNoteTitle(note) || "Sin título"}
         </h3>
         {note.is_pinned === 1 && (
           <Pin
@@ -502,12 +495,9 @@ export function NotaListItem({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\notas\components\NuevoCuadernoModal.tsx
+FILE: src/modules/notas/components/NuevoCuadernoModal.tsx
 ========================================
-
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
 import { BookOpen, Check, Folder, Plus, Sparkles, Star } from 'lucide-react'
@@ -644,9 +634,9 @@ export function NuevoCuadernoModal({
       if (!copiedPath) return
       setCustomCovers((current) => (current.includes(copiedPath) ? current : [copiedPath, ...current]))
       setSelectedIcon(copiedPath)
-      showNotification('Portada aÃ±adida correctamente', 'success')
+      showNotification('Portada añadida correctamente', 'success')
     } catch (error) {
-      showNotification(error instanceof Error ? error.message : 'No se pudo aÃ±adir la portada', 'error')
+      showNotification(error instanceof Error ? error.message : 'No se pudo añadir la portada', 'error')
     }
   }
 
@@ -686,7 +676,7 @@ export function NuevoCuadernoModal({
       onClose()
     } catch (error) {
       const message = error instanceof Error && error.message.includes('Ya existe')
-        ? 'Ya existe un cuaderno con este nombre en esta ubicaciÃ³n'
+        ? 'Ya existe un cuaderno con este nombre en esta ubicación'
         : (error instanceof Error ? error.message : 'No se pudo guardar el cuaderno')
       showNotification(message, 'error')
     } finally {
@@ -708,7 +698,7 @@ export function NuevoCuadernoModal({
         <div className="notas-modal-field">
           <label htmlFor="cuaderno-padre">Cuaderno padre</label>
           <select id="cuaderno-padre" onChange={(event) => setParentNotebookIdValue(event.target.value === '' ? null : Number(event.target.value))} value={parentNotebookIdValue ?? ''}>
-            <option value="">RaÃ­z</option>
+            <option value="">Raíz</option>
             {parentOptions.map((entry) => (
               <option key={entry.id} value={entry.id}>{entry.name}</option>
             ))}
@@ -736,22 +726,22 @@ export function NuevoCuadernoModal({
                 </button>
               )
             })}
-            <button className="notas-modal-cover-add" onClick={() => void handleAddLocalCover()} type="button" title="AÃ±adir portada local">
+            <button className="notas-modal-cover-add" onClick={() => void handleAddLocalCover()} type="button" title="Añadir portada local">
               <Plus size={18} />
             </button>
           </div>
         </div>
 
         <label className="notas-modal-switch" htmlFor="cuaderno-bloqueado">
-          <span>Bloquear con contraseÃ±a</span>
+          <span>Bloquear con contraseña</span>
           <input checked={isLocked} id="cuaderno-bloqueado" onChange={(event) => setIsLocked(event.target.checked)} type="checkbox" />
           <span className="notas-modal-switch-slider" />
         </label>
 
         {isLocked ? (
           <div className="notas-modal-field">
-            <label htmlFor="cuaderno-password">ContraseÃ±a</label>
-            <input id="cuaderno-password" onChange={(event) => setPassword(event.target.value)} placeholder="Ingresa una contraseÃ±a" type="password" value={password} />
+            <label htmlFor="cuaderno-password">Contraseña</label>
+            <input id="cuaderno-password" onChange={(event) => setPassword(event.target.value)} placeholder="Ingresa una contraseña" type="password" value={password} />
           </div>
         ) : null}
 
@@ -766,12 +756,9 @@ export function NuevoCuadernoModal({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\notas\components\PanelCentralNotas.tsx
+FILE: src/modules/notas/components/PanelCentralNotas.tsx
 ========================================
-
 import {
   useCallback,
   useEffect,
@@ -938,7 +925,7 @@ export function PanelCentralNotas({
       },
       {
         id: "quick",
-        label: isQuickAccess ? "Quitar de Acceso rÃ¡pido" : "Acceso rÃ¡pido",
+        label: isQuickAccess ? "Quitar de Acceso rápido" : "Acceso rápido",
         icon: isQuickAccess ? (
           <StarOff className="h-4 w-4 text-amber-500" />
         ) : (
@@ -952,8 +939,8 @@ export function PanelCentralNotas({
               window.dispatchEvent(new CustomEvent("notes:updated"));
               showNotification(
                 nextStatus === 1
-                  ? "Nota aÃ±adida a Acceso rÃ¡pido"
-                  : "Nota quitada de Acceso rÃ¡pido",
+                  ? "Nota añadida a Acceso rápido"
+                  : "Nota quitada de Acceso rápido",
                 "success",
               );
               await loadNotes();
@@ -961,7 +948,7 @@ export function PanelCentralNotas({
               showNotification(
                 error instanceof Error
                   ? error.message
-                  : "No se pudo actualizar el acceso rÃ¡pido",
+                  : "No se pudo actualizar el acceso rápido",
                 "error",
               );
             }
@@ -1034,82 +1021,48 @@ export function PanelCentralNotas({
   }, [notebookId, notebooks]);
 
   return (
-    <section className="w-80 shrink-0 border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40 flex flex-col overflow-hidden">
-      <header className="flex items-center justify-between border-b border-slate-200/80 bg-white px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900">
+    <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
+      <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 dark:border-slate-800 dark:bg-slate-900">
         <h2 className="truncate pr-2 text-sm font-bold text-slate-800 dark:text-slate-100">
           {activeNotebookName}
         </h2>
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
-            className="panel-notas-icon-button p-1 text-slate-500 hover:text-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
             aria-label="Ordenar"
           >
             <ArrowUpDown size={16} />
           </button>
           <button
             type="button"
-            className="panel-notas-icon-button p-1 text-slate-500 hover:text-slate-800"
-            aria-label="MÃ¡s opciones"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+            aria-label="Más opciones"
           >
             <MoreVertical size={16} />
           </button>
         </div>
       </header>
 
-      {selectionMode && selectedIds.length > 0 && (
-        <div className="panel-notas-bulk-actions flex-shrink-0 p-2 text-xs bg-slate-50 border-b border-gray-100">
-          <span>{selectedIds.length} seleccionada(s)</span>
-          <button
-            onClick={() =>
-              setMoveNote(
-                notes.find((note) => note.id === selectedIds[0]) ?? null,
-              )
-            }
-            type="button"
-          >
-            Mover seleccionadas
-          </button>
-          <button
-            onClick={() =>
-              setDeleteTarget(
-                notes.find((note) => note.id === selectedIds[0]) ?? null,
-              )
-            }
-            type="button"
-          >
-            Eliminar seleccionadas
-          </button>
-        </div>
-      )}
-
-      {/* Contenedor de lista con ancho estrictamente contenido y scroll vertical Ãºnicamente */}
-      <div className="panel-notas-list flex-1 w-full max-w-full overflow-y-auto overflow-x-hidden p-2 space-y-2">
+      <div
+        className="flex-1 min-h-0 h-full w-full overflow-y-auto overflow-x-hidden p-3 space-y-2.5 scrollbar-thin"
+        style={{ overflowY: "auto", overflowX: "hidden" }}
+      >
         {workspaceId === null ? (
-          <div className="panel-notas-empty text-center p-4">
-            <h3 className="text-sm font-semibold text-slate-700">
-              Selecciona un espacio
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Elige un espacio en la barra lateral para ver tus notas.
-            </p>
+          <div className="p-6 text-center text-slate-400">
+            <p className="text-sm font-semibold">Selecciona un espacio</p>
           </div>
         ) : isLoading ? (
-          <p className="panel-notas-status text-xs text-slate-400 p-3 text-center">
+          <p className="p-6 text-center text-xs text-slate-400">
             Cargando notas...
           </p>
         ) : notes.length === 0 ? (
-          <div className="panel-notas-empty text-center p-4">
-            <h3 className="text-sm font-semibold text-slate-700">
-              No hay notas todavÃ­a
-            </h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Crea una nota nueva para comenzar.
-            </p>
+          <div className="p-6 text-center text-slate-400">
+            <p className="text-sm font-semibold">No hay notas todavía</p>
           </div>
         ) : (
           notes.map((note) => (
-            <div key={note.id} className="w-full max-w-full overflow-hidden">
+            <div key={note.id} className="w-full shrink-0">
               <NotaListItem
                 isSelected={selectedIds.includes(note.id)}
                 isActive={note.id === activeNoteId}
@@ -1135,7 +1088,7 @@ export function PanelCentralNotas({
 
       <ConfirmacionEliminacionModal
         isOpen={Boolean(deleteTarget)}
-        message="Â¿EstÃ¡s seguro de que deseas eliminar esta nota? PodrÃ¡s encontrarla en la papelera."
+        message="¿Estás seguro de que deseas eliminar esta nota? Podrás encontrarla en la papelera."
         onCancel={() => setDeleteTarget(null)}
         onConfirm={() => void deleteNote()}
         title="Eliminar nota"
@@ -1153,12 +1106,9 @@ export function PanelCentralNotas({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\notas\components\SeleccionCuadernoModal.tsx
+FILE: src/modules/notas/components/SeleccionCuadernoModal.tsx
 ========================================
-
 import {
   BookMarked,
   Check,
@@ -1347,12 +1297,9 @@ export function SeleccionCuadernoModal({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\notas\components\SidebarNavegacion.tsx
+FILE: src/modules/notas/components/SidebarNavegacion.tsx
 ========================================
-
 import { useEffect, useState, type ReactElement } from "react";
 import {
   Archive,
@@ -1378,6 +1325,7 @@ export interface SidebarNavegacionProps {
   onSelectAllNotes?: () => void;
   onSelectTrash?: () => void;
   onSelectTemplates?: () => void;
+  onSelectBackups?: () => void;
 }
 
 export function SidebarNavegacion({
@@ -1391,6 +1339,7 @@ export function SidebarNavegacion({
   onSelectAllNotes,
   onSelectTrash,
   onSelectTemplates,
+  onSelectBackups,
 }: SidebarNavegacionProps): ReactElement {
   const [resolvedWorkspace, setResolvedWorkspace] = useState<Workspace | null>(
     activeWorkspace,
@@ -1475,7 +1424,7 @@ export function SidebarNavegacion({
   return (
     <aside className="notas-sidebar">
       <SelectorEspacios onWorkspaceChange={onWorkspaceChange} />
-      <nav aria-label="NavegaciÃ³n principal" className="notas-sidebar-nav">
+      <nav aria-label="Navegación principal" className="notas-sidebar-nav">
         <button
           className="is-active"
           type="button"
@@ -1497,7 +1446,7 @@ export function SidebarNavegacion({
             }}
           >
             <Star size={17} />
-            <span>Acceso rÃ¡pido</span>
+            <span>Acceso rápido</span>
           </button>
 
           {quickAccessNotes.length > 0 && (
@@ -1518,7 +1467,7 @@ export function SidebarNavegacion({
                   >
                     <Star className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500/80 group-hover:scale-110 transition-transform" />
                     <span className="truncate flex-1">
-                      {note.title || "Sin tÃ­tulo"}
+                      {note.title || "Sin título"}
                     </span>
                   </button>
                 );
@@ -1557,6 +1506,16 @@ export function SidebarNavegacion({
             </span>
           )}
         </button>
+        <button
+          type="button"
+          onClick={() => onSelectBackups?.()}
+          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-600 transition hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+        >
+          <span className="flex items-center gap-2">
+            <Archive size={17} />
+            <span>Respaldos</span>
+          </span>
+        </button>
         <button type="button">
           <Settings size={17} /> Ajustes
         </button>
@@ -1571,12 +1530,9 @@ export function SidebarNavegacion({
 }
 
 
-
-
 ========================================
-FILE: \src\modules\notas\index.ts
+FILE: src/modules/notas/index.ts
 ========================================
-
 export { SidebarNavegacion, type SidebarNavegacionProps } from './components/SidebarNavegacion'
 export { ArbolCuadernos, type ArbolCuadernosProps } from './components/ArbolCuadernos'
 export { PanelCentralNotas, type PanelCentralNotasProps } from './components/PanelCentralNotas'
@@ -1594,12 +1550,9 @@ export {
 } from './notesApi'
 
 
-
-
 ========================================
-FILE: \src\modules\notas\notas.css
+FILE: src/modules/notas/notas.css
 ========================================
-
 .notas-sidebar {
   background: #fcfcfd;
   border-right: 1px solid rgba(15, 23, 42, 0.08);
@@ -1910,7 +1863,11 @@ FILE: \src\modules\notas\notas.css
   display: flex;
   flex: 1;
   flex-direction: column;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
   min-width: 0;
+  overflow-y: auto !important;
 }
 .panel-notas-header {
   align-items: center;
@@ -1971,12 +1928,13 @@ FILE: \src\modules\notas\notas.css
 }
 .panel-notas-list {
   display: flex;
+  flex: 1 1 0%;
   flex-direction: column;
   gap: 10px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 12px 18px 18px;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
 }
 .nota-list-item {
   align-items: flex-start;
@@ -2365,12 +2323,33 @@ FILE: \src\modules\notas\notas.css
 }
 
 
+========================================
+FILE: src/modules/notas/noteUtils.ts
+========================================
+import type { Note } from './notesApi'
+
+export function extraerExtracto(content: string): string {
+  return content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 150)
+}
+
+export function extractImage(content: string): string | null {
+  return content.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? null
+}
+
+export function formatNoteDate(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' }).format(date)
+}
+
+export function getNoteTitle(note: Note): string {
+  return note.title || 'Sin título'
+}
 
 
 ========================================
-FILE: \src\modules\notas\notesApi.ts
+FILE: src/modules/notas/notesApi.ts
 ========================================
-
 export interface Notebook {
   id: number;
   workspace_id: number;
@@ -2511,34 +2490,5 @@ export const notesApi = {
       getApi()?.notes?.delete(id),
   },
 };
-
-
-
-
-========================================
-FILE: \src\modules\notas\noteUtils.ts
-========================================
-
-import type { Note } from './notesApi'
-
-export function extraerExtracto(content: string): string {
-  return content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 150)
-}
-
-export function extractImage(content: string): string | null {
-  return content.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? null
-}
-
-export function formatNoteDate(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' }).format(date)
-}
-
-export function getNoteTitle(note: Note): string {
-  return note.title || 'Sin tÃ­tulo'
-}
-
-
 
 

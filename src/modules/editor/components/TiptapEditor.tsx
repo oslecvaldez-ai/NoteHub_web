@@ -262,14 +262,12 @@ function TiptapEditorComponent(
   return (
     <div className="flex flex-col flex-1 h-full w-full relative overflow-hidden">
       {isEmpty && (
-        <div className="tiptap-editor-placeholder pointer-events-none px-6 pt-6 text-slate-400 dark:text-slate-500">
+        <div className="tiptap-editor-placeholder pointer-events-none px-8 pt-6 text-slate-400 dark:text-slate-500">
           Escriba / para mostrar el menú o seleccionar de Plantillas
         </div>
       )}
-      <EditorContent
-        editor={editor}
-        className="flex-1 h-full w-full overflow-y-auto"
-      />
+
+      <EditorContent editor={editor} className="w-full flex-1 h-full" />
     </div>
   );
 }

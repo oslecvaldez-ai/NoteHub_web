@@ -1,13 +1,12 @@
-.tiptap-editor .editor-callout {
-  margin: 12px 0;
-  width: 100%;
+.tiptap-editor .editor-callout,
+.tiptap-editor div[data-type="custom-quote"] {
+  margin: 6px 0 !important;
+  padding: 8px 14px !important;
+  border-radius: 4px !important;
+  border-left-width: 4px !important;
+  font-size: 1em !important;
+  line-height: 1.5 !important;
   box-sizing: border-box;
-  padding: 16px;
-  border-radius: 6px;
-  border-left: 4px solid #6200ee;
-  background-color: #f5f5f5;
-  color: #333333;
-  position: relative;
 }
 .kh-collapsible {
   border: 1px solid rgba(148, 163, 184, 0.3);
@@ -52,18 +51,18 @@
 
 /* Párrafos e interlineado */
 .tiptap-editor p {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem !important;
+  line-height: 1.55 !important;
 }
 
 /* Formato de Cita / Callout Box */
-.tiptap-editor div[data-type="custom-quote"] {
-  margin-top: 0.1rem;
-  margin-bottom: 0.1rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0 0.9rem 0.75rem 0;
-  border-left-width: 4px;
-  border-left-style: solid;
-  font-size: 1.1em;
+/* reduced spacing and visual style for thin separators */
+.tiptap-editor hr,
+.ProseMirror hr {
+  border: none !important;
+  border-top: 1px solid #cbd5e1 !important; /* Slate-300 */
+  margin: 1rem 0 !important;
+  opacity: 1 !important;
 }
 
 /* Encabezados con proporciones elegantes */
@@ -90,9 +89,10 @@
 }
 
 /* Resaltados de texto limpios con bordes suaves */
-.tiptap-editor mark {
-  border-radius: 0.25rem;
-  padding: 0.1em 0.3em;
+.tiptap-editor mark,
+.editor-highlight {
+  border-radius: 3px !important;
+  padding: 1px 5px !important;
 }
 
 /* Contenedores principales expansibles */
@@ -110,26 +110,28 @@
   flex: 1;
   height: 100%;
   min-height: 100%;
+  width: 100%;
   outline: none !important;
   border: none !important;
   box-shadow: none !important;
-  border-radius: 0 !important;
   background: transparent !important;
-  overflow-y: auto !important; /* Habilita el desplazamiento con la rueda del mouse */
-  padding: 2rem 3rem 6rem 3rem !important; /* Espacio extra abajo para que el texto no se tape con la toolbar */
+  overflow-y: auto !important;
+  padding: 1.5rem 2rem 6rem 2rem !important;
 }
 
-/* Estilos para la línea horizontal separadora */
-.tiptap-editor hr {
-  border: none;
-  border-top: 2px solid #e2e8f0;
-  margin: 1.75rem 0;
-  border-radius: 2px;
+/* Estilos para la línea horizontal separadora (definido arriba) */
+
+/* Soporte para modo oscuro */
+.dark .tiptap-editor hr,
+.dark .ProseMirror hr {
+  border-top-color: #475569 !important; /* Slate-600 */
 }
 
 .tiptap-editor-placeholder {
   position: absolute;
-  inset: 1.5rem auto auto 1.5rem;
+  top: 1.5rem; /* pt-6 */
+  left: 2rem; /* px-8 horizontal padding */
+  right: 2rem;
   z-index: 1;
   pointer-events: none;
   color: #94a3b8;

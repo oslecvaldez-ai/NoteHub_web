@@ -65,37 +65,34 @@ const TEXT_COLORS: ColorOption[] = [
 ];
 
 const BG_COLORS: ColorOption[] = [
-  { name: "Rojo", color: "#FF8B8B" },
-  { name: "Naranja", color: "#FFC085" },
-  { name: "Amarillo", color: "#FFE285" },
-  { name: "Verde", color: "#C2F18E" },
-  { name: "Azul", color: "#85C8FF" },
-  { name: "Rosa", color: "#FFB2E6" },
-  { name: "Púrpura", color: "#CFA5FF" },
-  { name: "Gris", color: "#CCCCCC" },
+  { name: "Azul", color: "#E1EFFF" },
+  { name: "Rojo", color: "#FFEAEA" },
+  { name: "Amarillo", color: "#FFF6D6" },
+  { name: "Naranja", color: "#FFEBD6" },
+  { name: "Verde", color: "#E8F8D8" },
+  { name: "Púrpura", color: "#F3E8FF" },
+  { name: "Gris", color: "#F1F3F5" },
 ];
 
 const BG_TO_BORDER_MAP: Record<string, string> = {
-  "#FF8B8B": "#EE2C2C",
-  "#FFC085": "#FF7A00",
-  "#FFE285": "#FFC72C",
-  "#C2F18E": "#51B837",
-  "#85C8FF": "#478AF6",
-  "#FFB2E6": "#F86BD7",
-  "#CFA5FF": "#9B51E0",
-  "#CCCCCC": "#707070",
+  "#E1EFFF": "#478AF6",
+  "#FFEAEA": "#EE2C2C",
+  "#FFF6D6": "#FFC72C",
+  "#FFEBD6": "#FF7A00",
+  "#E8F8D8": "#51B837",
+  "#F3E8FF": "#9B51E0",
+  "#F1F3F5": "#94A3B8",
 };
 
 // Mapa de Pares Armónicos: Fondo Pastel -> Texto Armónico Oscuro
 const HARMONIC_PAIRS: Record<string, string> = {
-  "#FF8B8B": "#5A0000",
-  "#FFC085": "#4A2800",
-  "#FFE285": "#3D3000",
-  "#C2F18E": "#1B4300",
-  "#85C8FF": "#002B5B",
-  "#FFB2E6": "#4A0033",
-  "#CFA5FF": "#330066",
-  "#CCCCCC": "#1A1A1A",
+  "#E1EFFF": "#003B73",
+  "#FFEAEA": "#8A0000",
+  "#FFF6D6": "#5C4300",
+  "#FFEBD6": "#6B3300",
+  "#E8F8D8": "#1F4E0A",
+  "#F3E8FF": "#4A156B",
+  "#F1F3F5": "#334155",
 };
 
 const handleApplyHarmonicHighlight = (ed: any, bgColor: string) => {
