@@ -291,33 +291,20 @@ export function PanelCentralNotas({
       </header>
 
       {/* Search bar sticky below header */}
-      <div className="sticky top-14 z-20 bg-transparent px-3 pt-3">
-        <div className="flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800/70 p-2 shadow-sm">
-          <LucideSearch className="h-4 w-4 text-slate-500" />
+      <div className="px-3 pt-3 pb-2">
+        <div className="flex items-center gap-2 rounded-2xl bg-slate-50 border border-slate-200/80 focus-within:border-purple-400 p-2">
+          <LucideSearch className="h-4 w-4 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearch?.(e.target.value)}
-            placeholder="Buscar en notas o #etiquetas..."
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800 dark:text-slate-100 px-2"
+            placeholder="Buscar en notas o #etiq"
+            className="w-full min-w-0 h-9 rounded-full bg-slate-50 border-0 text-sm outline-none placeholder:text-slate-400 text-slate-800 px-3 box-border"
           />
-          {searchQuery ? (
-            <button
-              type="button"
-              onClick={() => onSearch?.("")}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-              aria-label="Limpiar búsqueda"
-            >
-              ×
-            </button>
-          ) : null}
         </div>
       </div>
 
-      <div
-        className="flex-1 min-h-0 h-full w-full overflow-y-auto overflow-x-hidden p-3 space-y-2.5 scrollbar-thin"
-        style={{ overflowY: "auto", overflowX: "hidden" }}
-      >
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-3 scrollbar-thin">
         {workspaceId === null ? (
           <div className="p-6 text-center text-slate-400">
             <p className="text-sm font-semibold">Selecciona un espacio</p>
@@ -332,7 +319,7 @@ export function PanelCentralNotas({
           </div>
         ) : (
           notes.map((note) => (
-            <div key={note.id} className="w-full shrink-0">
+            <div key={note.id} className="w-full min-w-0">
               <NotaListItem
                 isSelected={selectedIds.includes(note.id)}
                 isActive={note.id === activeNoteId}
