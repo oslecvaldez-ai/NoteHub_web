@@ -7,6 +7,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { type TiptapEditorHandle } from "./TiptapEditor";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface EditorHeaderProps {
   title: string;
@@ -26,14 +27,13 @@ export function EditorHeader({
   title,
   onPin,
   onStar,
-  onShare,
-  onHistory,
   onExternal,
   onMenu,
   onToggleFocusMode,
   isPinned = false,
   isQuickAccess = false,
 }: EditorHeaderProps) {
+  const { accentColor } = useTheme();
   const pinTitle = isPinned ? "Desfijar nota" : "Fijar nota";
   const quickAccessTitle = isQuickAccess
     ? "Quitar de Acceso rápido"
@@ -51,7 +51,10 @@ export function EditorHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: accentColor }}
+          />
           <span className="text-xs text-slate-600 dark:text-slate-300">
             Guardado local
           </span>
@@ -66,7 +69,12 @@ export function EditorHeader({
           title={pinTitle}
           className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
         >
-          <Pin className="h-4 w-4" />
+          <Pin
+            className="h-4 w-4"
+            style={
+              isPinned ? { color: accentColor, fill: accentColor } : undefined
+            }
+          />
         </button>
         <button
           type="button"
@@ -74,7 +82,14 @@ export function EditorHeader({
           title={quickAccessTitle}
           className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
         >
-          <Star className="h-4 w-4" />
+          <Star
+            className="h-4 w-4"
+            style={
+              isQuickAccess
+                ? { color: accentColor, fill: accentColor }
+                : undefined
+            }
+          />
         </button>
         <button
           type="button"
@@ -96,7 +111,8 @@ export function EditorHeader({
           type="button"
           onClick={onToggleFocusMode}
           title="Modo foco"
-          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-purple-200 bg-white text-purple-600 hover:bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-300"
+          style={{ color: accentColor, borderColor: accentColor }}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border bg-white transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800"
         >
           <Maximize2 className="h-4 w-4" />
         </button>

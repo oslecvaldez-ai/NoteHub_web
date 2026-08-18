@@ -10,6 +10,7 @@ import { SelectorEspacios } from "../../espacios/components/SelectorEspacios";
 import { workspacesApi, type Workspace } from "../../espacios/workspacesApi";
 import { ArbolCuadernos } from "./ArbolCuadernos";
 import { type Note } from "../notesApi";
+import { useTheme } from "../../../core/theme/useTheme";
 import "../notas.css";
 
 export interface SidebarNavegacionProps {
@@ -24,6 +25,8 @@ export interface SidebarNavegacionProps {
   onSelectTrash?: () => void;
   onSelectTemplates?: () => void;
   onSelectBackups?: () => void;
+  onSelectSettings?: () => void;
+  isSettingsActive?: boolean;
 }
 
 export function SidebarNavegacion({
@@ -38,7 +41,10 @@ export function SidebarNavegacion({
   onSelectTrash,
   onSelectTemplates,
   onSelectBackups,
+  onSelectSettings,
+  isSettingsActive = false,
 }: SidebarNavegacionProps): ReactElement {
+  const { accentColor } = useTheme();
   const [resolvedWorkspace, setResolvedWorkspace] = useState<Workspace | null>(
     activeWorkspace,
   );
@@ -163,7 +169,10 @@ export function SidebarNavegacion({
                         : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-900/80"
                     }`}
                   >
-                    <Star className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500/80 group-hover:scale-110 transition-transform" />
+                    <Star
+                      className="h-3 w-3 shrink-0 fill-current transition-transform group-hover:scale-110"
+                      style={{ color: accentColor, fill: accentColor }}
+                    />
                     <span className="truncate flex-1">
                       {note.title || "Sin título"}
                     </span>
@@ -184,7 +193,10 @@ export function SidebarNavegacion({
             <span>Papelera</span>
           </span>
           {trashCount > 0 && (
-            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-100 px-1.5 text-[11px] font-bold text-red-600 dark:bg-red-950 dark:text-red-400">
+            <span
+              style={{ color: accentColor }}
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold dark:bg-slate-800/60"
+            >
               {trashCount}
             </span>
           )}
@@ -199,7 +211,10 @@ export function SidebarNavegacion({
             <span>Plantillas</span>
           </span>
           {templatesCount > 0 && (
-            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-purple-100 px-1.5 text-[11px] font-bold text-purple-600 dark:bg-purple-950 dark:text-purple-400">
+            <span
+              style={{ color: accentColor }}
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold dark:bg-slate-800/60"
+            >
               {templatesCount}
             </span>
           )}
@@ -214,7 +229,11 @@ export function SidebarNavegacion({
             <span>Respaldos</span>
           </span>
         </button>
-        <button type="button">
+        <button
+          type="button"
+          className={isSettingsActive ? "is-active" : undefined}
+          onClick={() => onSelectSettings?.()}
+        >
           <Settings size={17} /> Ajustes
         </button>
       </nav>

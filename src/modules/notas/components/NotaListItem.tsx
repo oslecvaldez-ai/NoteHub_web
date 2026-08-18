@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
 import { Pin } from "lucide-react";
 import { Check } from "../../../core/components/Iconos";
+import { useTheme } from "../../../core/theme/useTheme";
 import type { Note } from "../notesApi";
 import {
   extractImage,
@@ -26,6 +27,7 @@ export function NotaListItem({
   onSelect,
   onContextMenu,
 }: NotaListItemProps) {
+  const { accentColor } = useTheme();
   const image = extractImage(note.content);
   const excerpt = extraerExtracto(note.content);
 
@@ -33,9 +35,10 @@ export function NotaListItem({
     <article
       className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-[22px] p-4 box-border w-full min-w-0 overflow-hidden transition ${
         isActive || isSelected
-          ? "border-2 border-purple-300 bg-white shadow-sm dark:border-purple-700 dark:bg-slate-900"
+          ? "border-2 bg-white shadow-sm dark:bg-slate-900"
           : "border border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60"
       }`}
+      style={isActive || isSelected ? { borderColor: accentColor } : undefined}
       onClick={() => onSelect(note)}
       onContextMenu={(event) => {
         event.preventDefault();
@@ -70,7 +73,8 @@ export function NotaListItem({
         {note.is_pinned === 1 && (
           <Pin
             aria-label="Nota fijada"
-            className="h-3.5 w-3.5 shrink-0 fill-current text-purple-600 dark:text-purple-400 mt-0.5"
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 fill-current"
+            style={{ color: accentColor }}
           />
         )}
       </div>

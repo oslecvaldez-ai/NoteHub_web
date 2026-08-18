@@ -9,6 +9,7 @@ import {
 import {
   ArrowUpDown,
   MoreVertical,
+  Pin,
   Star,
   StarOff,
   Search as LucideSearch,
@@ -19,6 +20,7 @@ import { MenuContextual, type ContextMenuItem } from "./MenuContextual";
 import { NotaListItem } from "./NotaListItem";
 import { SeleccionCuadernoModal } from "./SeleccionCuadernoModal";
 import { notesApi, type Notebook, type Note } from "../notesApi";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface PanelCentralNotasProps {
   workspaceId: number | null;
@@ -56,6 +58,7 @@ export function PanelCentralNotas({
   const [deleteTarget, setDeleteTarget] = useState<Note | null>(null);
   const [moveNote, setMoveNote] = useState<Note | null>(null);
   const { notify: showNotification } = useNotifications();
+  const { accentColor } = useTheme();
 
   const loadNotes = useCallback(async (): Promise<void> => {
     if (workspaceId === null) return;
@@ -164,6 +167,16 @@ export function PanelCentralNotas({
       {
         id: "pin",
         label: note.is_pinned === 1 ? "Desanclar" : "Anclar",
+        icon: (
+          <Pin
+            className="h-4 w-4"
+            style={
+              note.is_pinned === 1
+                ? { color: accentColor, fill: accentColor }
+                : { color: accentColor }
+            }
+          />
+        ),
         onSelect: () =>
           void runNoteAction(
             () => notesApi.notes.togglePin(note.id),
@@ -174,9 +187,12 @@ export function PanelCentralNotas({
         id: "quick",
         label: isQuickAccess ? "Quitar de Acceso rápido" : "Acceso rápido",
         icon: isQuickAccess ? (
-          <StarOff className="h-4 w-4 text-amber-500" />
+          <StarOff className="h-4 w-4" style={{ color: accentColor }} />
         ) : (
-          <Star className="h-4 w-4 text-amber-500 fill-amber-500/80" />
+          <Star
+            className="h-4 w-4"
+            style={{ color: accentColor, fill: accentColor }}
+          />
         ),
         onSelect: () => {
           void (async () => {

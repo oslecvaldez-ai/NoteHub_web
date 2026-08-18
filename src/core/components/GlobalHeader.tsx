@@ -6,14 +6,16 @@ import {
   useState,
 } from "react";
 import { Save, Search, Settings, PanelLeft, PencilLine } from "lucide-react";
+import { useTheme } from "../theme/useTheme";
 
 interface GlobalHeaderProps {
   searchQuery: string;
   onSearch: (query: string) => void;
   onCreateNote: () => void;
   onSaveNote?: () => void;
-  onReload: () => void;
+  onReload?: () => void;
   onToggleSidebar?: () => void;
+  onSettings?: () => void;
 }
 
 export function GlobalHeader({
@@ -21,9 +23,10 @@ export function GlobalHeader({
   onSearch,
   onCreateNote,
   onSaveNote,
-  onReload,
   onToggleSidebar,
+  onSettings,
 }: GlobalHeaderProps): ReactElement {
+  const { accentColor } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -58,7 +61,8 @@ export function GlobalHeader({
           type="button"
           aria-label="Toggle sidebar"
           onClick={onToggleSidebar}
-          className="h-9 w-9 flex items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+          style={{ color: accentColor }}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800"
         >
           <PanelLeft size={18} />
         </button>
@@ -71,9 +75,9 @@ export function GlobalHeader({
               type="button"
               aria-label="Abrir búsqueda"
               onClick={() => setSearchOpen(true)}
-              className="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 flex items-center justify-center transition"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
-              <Search size={18} />
+              <Search size={18} style={{ color: accentColor }} />
             </button>
           ) : (
             <div className="transition-all duration-200 ease-out w-64 md:w-80">
@@ -110,7 +114,8 @@ export function GlobalHeader({
         <button
           type="button"
           onClick={onCreateNote}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-sm transition flex items-center gap-2 px-3.5 py-1.5 rounded-2xl"
+          style={{ backgroundColor: accentColor }}
+          className="flex items-center gap-2 rounded-2xl px-3.5 py-1.5 font-medium text-white shadow-sm transition hover:opacity-90"
         >
           <PencilLine className="h-4 w-4" />
           <span>Nueva Nota</span>
@@ -120,16 +125,17 @@ export function GlobalHeader({
           aria-label="Guardar nota"
           title="Guardar cambios"
           onClick={onSaveNote}
-          className="h-9 w-9 rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 dark:bg-purple-950/60 dark:text-purple-300 dark:hover:bg-purple-900/60 border border-purple-200/60 dark:border-purple-800/60 flex items-center justify-center transition shadow-sm"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
         >
-          <Save size={18} />
+          <Save size={18} style={{ color: accentColor }} />
         </button>
         <button
           type="button"
           aria-label="Ajustes"
-          className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 flex items-center justify-center transition"
+          onClick={onSettings}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
         >
-          <Settings size={18} />
+          <Settings size={18} style={{ color: accentColor }} />
         </button>
       </div>
     </header>

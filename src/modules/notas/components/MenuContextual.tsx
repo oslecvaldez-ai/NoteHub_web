@@ -1,6 +1,7 @@
 import { useEffect, type ReactElement } from "react";
 import { createPortal } from "react-dom";
 import { X } from "../../../core/components/Iconos";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface ContextMenuItem {
   id: string;
@@ -36,6 +37,7 @@ export function MenuContextual({
   items,
   onClose,
 }: MenuContextualProps): ReactElement | null {
+  const { accentColor } = useTheme();
   useEffect(() => {
     if (!isOpen) return undefined;
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -58,10 +60,13 @@ export function MenuContextual({
       <button
         aria-label="Cerrar menú"
         className="notas-context-close"
-        onClick={onClose}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
         type="button"
       >
-        <X size={14} />
+        <X size={14} style={{ color: accentColor }} />
       </button>
       {items.map((item) => (
         <button

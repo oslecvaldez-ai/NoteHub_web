@@ -24,8 +24,11 @@ import {
   type PanelEditorHandle,
 } from "./modules/editor/components/PanelEditor";
 import { PanelRespaldos } from "./modules/respaldos";
+import { VistaConfiguracion } from "./modules/configuracion";
+import { useTheme } from "./core/theme/useTheme";
 
 function WorkspaceShell() {
+  const { accentColor } = useTheme();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace | null>(
@@ -45,7 +48,7 @@ function WorkspaceShell() {
   >("idle");
   const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0);
   const [activeView, setActiveView] = useState<
-    "notas" | "papelera" | "plantillas" | "respaldos"
+    "notas" | "papelera" | "plantillas" | "respaldos" | "configuracion"
   >("notas");
 
   const toggleSidebar = useCallback(() => {
@@ -175,7 +178,7 @@ function WorkspaceShell() {
   }, [refreshQuickAccessNotes]);
 
   useEffect(() => {
-    if (activeView === "papelera") {
+    if (activeView === "papelera" || activeView === "configuracion") {
       setSelectedNote(null);
     }
   }, [activeView]);
@@ -193,6 +196,7 @@ function WorkspaceShell() {
 
   const handleNoteSelect = useCallback((note: Note): void => {
     setSelectedNote(note);
+    setActiveView("notas");
   }, []);
 
   const handleSelectAllNotes = useCallback(() => {
@@ -234,6 +238,7 @@ function WorkspaceShell() {
           onSaveNote={handleSaveAndCloseNote}
           onReload={reloadAction}
           onToggleSidebar={toggleSidebar}
+          onSettings={() => setActiveView("configuracion")}
         />
       </div>
 
@@ -260,55 +265,61 @@ function WorkspaceShell() {
               onSelectTrash={() => setActiveView("papelera")}
               onSelectTemplates={() => setActiveView("plantillas")}
               onSelectBackups={() => setActiveView("respaldos")}
+              onSelectSettings={() => setActiveView("configuracion")}
+              isSettingsActive={activeView === "configuracion"}
             />
           </div>
         )}
 
-        {!isFocusMode && activeView !== "papelera" && (
-          <div
-            className={`flex h-full max-h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-200 ${
-              activeView === "plantillas" ? "w-[360px]" : "w-80"
-            }`}
-          >
-            {activeView === "plantillas" ? (
-              <PanelPlantillas
-                workspaceId={activeWorkspace?.id ?? 0}
-                selectedTemplateId={selectedTemplate?.id ?? null}
-                refreshTrigger={templatesRefreshKey}
-                onSelectTemplate={(template) => {
-                  setSelectedTemplate(template);
-                  setTemplateEditorMode("idle");
-                }}
-                onCreateNewTemplate={() => {
-                  setSelectedTemplate(null);
-                  setTemplateEditorMode("create");
-                }}
-                onEditTemplate={(template) => {
-                  setSelectedTemplate(template);
-                  setTemplateEditorMode("edit");
-                }}
-              />
-            ) : (
-              <PanelCentralNotas
-                key={`${activeWorkspace?.id ?? "none"}-${selectedNotebookId ?? "all"}`}
-                notebookId={selectedNotebookId}
-                workspaceId={activeWorkspace?.id ?? null}
-                searchQuery={searchQuery}
-                onSearch={setSearchQuery}
-                onReloadReady={handleReloadReady}
-                onNoteSelect={handleNoteSelect}
-                activeNoteId={selectedNote?.id ?? null}
-              />
-            )}
-          </div>
-        )}
+        {!isFocusMode &&
+          activeView !== "papelera" &&
+          activeView !== "configuracion" && (
+            <div
+              className={`flex h-full max-h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-200 ${
+                activeView === "plantillas" ? "w-[360px]" : "w-80"
+              }`}
+            >
+              {activeView === "plantillas" ? (
+                <PanelPlantillas
+                  workspaceId={activeWorkspace?.id ?? 0}
+                  selectedTemplateId={selectedTemplate?.id ?? null}
+                  refreshTrigger={templatesRefreshKey}
+                  onSelectTemplate={(template) => {
+                    setSelectedTemplate(template);
+                    setTemplateEditorMode("idle");
+                  }}
+                  onCreateNewTemplate={() => {
+                    setSelectedTemplate(null);
+                    setTemplateEditorMode("create");
+                  }}
+                  onEditTemplate={(template) => {
+                    setSelectedTemplate(template);
+                    setTemplateEditorMode("edit");
+                  }}
+                />
+              ) : (
+                <PanelCentralNotas
+                  key={`${activeWorkspace?.id ?? "none"}-${selectedNotebookId ?? "all"}`}
+                  notebookId={selectedNotebookId}
+                  workspaceId={activeWorkspace?.id ?? null}
+                  searchQuery={searchQuery}
+                  onSearch={setSearchQuery}
+                  onReloadReady={handleReloadReady}
+                  onNoteSelect={handleNoteSelect}
+                  activeNoteId={selectedNote?.id ?? null}
+                />
+              )}
+            </div>
+          )}
 
         <div
           className={`flex-1 h-full min-w-0 flex flex-col bg-white overflow-hidden transition-all duration-200 ${
             isFocusMode ? "max-w-none" : ""
           }`}
         >
-          {activeView === "papelera" && activeWorkspace ? (
+          {activeView === "configuracion" ? (
+            <VistaConfiguracion />
+          ) : activeView === "papelera" && activeWorkspace ? (
             <PanelPapelera
               workspaceId={activeWorkspace.id}
               onNotesMutated={() => {
@@ -371,8 +382,8 @@ function WorkspaceShell() {
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 bg-white p-8 text-center dark:bg-slate-950">
-              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-purple-50 text-purple-500 shadow-sm dark:bg-purple-950/40 dark:text-purple-400">
-                <FileText className="h-8 w-8" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 shadow-sm dark:bg-slate-800/50">
+                <FileText className="h-8 w-8" style={{ color: accentColor }} />
               </div>
               <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
                 Selecciona o crea una nota

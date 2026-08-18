@@ -7,8 +7,10 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { SuccessModal } from "../components/SuccessModal";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export const PanelRespaldos: React.FC = () => {
+  const { accentColor } = useTheme();
   const [loading, setLoading] = useState(false);
   const [modalInfo, setModalInfo] = useState<{
     isOpen: boolean;
@@ -83,7 +85,7 @@ export const PanelRespaldos: React.FC = () => {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-          <Archive className="w-6 h-6 text-purple-600" />
+          <Archive className="w-6 h-6" style={{ color: accentColor }} />
           Copias de Seguridad y Restauración
         </h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
@@ -96,7 +98,7 @@ export const PanelRespaldos: React.FC = () => {
         <div className="p-5 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-semibold mb-1">
-              <Download className="w-5 h-5 text-purple-600" />
+              <Download className="w-5 h-5" style={{ color: accentColor }} />
               Crear Respaldo Local
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -107,7 +109,8 @@ export const PanelRespaldos: React.FC = () => {
           <button
             onClick={handleCreateBackup}
             disabled={loading}
-            className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
+            style={{ backgroundColor: accentColor }}
+            className="w-full py-2 px-4 hover:opacity-90 disabled:opacity-50 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-opacity"
           >
             {loading ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -122,7 +125,7 @@ export const PanelRespaldos: React.FC = () => {
         <div className="p-5 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 flex flex-col justify-between space-y-4">
           <div>
             <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-semibold mb-1">
-              <Upload className="w-5 h-5 text-amber-600" />
+              <Upload className="w-5 h-5" style={{ color: accentColor }} />
               Restaurar desde Respaldo
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -133,7 +136,8 @@ export const PanelRespaldos: React.FC = () => {
           <button
             onClick={handleRestoreBackup}
             disabled={loading}
-            className="w-full py-2 px-4 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
+            style={{ borderColor: accentColor, color: accentColor }}
+            className="w-full py-2 px-4 border-2 bg-transparent transition hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-50 font-medium rounded-lg flex items-center justify-center gap-2"
           >
             {loading ? (
               <RefreshCw className="w-4 h-4 animate-spin" />

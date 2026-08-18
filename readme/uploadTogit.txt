@@ -1,0 +1,12 @@
+Paso 1
+git add .
+git commit -m "style: culminación de detalles de UI en layout y configuración del logo de NoteHub"
+
+PASO 2
+#Mueve la etiqueta v1.1.0 al commit que acabas de crear, forzando la actualización con el parámetro -f:
+git tag -f -a v1.1.0 -m "Estabilización de respaldos y detalles de UI culminados"
+
+PASO 3
+#Sube el nuevo commit a la rama principal y luego fuerza la actualización de la etiqueta en el servidor:
+git push origin master
+git push origin v1.1.0 -f

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactElement } from "react";
 import { AlertCircle, RefreshCw, Search, Trash2 } from "lucide-react";
 import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
+import { useTheme } from "../../../core/theme/useTheme";
 import { ItemPapelera, type NotaPapelera } from "../components/ItemPapelera";
 
 interface PanelPapeleraProps {
@@ -12,6 +13,7 @@ export function PanelPapelera({
   workspaceId,
   onNotesMutated,
 }: PanelPapeleraProps): ReactElement {
+  const { accentColor } = useTheme();
   const [notas, setNotas] = useState<NotaPapelera[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -91,8 +93,8 @@ export function PanelPapelera({
       <div className="border-b border-slate-200/80 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100/80 text-red-600 dark:bg-red-950/60 dark:text-red-400">
-              <Trash2 className="h-5 w-5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+              <Trash2 className="h-5 w-5" style={{ color: accentColor }} />
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
@@ -110,9 +112,10 @@ export function PanelPapelera({
             type="button"
             disabled={notas.length === 0}
             onClick={() => setShowEmptyModal(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100 disabled:pointer-events-none disabled:opacity-40 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/60"
+            style={{ borderColor: accentColor, color: accentColor }}
+            className="flex items-center gap-1.5 rounded-xl border bg-slate-50 px-3 py-1.5 text-xs font-semibold transition hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-900 dark:hover:bg-slate-800"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-3.5 w-3.5" style={{ color: accentColor }} />
             <span>Vaciar Papelera</span>
           </button>
         </div>
@@ -124,7 +127,7 @@ export function PanelPapelera({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Buscar en papelera..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-red-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:focus:border-slate-600"
           />
         </div>
       </div>
@@ -138,7 +141,7 @@ export function PanelPapelera({
         ) : filteredNotas.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center gap-2.5 text-center text-slate-400 dark:text-slate-500">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900">
-              <Trash2 className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+              <Trash2 className="h-6 w-6" style={{ color: accentColor }} />
             </div>
             <p className="text-sm font-semibold">La papelera está vacía</p>
             <p className="max-w-[200px] text-xs text-slate-400">

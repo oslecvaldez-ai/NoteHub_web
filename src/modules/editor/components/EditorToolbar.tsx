@@ -3,6 +3,7 @@ import {
   useState,
   useRef,
   useEffect,
+  type CSSProperties,
   type ElementType,
   type MouseEvent,
 } from "react";
@@ -32,6 +33,7 @@ import {
   RotateCcw,
   RotateCw,
 } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface EditorToolbarProps {
   editor?: TiptapEditorHandle | null;
@@ -137,9 +139,9 @@ function toolbarButton(
   isActive = false,
 ) {
   const base =
-    "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900";
+    "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] dark:text-slate-200";
   const activeCls = isActive
-    ? "border-purple-500 bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:border-purple-600"
+    ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]"
     : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950";
 
   return (
@@ -163,6 +165,7 @@ export function EditorToolbar({
   onInsertDate,
   onOpenPlantillas,
 }: EditorToolbarProps) {
+  const { accentColor } = useTheme();
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
   const [showInsertMenu, setShowInsertMenu] = useState(false);
@@ -223,12 +226,20 @@ export function EditorToolbar({
   };
 
   return (
-    <div className="w-full flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-950 dark:border-slate-800">
+    <div
+      style={
+        {
+          "--accent-color": accentColor,
+          "--accent-bg": `${accentColor}20`,
+        } as CSSProperties
+      }
+      className="w-full flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-950 dark:border-slate-800"
+    >
       {/* 1) Insert (+) */}
       <div className="relative" ref={insertMenuRef}>
         <button
           type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${showInsertMenu ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowInsertMenu((s) => !s);
@@ -375,7 +386,7 @@ export function EditorToolbar({
       <div>
         <select
           aria-label="Formato de encabezado"
-          className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer px-2 py-1 rounded-xl border border-slate-200"
+          className="cursor-pointer rounded-xl border border-slate-200 bg-transparent px-2 py-1 text-xs font-semibold text-slate-700 outline-none transition-colors hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] focus:border-[var(--accent-color)] focus:bg-[var(--accent-bg)] focus:text-[var(--accent-color)] dark:border-slate-700 dark:text-slate-200"
           onChange={(e) => {
             const val = e.target.value;
             if (val === "p") {
@@ -413,7 +424,7 @@ export function EditorToolbar({
       <div className="relative" ref={iconsMenuRef}>
         <button
           type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${showIconsMenu ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowIconsMenu((s) => !s);
@@ -502,7 +513,7 @@ export function EditorToolbar({
       {/* 6) Underline */}
       <button
         type="button"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${editor?.isActive("underline") ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => {
           editor?.runEditorCommand((ed) =>
@@ -521,7 +532,7 @@ export function EditorToolbar({
       {/* 7) Strikethrough */}
       <button
         type="button"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${editor?.isActive("strike") ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => {
           editor?.runEditorCommand((ed) =>
@@ -542,7 +553,7 @@ export function EditorToolbar({
         <button
           type="button"
           title="Color de texto"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${showTextColorMenu ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowTextColorMenu((s) => !s);
@@ -595,7 +606,7 @@ export function EditorToolbar({
         <button
           type="button"
           title="Color de fondo (Resaltador)"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${showBgColorMenu ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowBgColorMenu((s) => !s);
@@ -687,7 +698,7 @@ export function EditorToolbar({
       <div>
         <select
           aria-label="Transformar texto"
-          className="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer px-1 py-0.5"
+          className="cursor-pointer rounded-lg border border-slate-200/80 bg-white/50 px-2.5 py-1 text-xs font-semibold text-slate-700 outline-none transition-colors hover:border-transparent hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] focus:border-transparent focus:bg-[var(--accent-bg)] focus:text-[var(--accent-color)] dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300"
           onChange={(e) => {
             const val = e.target.value as
               | "uppercase"
@@ -732,7 +743,7 @@ export function EditorToolbar({
       <div>
         <button
           type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() =>
             editor?.runEditorCommand((ed) =>
@@ -848,34 +859,46 @@ export function EditorToolbar({
       )}
 
       {/* 17) Code block */}
-      {toolbarButton(Slash, "Bloque de Código", () =>
-        editor?.runEditorCommand((ed) =>
-          ed
-            .chain()
-            .focus(undefined, { scrollIntoView: false })
-            .toggleCodeBlock()
-            .run(),
-        ),
+      {toolbarButton(
+        Slash,
+        "Bloque de Código",
+        () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleCodeBlock()
+              .run(),
+          ),
+        !!editor?.isActive("codeBlock"),
       )}
 
       {/* Sub/Superscript buttons (use handlers passed from parent) */}
-      {toolbarButton(Subscript, "Subíndice", () =>
-        editor?.runEditorCommand((ed) =>
-          ed
-            .chain()
-            .focus(undefined, { scrollIntoView: false })
-            .toggleSubscript()
-            .run(),
-        ),
+      {toolbarButton(
+        Subscript,
+        "Subíndice",
+        () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleSubscript()
+              .run(),
+          ),
+        !!editor?.isActive("subscript"),
       )}
-      {toolbarButton(Superscript, "Superíndice", () =>
-        editor?.runEditorCommand((ed) =>
-          ed
-            .chain()
-            .focus(undefined, { scrollIntoView: false })
-            .toggleSuperscript()
-            .run(),
-        ),
+      {toolbarButton(
+        Superscript,
+        "Superíndice",
+        () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleSuperscript()
+              .run(),
+          ),
+        !!editor?.isActive("superscript"),
       )}
 
       {/* 18) Horizontal rule */}

@@ -525,7 +525,20 @@
   color: #dc2626;
 }
 .notas-context-close {
-  display: none;
+  align-items: center;
+  color: var(--text-secondary, #8e8e93);
+  display: inline-flex !important;
+  justify-content: center;
+  margin: 0 0 4px auto;
+  padding: 4px !important;
+  text-align: center !important;
+}
+.notas-context-close:hover {
+  background: color-mix(
+    in srgb,
+    var(--color-primary, #0077d6) 12%,
+    transparent
+  );
 }
 .notas-modal-overlay {
   align-items: center;
