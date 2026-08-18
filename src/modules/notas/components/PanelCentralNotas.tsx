@@ -6,7 +6,13 @@ import {
   type MouseEvent,
   type ReactElement,
 } from "react";
-import { ArrowUpDown, MoreVertical, Star, StarOff, Search } from "lucide-react";
+import {
+  ArrowUpDown,
+  MoreVertical,
+  Star,
+  StarOff,
+  Search as LucideSearch,
+} from "lucide-react";
 import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
 import { useNotifications } from "../../../core/components/useNotifications";
 import { MenuContextual, type ContextMenuItem } from "./MenuContextual";
@@ -287,7 +293,7 @@ export function PanelCentralNotas({
       {/* Search bar sticky below header */}
       <div className="sticky top-14 z-20 bg-transparent px-3 pt-3">
         <div className="flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800/70 p-2 shadow-sm">
-          <Search className="h-4 w-4 text-slate-500" />
+          <LucideSearch className="h-4 w-4 text-slate-500" />
           <input
             type="text"
             value={searchQuery}
