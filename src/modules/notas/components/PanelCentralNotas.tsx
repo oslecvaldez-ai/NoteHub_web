@@ -305,31 +305,37 @@ export function PanelCentralNotas({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 space-y-3 scrollbar-thin">
-        {workspaceId === null ? (
+        {workspaceId === null && (
           <div className="p-6 text-center text-slate-400">
             <p className="text-sm font-semibold">Selecciona un espacio</p>
           </div>
-        ) : isLoading ? (
-          <p className="p-6 text-center text-xs text-slate-400">
-            Cargando notas...
-          </p>
-        ) : notes.length === 0 ? (
+        )}
+
+        {workspaceId !== null && isLoading && (
+          <p className="p-6 text-center text-xs text-slate-400">Cargando notas...</p>
+        )}
+
+        {workspaceId !== null && !isLoading && notes.length === 0 && (
           <div className="p-6 text-center text-slate-400">
             <p className="text-sm font-semibold">No hay notas todavía</p>
           </div>
-        ) : (
-          notes.map((note) => (
-            <div key={note.id} className="w-full min-w-0">
-              <NotaListItem
-                isSelected={selectedIds.includes(note.id)}
-                isActive={note.id === activeNoteId}
-                isSelectionMode={selectionMode}
-                note={note}
-                onContextMenu={handleContextMenu}
-                onSelect={selectNote}
-              />
-            </div>
-          ))
+        )}
+
+        {workspaceId !== null && !isLoading && notes.length > 0 && (
+          <>
+            {notes.map((note) => (
+              <div key={note.id} className="w-full min-w-0">
+                <NotaListItem
+                  isSelected={selectedIds.includes(note.id)}
+                  isActive={note.id === activeNoteId}
+                  isSelectionMode={selectionMode}
+                  note={note}
+                  onContextMenu={handleContextMenu}
+                  onSelect={selectNote}
+                />
+              </div>
+            ))}
+          </>
         )}
       </div>
 

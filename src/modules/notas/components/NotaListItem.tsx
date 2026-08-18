@@ -51,23 +51,37 @@ export function NotaListItem({
         </span>
       )}
 
-      <div className="flex items-start justify-between gap-2 min-w-0 w-full">
-        <h3 className="min-w-0 flex-1 line-clamp-2 text-xs font-bold text-slate-900 dark:text-slate-100 break-words leading-snug">
+      {/* Cabecera del Título con truncado garantizado */}
+      <div className="flex items-start justify-between gap-2 w-full min-w-0 overflow-hidden">
+        <h3
+          className="flex-1 min-w-0 text-xs font-bold text-slate-900 dark:text-slate-100 leading-snug break-all"
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={getNoteTitle(note)}
+        >
           {getNoteTitle(note) || "Sin título"}
         </h3>
+
         {note.is_pinned === 1 && (
           <Pin
             aria-label="Nota fijada"
-            className="h-3 w-3 shrink-0 fill-current text-purple-600 dark:text-purple-400"
+            className="h-3.5 w-3.5 shrink-0 fill-current text-purple-600 dark:text-purple-400 mt-0.5"
           />
         )}
       </div>
 
-      <p className="min-w-0 truncate text-[11px] font-normal leading-relaxed mt-1 text-slate-400 dark:text-slate-500">
+      {/* Extracto en 1 sola línea con elipsis limpia */}
+      <p className="w-full min-w-0 text-[11px] font-normal leading-relaxed text-slate-400 dark:text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap">
         {excerpt || "Sin contenido adicional"}
       </p>
 
-      <div className="mt-2 w-full">
+      {/* Fecha */}
+      <div className="mt-1 w-full min-w-0">
         <span className="block text-[10px] text-slate-400 dark:text-slate-500">
           {formatNoteDate(note.updated_at)}
         </span>
