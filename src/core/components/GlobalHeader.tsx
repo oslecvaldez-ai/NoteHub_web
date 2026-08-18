@@ -1,14 +1,12 @@
 import { type ChangeEvent, type ReactElement } from "react";
 import {
   Copy,
-  ChevronLeft,
-  ChevronRight,
   Lock,
-  Menu,
-  RotateCcw,
   Save,
   Search,
   Settings,
+  PanelLeft,
+  PencilLine,
 } from "lucide-react";
 
 interface GlobalHeaderProps {
@@ -30,36 +28,14 @@ export function GlobalHeader({
 }: GlobalHeaderProps): ReactElement {
   return (
     <header className="flex h-14 w-full items-center justify-between gap-4 bg-white/85 dark:bg-slate-950/85 backdrop-blur-md border-b border-slate-200/70 dark:border-slate-800/70 px-4">
-      <div className="flex items-center gap-2 text-slate-600">
+      <div className="flex items-center gap-2">
         <button
           type="button"
-          aria-label="Abrir menú"
+          aria-label="Toggle sidebar"
           onClick={onToggleSidebar}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+          className="h-9 w-9 flex items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition"
         >
-          <Menu size={18} />
-        </button>
-        <button
-          type="button"
-          aria-label="Navegar atrás"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-        >
-          <ChevronLeft size={18} />
-        </button>
-        <button
-          type="button"
-          aria-label="Navegar adelante"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-        >
-          <ChevronRight size={18} />
-        </button>
-        <button
-          type="button"
-          aria-label="Recargar"
-          onClick={onReload}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-        >
-          <RotateCcw size={18} />
+          <PanelLeft size={18} />
         </button>
       </div>
 
@@ -81,9 +57,10 @@ export function GlobalHeader({
         <button
           type="button"
           onClick={onCreateNote}
-          className="rounded-full bg-[#9333ea] px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+          className="bg-purple-600 hover:bg-purple-700 text-white font-medium shadow-sm transition flex items-center gap-2 px-3.5 py-1.5 rounded-2xl"
         >
-          Nueva Nota
+          <PencilLine className="h-4 w-4" />
+          <span>Nueva Nota</span>
         </button>
         <button
           type="button"

@@ -1,10 +1,8 @@
 import {
-  Clock,
   ExternalLink,
   Maximize2,
   MoreHorizontal,
   Pin,
-  Share2,
   Star,
   BookOpen,
 } from "lucide-react";
@@ -80,11 +78,11 @@ export function EditorHeader({
         </button>
         <button
           type="button"
-          onClick={onHistory}
-          title="Historial"
+          onClick={onMenu}
+          title="Más opciones"
           className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
         >
-          <Clock className="h-4 w-4" />
+          <MoreHorizontal className="h-4 w-4" />
         </button>
         <button
           type="button"
