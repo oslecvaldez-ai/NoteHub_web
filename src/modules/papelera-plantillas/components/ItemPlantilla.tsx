@@ -55,7 +55,7 @@ export function ItemPlantilla({
         className={`group relative flex cursor-pointer items-center justify-between rounded-2xl border p-3.5 transition ${
           isSelected
             ? "border-purple-300 bg-purple-50/70 shadow-sm dark:border-purple-800 dark:bg-purple-950/40"
-            : "border-slate-200/80 bg-white hover:border-purple-200 hover:bg-purple-50/20 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-purple-900/50"
+            : "border-slate-200 bg-slate-50 hover:border-purple-200 hover:bg-purple-50/20 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-purple-900/50"
         }`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">

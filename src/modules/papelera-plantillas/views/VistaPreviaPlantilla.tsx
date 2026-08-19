@@ -29,8 +29,8 @@ export function VistaPreviaPlantilla({
   }
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-slate-950">
-      <div className="flex items-center justify-between border-b border-slate-100 px-8 py-5 dark:border-slate-800/80">
+    <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="flex items-center justify-between border-b border-slate-100 px-8 py-5 dark:border-slate-800/60">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
             Vista Previa de Plantilla

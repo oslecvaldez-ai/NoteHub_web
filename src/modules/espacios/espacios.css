@@ -1,5 +1,4 @@
 .selector-espacios {
-  color: var(--text-primary, #1C1C1E);
   position: relative;
   width: 100%;
 }
@@ -27,10 +26,6 @@
   padding: 11px 12px;
 }
 
-.selector-espacios-trigger:hover {
-  background: color-mix(in srgb, var(--color-primary, #0077D6) 10%, transparent);
-}
-
 .selector-espacios-trigger span {
   flex: 1;
   overflow: hidden;
@@ -39,8 +34,9 @@
 }
 
 .selector-espacios-menu {
-  background: var(--bg-card, #F4F5F7);
-  border: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 24%, transparent);
+  background: var(--bg-card, #f4f5f7);
+  border: 1px solid
+    color-mix(in srgb, var(--text-secondary, #8e8e93) 24%, transparent);
   border-radius: 8px;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.16);
   left: 0;
@@ -72,13 +68,14 @@
 }
 
 .espacio-item-badge {
-  color: var(--text-secondary, #8E8E93);
+  color: var(--text-secondary, #8e8e93);
   font-size: 11px;
   white-space: nowrap;
 }
 
 .selector-espacios-menu-actions {
-  border-top: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 20%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--text-secondary, #8e8e93) 20%, transparent);
   margin-top: 6px;
   padding-top: 6px;
 }
@@ -90,12 +87,29 @@
 }
 
 .selector-espacios-menu-actions button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-primary, #0077D6) 10%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--color-primary, #0077d6) 10%,
+    transparent
+  );
 }
 
 .selector-espacios-menu-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.dark .selector-espacios-menu {
+  background: #0f172a !important;
+  border-color: rgba(148, 163, 184, 0.16) !important;
+}
+
+.dark .selector-espacios-menu-actions button {
+  color: #e2e8f0 !important;
+}
+
+.dark .selector-espacios-menu-actions button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .espacios-modal-overlay {
@@ -110,10 +124,10 @@
 }
 
 .espacios-modal {
-  background: var(--bg-card, #F4F5F7);
+  background: var(--bg-card, #f4f5f7);
   border-radius: 8px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-  color: var(--text-primary, #1C1C1E);
+  color: var(--text-primary, #1c1c1e);
   max-width: 440px;
   padding: 24px;
   position: relative;
@@ -126,18 +140,19 @@
 }
 
 .espacios-modal label {
-  color: var(--text-secondary, #8E8E93);
+  color: var(--text-secondary, #8e8e93);
   display: block;
   font-size: 13px;
   margin-bottom: 7px;
 }
 
 .espacios-modal input:not([type="checkbox"]) {
-  background: var(--bg-app, #FFFFFF);
-  border: 1px solid color-mix(in srgb, var(--text-secondary, #8E8E93) 35%, transparent);
+  background: var(--bg-app, #ffffff);
+  border: 1px solid
+    color-mix(in srgb, var(--text-secondary, #8e8e93) 35%, transparent);
   border-radius: 6px;
   box-sizing: border-box;
-  color: var(--text-primary, #1C1C1E);
+  color: var(--text-primary, #1c1c1e);
   font: inherit;
   padding: 10px 12px;
   width: 100%;
@@ -146,7 +161,7 @@
 .espacios-modal-close {
   background: transparent;
   border: 0;
-  color: var(--text-secondary, #8E8E93);
+  color: var(--text-secondary, #8e8e93);
   cursor: pointer;
   padding: 4px;
   position: absolute;
@@ -156,14 +171,14 @@
 
 .espacios-modal-option {
   align-items: center;
-  color: var(--text-primary, #1C1C1E);
+  color: var(--text-primary, #1c1c1e);
   display: flex;
   justify-content: space-between;
   margin-top: 18px;
 }
 
 .espacios-modal-option small {
-  color: var(--text-secondary, #8E8E93);
+  color: var(--text-secondary, #8e8e93);
   display: block;
   font-size: 11px;
   margin-top: 3px;
@@ -186,8 +201,8 @@
 }
 
 .espacios-modal-actions button:last-child {
-  background: var(--color-primary, #0077D6);
-  color: #FFFFFF;
+  background: var(--color-primary, #0077d6);
+  color: #ffffff;
 }
 
 .espacios-modal-actions button:disabled,
@@ -198,7 +213,7 @@
 
 .espacios-danger-action {
   background: transparent;
-  color: #DC2626;
+  color: #dc2626;
   margin-top: 20px;
   padding-left: 0;
 }
@@ -216,7 +231,11 @@
 
 .espacios-list-item:hover:not(:disabled),
 .espacios-list-item.is-selected {
-  background: color-mix(in srgb, var(--color-primary, #0077D6) 12%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--color-primary, #0077d6) 12%,
+    transparent
+  );
 }
 
 .espacios-list-item:disabled {

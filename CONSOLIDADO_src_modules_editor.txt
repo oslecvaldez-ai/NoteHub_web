@@ -313,15 +313,15 @@ export const ChecklistItem = TaskItem.extend({
 FILE: src/modules/editor/components/EditorHeader.tsx
 ========================================
 import {
-  Clock,
   ExternalLink,
   Maximize2,
   MoreHorizontal,
   Pin,
-  Share2,
   Star,
+  BookOpen,
 } from "lucide-react";
 import { type TiptapEditorHandle } from "./TiptapEditor";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface EditorHeaderProps {
   title: string;
@@ -338,107 +338,100 @@ export interface EditorHeaderProps {
 }
 
 export function EditorHeader({
+  title,
   onPin,
   onStar,
-  onShare,
-  onHistory,
   onExternal,
   onMenu,
   onToggleFocusMode,
   isPinned = false,
   isQuickAccess = false,
 }: EditorHeaderProps) {
+  const { accentColor } = useTheme();
   const pinTitle = isPinned ? "Desfijar nota" : "Fijar nota";
-  const pinButtonClass = isPinned
-    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-purple-500 bg-purple-100 text-purple-700 transition hover:bg-purple-200 dark:border-purple-600 dark:bg-purple-950/70 dark:text-purple-300 dark:hover:bg-purple-900/70"
-    : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
   const quickAccessTitle = isQuickAccess
     ? "Quitar de Acceso rápido"
     : "Añadir a Acceso rápido";
-  const quickAccessButtonClass = isQuickAccess
-    ? "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-400 bg-amber-100 text-amber-600 transition hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-950/70 dark:text-amber-300 dark:hover:bg-amber-900/70"
-    : "inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800";
 
   return (
-    <header className="editor-header flex items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-200/50 dark:border-slate-700 dark:bg-slate-950 dark:shadow-none">
-      <div className="flex flex-1 items-center gap-3 min-w-0">
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-            Editor
-          </p>
-          {/* <h1 className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">
-            {title}
-          </h1> */}
+    <div className="mx-4 mt-3 mb-1 px-4 py-2.5 flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/90">
+      {/* Left: metadata */}
+      <div className="flex items-center gap-3">
+        <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 border border-slate-200 dark:bg-slate-950 dark:border-slate-800">
+          <BookOpen className="h-4 w-4 text-slate-700 dark:text-slate-200" />
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[200px]">
+            {title || "Cuaderno"}
+          </span>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onPin}
-            aria-label={pinTitle}
-            title={pinTitle}
-            className={pinButtonClass}
-          >
-            <Pin className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onStar}
-            aria-label={quickAccessTitle}
-            title={quickAccessTitle}
-            className={quickAccessButtonClass}
-          >
-            <Star
-              className={`h-4 w-4 ${isQuickAccess ? "fill-current" : ""}`}
-            />
-          </button>
-          <button
-            type="button"
-            onClick={onShare}
-            aria-label="Compartir"
-            title="Compartir"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <Share2 className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onHistory}
-            aria-label="Historial"
-            title="Historial"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <Clock className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onExternal}
-            aria-label="Abrir externamente"
-            title="Abrir externamente"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={onMenu}
-            aria-label="Más opciones"
-            title="Más opciones"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+
+        <div className="flex items-center gap-2">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: accentColor }}
+          />
+          <span className="text-xs text-slate-600 dark:text-slate-300">
+            Guardado local
+          </span>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onToggleFocusMode}
-        aria-label="Pantalla completa"
-        title="Pantalla completa"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-      >
-        <Maximize2 className="h-4 w-4" />
-      </button>
-    </header>
+
+      {/* Right: actions */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPin}
+          title={pinTitle}
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200"
+        >
+          <Pin
+            className="h-4 w-4"
+            style={
+              isPinned ? { color: accentColor, fill: accentColor } : undefined
+            }
+          />
+        </button>
+        <button
+          type="button"
+          onClick={onStar}
+          title={quickAccessTitle}
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200"
+        >
+          <Star
+            className="h-4 w-4"
+            style={
+              isQuickAccess
+                ? { color: accentColor, fill: accentColor }
+                : undefined
+            }
+          />
+        </button>
+        <button
+          type="button"
+          onClick={onMenu}
+          title="Más opciones"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onExternal}
+          title="Exportar"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleFocusMode}
+          title="Modo foco"
+          style={{ color: accentColor, borderColor: accentColor }}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border bg-white transition hover:bg-slate-50 dark:bg-slate-900/80 dark:hover:bg-slate-800/80"
+        >
+          <Maximize2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -451,6 +444,7 @@ import {
   useState,
   useRef,
   useEffect,
+  type CSSProperties,
   type ElementType,
   type MouseEvent,
 } from "react";
@@ -480,6 +474,7 @@ import {
   RotateCcw,
   RotateCw,
 } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface EditorToolbarProps {
   editor?: TiptapEditorHandle | null;
@@ -513,37 +508,34 @@ const TEXT_COLORS: ColorOption[] = [
 ];
 
 const BG_COLORS: ColorOption[] = [
-  { name: "Rojo", color: "#FF8B8B" },
-  { name: "Naranja", color: "#FFC085" },
-  { name: "Amarillo", color: "#FFE285" },
-  { name: "Verde", color: "#C2F18E" },
-  { name: "Azul", color: "#85C8FF" },
-  { name: "Rosa", color: "#FFB2E6" },
-  { name: "Púrpura", color: "#CFA5FF" },
-  { name: "Gris", color: "#CCCCCC" },
+  { name: "Azul", color: "#E1EFFF" },
+  { name: "Rojo", color: "#FFEAEA" },
+  { name: "Amarillo", color: "#FFF6D6" },
+  { name: "Naranja", color: "#FFEBD6" },
+  { name: "Verde", color: "#E8F8D8" },
+  { name: "Púrpura", color: "#F3E8FF" },
+  { name: "Gris", color: "#F1F3F5" },
 ];
 
 const BG_TO_BORDER_MAP: Record<string, string> = {
-  "#FF8B8B": "#EE2C2C",
-  "#FFC085": "#FF7A00",
-  "#FFE285": "#FFC72C",
-  "#C2F18E": "#51B837",
-  "#85C8FF": "#478AF6",
-  "#FFB2E6": "#F86BD7",
-  "#CFA5FF": "#9B51E0",
-  "#CCCCCC": "#707070",
+  "#E1EFFF": "#478AF6",
+  "#FFEAEA": "#EE2C2C",
+  "#FFF6D6": "#FFC72C",
+  "#FFEBD6": "#FF7A00",
+  "#E8F8D8": "#51B837",
+  "#F3E8FF": "#9B51E0",
+  "#F1F3F5": "#94A3B8",
 };
 
 // Mapa de Pares Armónicos: Fondo Pastel -> Texto Armónico Oscuro
 const HARMONIC_PAIRS: Record<string, string> = {
-  "#FF8B8B": "#5A0000",
-  "#FFC085": "#4A2800",
-  "#FFE285": "#3D3000",
-  "#C2F18E": "#1B4300",
-  "#85C8FF": "#002B5B",
-  "#FFB2E6": "#4A0033",
-  "#CFA5FF": "#330066",
-  "#CCCCCC": "#1A1A1A",
+  "#E1EFFF": "#003B73",
+  "#FFEAEA": "#8A0000",
+  "#FFF6D6": "#5C4300",
+  "#FFEBD6": "#6B3300",
+  "#E8F8D8": "#1F4E0A",
+  "#F3E8FF": "#4A156B",
+  "#F1F3F5": "#334155",
 };
 
 const handleApplyHarmonicHighlight = (ed: any, bgColor: string) => {
@@ -588,9 +580,9 @@ function toolbarButton(
   isActive = false,
 ) {
   const base =
-    "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-900";
+    "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] dark:text-slate-400 dark:hover:text-slate-200";
   const activeCls = isActive
-    ? "border-purple-500 bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:border-purple-600"
+    ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]"
     : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950";
 
   return (
@@ -614,6 +606,7 @@ export function EditorToolbar({
   onInsertDate,
   onOpenPlantillas,
 }: EditorToolbarProps) {
+  const { accentColor } = useTheme();
   const [showTextColorMenu, setShowTextColorMenu] = useState(false);
   const [showBgColorMenu, setShowBgColorMenu] = useState(false);
   const [showInsertMenu, setShowInsertMenu] = useState(false);
@@ -674,12 +667,20 @@ export function EditorToolbar({
   };
 
   return (
-    <div className="w-full flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-950 dark:border-slate-800">
+    <div
+      style={
+        {
+          "--accent-color": accentColor,
+          "--accent-bg": `${accentColor}20`,
+        } as CSSProperties
+      }
+      className="w-full flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-900/90 dark:border-slate-800/80 dark:backdrop-blur-md"
+    >
       {/* 1) Insert (+) */}
       <div className="relative" ref={insertMenuRef}>
         <button
           type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${showInsertMenu ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowInsertMenu((s) => !s);
@@ -826,7 +827,7 @@ export function EditorToolbar({
       <div>
         <select
           aria-label="Formato de encabezado"
-          className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer px-2 py-1 rounded-xl border border-slate-200"
+          className="cursor-pointer rounded-xl border border-slate-200 bg-transparent px-2 py-1 text-xs font-semibold text-slate-700 outline-none transition-colors hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] focus:border-[var(--accent-color)] focus:bg-[var(--accent-bg)] focus:text-[var(--accent-color)] dark:border-slate-700 dark:text-slate-200"
           onChange={(e) => {
             const val = e.target.value;
             if (val === "p") {
@@ -864,7 +865,7 @@ export function EditorToolbar({
       <div className="relative" ref={iconsMenuRef}>
         <button
           type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${showIconsMenu ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowIconsMenu((s) => !s);
@@ -953,7 +954,7 @@ export function EditorToolbar({
       {/* 6) Underline */}
       <button
         type="button"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${editor?.isActive("underline") ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => {
           editor?.runEditorCommand((ed) =>
@@ -972,7 +973,7 @@ export function EditorToolbar({
       {/* 7) Strikethrough */}
       <button
         type="button"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+        className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${editor?.isActive("strike") ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => {
           editor?.runEditorCommand((ed) =>
@@ -993,7 +994,7 @@ export function EditorToolbar({
         <button
           type="button"
           title="Color de texto"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${showTextColorMenu ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowTextColorMenu((s) => !s);
@@ -1046,7 +1047,7 @@ export function EditorToolbar({
         <button
           type="button"
           title="Color de fondo (Resaltador)"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] ${showBgColorMenu ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]" : "border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"}`}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => {
             setShowBgColorMenu((s) => !s);
@@ -1138,7 +1139,7 @@ export function EditorToolbar({
       <div>
         <select
           aria-label="Transformar texto"
-          className="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer px-1 py-0.5"
+          className="cursor-pointer rounded-lg border border-slate-200/80 bg-white/50 px-2.5 py-1 text-xs font-semibold text-slate-700 outline-none transition-colors hover:border-transparent hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] focus:border-transparent focus:bg-[var(--accent-bg)] focus:text-[var(--accent-color)] dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-300"
           onChange={(e) => {
             const val = e.target.value as
               | "uppercase"
@@ -1183,7 +1184,7 @@ export function EditorToolbar({
       <div>
         <button
           type="button"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
           onMouseDown={(e) => e.preventDefault()}
           onClick={() =>
             editor?.runEditorCommand((ed) =>
@@ -1299,34 +1300,46 @@ export function EditorToolbar({
       )}
 
       {/* 17) Code block */}
-      {toolbarButton(Slash, "Bloque de Código", () =>
-        editor?.runEditorCommand((ed) =>
-          ed
-            .chain()
-            .focus(undefined, { scrollIntoView: false })
-            .toggleCodeBlock()
-            .run(),
-        ),
+      {toolbarButton(
+        Slash,
+        "Bloque de Código",
+        () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleCodeBlock()
+              .run(),
+          ),
+        !!editor?.isActive("codeBlock"),
       )}
 
       {/* Sub/Superscript buttons (use handlers passed from parent) */}
-      {toolbarButton(Subscript, "Subíndice", () =>
-        editor?.runEditorCommand((ed) =>
-          ed
-            .chain()
-            .focus(undefined, { scrollIntoView: false })
-            .toggleSubscript()
-            .run(),
-        ),
+      {toolbarButton(
+        Subscript,
+        "Subíndice",
+        () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleSubscript()
+              .run(),
+          ),
+        !!editor?.isActive("subscript"),
       )}
-      {toolbarButton(Superscript, "Superíndice", () =>
-        editor?.runEditorCommand((ed) =>
-          ed
-            .chain()
-            .focus(undefined, { scrollIntoView: false })
-            .toggleSuperscript()
-            .run(),
-        ),
+      {toolbarButton(
+        Superscript,
+        "Superíndice",
+        () =>
+          editor?.runEditorCommand((ed) =>
+            ed
+              .chain()
+              .focus(undefined, { scrollIntoView: false })
+              .toggleSuperscript()
+              .run(),
+          ),
+        !!editor?.isActive("superscript"),
       )}
 
       {/* 18) Horizontal rule */}
@@ -1536,7 +1549,7 @@ import { workspacesApi, type Workspace } from "../../espacios/workspacesApi";
 import { BuscadorInterno } from "./BuscadorInterno";
 import { InsertarPlantillaModal } from "./InsertarPlantillaModal";
 import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
-import { Info, Minimize2, Printer } from "lucide-react";
+import { Minimize2 } from "lucide-react";
 
 export interface PanelEditorHandle {
   saveNow: () => Promise<void>;
@@ -2247,8 +2260,8 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
     }
 
     return (
-      <div className="flex-1 flex flex-col h-full w-full bg-white overflow-hidden">
-        <div className="flex-shrink-0 w-full bg-white z-10">
+      <div className="flex-1 flex flex-col h-full w-full bg-white overflow-hidden dark:bg-slate-950">
+        <div className="flex-shrink-0 w-full bg-white z-10 dark:bg-slate-950">
           <EditorHeader
             title={resolvedTitle}
             onPin={handleTogglePin}
@@ -2263,7 +2276,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
           />
         </div>
 
-        <div className="flex-1 w-full overflow-y-auto min-h-0 relative bg-white">
+        <div className="flex-1 w-full overflow-y-auto min-h-0 relative bg-white dark:bg-[#15171c]">
           <TiptapEditor
             ref={editorRef}
             initialHTML={editorInitialHTML}
@@ -2281,7 +2294,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
           />
         </div>
 
-        <div className="flex-shrink-0 w-full flex flex-col bg-white border-t border-gray-200 z-10">
+        <div className="flex-shrink-0 w-full flex flex-col bg-white border-t border-gray-200 z-10 dark:bg-slate-950 dark:border-slate-800/80">
           <EditorToolbar
             editor={editorRef.current}
             onInsertTable={handleInsertTable}
@@ -2289,7 +2302,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
             onInsertDate={handleInsertDate}
             onOpenPlantillas={() => setShowPlantillasModal(true)}
           />
-          <footer className="w-full flex items-center justify-between border-t border-gray-100 bg-white px-4 py-2.5 text-sm text-slate-600">
+          <footer className="w-full flex items-center justify-between border-t border-gray-100 bg-white px-4 py-2.5 text-sm text-slate-600 dark:border-slate-800/60 dark:bg-slate-950 dark:text-slate-400">
             <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-slate-700">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-xs text-slate-700">
                 📄
@@ -2297,30 +2310,6 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
               <span className="text-xs font-medium">
                 {notebookId ? `Cuaderno ${notebookId}` : "Sin cuaderno"}
               </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="inline-flex h-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
-              >
-                Aa
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                aria-label="Imprimir"
-                title="Imprimir"
-              >
-                <Printer className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
-                aria-label="Información"
-                title="Información"
-              >
-                <Info className="h-3.5 w-3.5" />
-              </button>
             </div>
           </footer>
         </div>
@@ -2438,16 +2427,15 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
 ========================================
 FILE: src/modules/editor/components/TiptapEditor.css
 ========================================
-.tiptap-editor .editor-callout {
-  margin: 12px 0;
-  width: 100%;
+.tiptap-editor .editor-callout,
+.tiptap-editor div[data-type="custom-quote"] {
+  margin: 6px 0 !important;
+  padding: 8px 14px !important;
+  border-radius: 4px !important;
+  border-left-width: 4px !important;
+  font-size: 1em !important;
+  line-height: 1.5 !important;
   box-sizing: border-box;
-  padding: 16px;
-  border-radius: 6px;
-  border-left: 4px solid #6200ee;
-  background-color: #f5f5f5;
-  color: #333333;
-  position: relative;
 }
 .kh-collapsible {
   border: 1px solid rgba(148, 163, 184, 0.3);
@@ -2492,18 +2480,18 @@ FILE: src/modules/editor/components/TiptapEditor.css
 
 /* Párrafos e interlineado */
 .tiptap-editor p {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.35rem !important;
+  line-height: 1.55 !important;
 }
 
 /* Formato de Cita / Callout Box */
-.tiptap-editor div[data-type="custom-quote"] {
-  margin-top: 0.1rem;
-  margin-bottom: 0.1rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0 0.9rem 0.75rem 0;
-  border-left-width: 4px;
-  border-left-style: solid;
-  font-size: 1.1em;
+/* reduced spacing and visual style for thin separators */
+.tiptap-editor hr,
+.ProseMirror hr {
+  border: none !important;
+  border-top: 1px solid #cbd5e1 !important; /* Slate-300 */
+  margin: 1rem 0 !important;
+  opacity: 1 !important;
 }
 
 /* Encabezados con proporciones elegantes */
@@ -2530,9 +2518,10 @@ FILE: src/modules/editor/components/TiptapEditor.css
 }
 
 /* Resaltados de texto limpios con bordes suaves */
-.tiptap-editor mark {
-  border-radius: 0.25rem;
-  padding: 0.1em 0.3em;
+.tiptap-editor mark,
+.editor-highlight {
+  border-radius: 3px !important;
+  padding: 1px 5px !important;
 }
 
 /* Contenedores principales expansibles */
@@ -2550,26 +2539,28 @@ FILE: src/modules/editor/components/TiptapEditor.css
   flex: 1;
   height: 100%;
   min-height: 100%;
+  width: 100%;
   outline: none !important;
   border: none !important;
   box-shadow: none !important;
-  border-radius: 0 !important;
   background: transparent !important;
-  overflow-y: auto !important; /* Habilita el desplazamiento con la rueda del mouse */
-  padding: 2rem 3rem 6rem 3rem !important; /* Espacio extra abajo para que el texto no se tape con la toolbar */
+  overflow-y: auto !important;
+  padding: 1.5rem 2rem 6rem 2rem !important;
 }
 
-/* Estilos para la línea horizontal separadora */
-.tiptap-editor hr {
-  border: none;
-  border-top: 2px solid #e2e8f0;
-  margin: 1.75rem 0;
-  border-radius: 2px;
+/* Estilos para la línea horizontal separadora (definido arriba) */
+
+/* Soporte para modo oscuro */
+.dark .tiptap-editor hr,
+.dark .ProseMirror hr {
+  border-top-color: #475569 !important; /* Slate-600 */
 }
 
 .tiptap-editor-placeholder {
   position: absolute;
-  inset: 1.5rem auto auto 1.5rem;
+  top: 1.5rem; /* pt-6 */
+  left: 2rem; /* px-8 horizontal padding */
+  right: 2rem;
   z-index: 1;
   pointer-events: none;
   color: #94a3b8;
@@ -2971,14 +2962,12 @@ function TiptapEditorComponent(
   return (
     <div className="flex flex-col flex-1 h-full w-full relative overflow-hidden">
       {isEmpty && (
-        <div className="tiptap-editor-placeholder pointer-events-none px-6 pt-6 text-slate-400 dark:text-slate-500">
+        <div className="tiptap-editor-placeholder pointer-events-none px-8 pt-6 text-slate-400 dark:text-slate-500">
           Escriba / para mostrar el menú o seleccionar de Plantillas
         </div>
       )}
-      <EditorContent
-        editor={editor}
-        className="flex-1 h-full w-full overflow-y-auto"
-      />
+
+      <EditorContent editor={editor} className="w-full flex-1 h-full" />
     </div>
   );
 }

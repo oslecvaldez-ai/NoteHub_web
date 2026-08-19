@@ -139,7 +139,7 @@ function toolbarButton(
   isActive = false,
 ) {
   const base =
-    "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] dark:text-slate-200";
+    "inline-flex h-9 w-9 items-center justify-center rounded-xl border text-slate-700 transition hover:border-[var(--accent-color)] hover:bg-[var(--accent-bg)] hover:text-[var(--accent-color)] dark:text-slate-400 dark:hover:text-slate-200";
   const activeCls = isActive
     ? "border-[var(--accent-color)] bg-[var(--accent-bg)] text-[var(--accent-color)]"
     : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950";
@@ -233,7 +233,7 @@ export function EditorToolbar({
           "--accent-bg": `${accentColor}20`,
         } as CSSProperties
       }
-      className="w-full flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-950 dark:border-slate-800"
+      className="w-full flex flex-wrap items-center gap-1.5 px-3 py-2 bg-white border-t border-gray-100 dark:bg-slate-900/90 dark:border-slate-800/80 dark:backdrop-blur-md"
     >
       {/* 1) Insert (+) */}
       <div className="relative" ref={insertMenuRef}>
@@ -255,7 +255,7 @@ export function EditorToolbar({
             <div className="space-y-1">
               <button
                 type="button"
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   onInsertImage();
@@ -270,7 +270,7 @@ export function EditorToolbar({
               <div className="relative">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowTableSubmenu((s) => !s)}
                 >
@@ -282,30 +282,30 @@ export function EditorToolbar({
                 </button>
 
                 {showTableSubmenu && (
-                  <div className="absolute left-full top-0 ml-2 w-36 rounded-xl border bg-white p-2 shadow-md">
+                  <div className="absolute left-full top-0 ml-2 w-36 rounded-xl border border-slate-200 bg-white p-2 shadow-md dark:border-slate-800 dark:bg-slate-900">
                     <button
-                      className="w-full text-left px-2 py-1 text-xs"
+                      className="w-full rounded-lg px-2 py-1 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => insertTable(2, 2)}
                     >
                       2x2
                     </button>
                     <button
-                      className="w-full text-left px-2 py-1 text-xs"
+                      className="w-full rounded-lg px-2 py-1 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => insertTable(3, 3)}
                     >
                       3x3
                     </button>
                     <button
-                      className="w-full text-left px-2 py-1 text-xs"
+                      className="w-full rounded-lg px-2 py-1 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => insertTable(4, 4)}
                     >
                       4x4
                     </button>
                     <button
-                      className="w-full text-left px-2 py-1 text-xs"
+                      className="w-full rounded-lg px-2 py-1 text-left text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => insertTable(5, 5)}
                     >
@@ -319,7 +319,7 @@ export function EditorToolbar({
               <div className="relative">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowDateSubmenu((s) => !s)}
                 >
@@ -354,7 +354,7 @@ export function EditorToolbar({
 
               <button
                 type="button"
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   onOpenPlantillas?.();
@@ -367,7 +367,7 @@ export function EditorToolbar({
 
               <button
                 type="button"
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   console.info("Ver imágenes de la nota - placeholder");
@@ -436,27 +436,27 @@ export function EditorToolbar({
 
         {showIconsMenu && (
           <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center gap-1 mb-2">
+            <div className="mb-2 flex items-center gap-1">
               <button
-                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "indicadores" ? "bg-slate-100" : ""}`}
+                className={`rounded-xl px-2 py-1 text-xs text-slate-600 dark:text-slate-400 ${iconsTab === "indicadores" ? "bg-slate-100 dark:bg-slate-800 dark:text-slate-200" : ""}`}
                 onClick={() => setIconsTab("indicadores")}
               >
                 Indicadores
               </button>
               <button
-                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "simbolos" ? "bg-slate-100" : ""}`}
+                className={`rounded-xl px-2 py-1 text-xs text-slate-600 dark:text-slate-400 ${iconsTab === "simbolos" ? "bg-slate-100 dark:bg-slate-800 dark:text-slate-200" : ""}`}
                 onClick={() => setIconsTab("simbolos")}
               >
                 Símbolos
               </button>
               <button
-                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "enumeration" ? "bg-slate-100" : ""}`}
+                className={`rounded-xl px-2 py-1 text-xs text-slate-600 dark:text-slate-400 ${iconsTab === "enumeration" ? "bg-slate-100 dark:bg-slate-800 dark:text-slate-200" : ""}`}
                 onClick={() => setIconsTab("enumeration")}
               >
                 Enumeración
               </button>
               <button
-                className={`px-2 py-1 text-xs rounded-xl ${iconsTab === "herramientas" ? "bg-slate-100" : ""}`}
+                className={`rounded-xl px-2 py-1 text-xs text-slate-600 dark:text-slate-400 ${iconsTab === "herramientas" ? "bg-slate-100 dark:bg-slate-800 dark:text-slate-200" : ""}`}
                 onClick={() => setIconsTab("herramientas")}
               >
                 Herramientas
@@ -467,7 +467,7 @@ export function EditorToolbar({
                 <button
                   key={icon}
                   type="button"
-                  className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-slate-100"
+                  className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-slate-800"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     editor?.runEditorCommand((ed) =>
@@ -563,13 +563,13 @@ export function EditorToolbar({
           <Palette className="h-4 w-4" />
         </button>
         {showTextColorMenu && (
-          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <div className="space-y-1">
               {TEXT_COLORS.map((item) => (
                 <button
                   key={item.name}
                   type="button"
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     editor?.runEditorCommand((ed) =>
@@ -616,13 +616,13 @@ export function EditorToolbar({
           <Highlighter className="h-4 w-4" />
         </button>
         {showBgColorMenu && (
-          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+          <div className="absolute bottom-11 left-0 z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <div className="space-y-1">
               {BG_COLORS.map((item) => (
                 <button
                   key={item.name}
                   type="button"
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
+                  className="flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     editor?.runEditorCommand((ed) => {
@@ -664,7 +664,7 @@ export function EditorToolbar({
             <div className="mt-2 border-t border-slate-100 pt-1">
               <button
                 type="button"
-                className="w-full rounded-xl px-3 py-1.5 text-left text-xs font-medium text-slate-600 hover:bg-slate-100"
+                className="w-full rounded-xl px-3 py-1.5 text-left text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   editor?.runEditorCommand((ed) => {
@@ -762,7 +762,7 @@ export function EditorToolbar({
       </div>
 
       {/* 12..15) Alignment and lists */}
-      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5">
+      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 dark:border-slate-800">
         {toolbarButton(AlignLeft, "Izquierda", () =>
           editor?.runEditorCommand((ed) =>
             ed
@@ -913,7 +913,7 @@ export function EditorToolbar({
       )}
 
       {/* 19..20) Undo / Redo */}
-      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5">
+      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 dark:border-slate-800">
         {toolbarButton(RotateCcw, "Deshacer", () =>
           editor?.runEditorCommand((ed) =>
             ed.chain().focus(undefined, { scrollIntoView: false }).undo().run(),

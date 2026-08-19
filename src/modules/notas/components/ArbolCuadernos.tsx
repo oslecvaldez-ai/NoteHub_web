@@ -255,7 +255,7 @@ export const ArbolCuadernos = forwardRef<
     return (
       <section className="arbol-cuadernos">
         {showSectionHeader && (
-          <div className="notas-sidebar-section-heading">
+          <div className="notas-sidebar-section-heading text-slate-500 dark:text-slate-500">
             <span>Cuadernos</span>
             <button
               aria-label="Nuevo cuaderno"

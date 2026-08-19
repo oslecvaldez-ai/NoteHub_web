@@ -228,7 +228,7 @@ function WorkspaceShell() {
   }, [selectedNote, reloadAction]);
 
   return (
-    <main className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--bg-app)] text-[var(--text-primary)]">
+    <main className="flex h-screen w-screen flex-col overflow-hidden bg-white text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
       {/* Cabecera Global Fija */}
       <div className="flex-shrink-0 z-20">
         <GlobalHeader
@@ -245,7 +245,7 @@ function WorkspaceShell() {
       {/* Contenedor estricto de 3 columnas */}
       <div className="flex flex-row flex-1 min-h-0 overflow-hidden">
         {!isFocusMode && isSidebarVisible && (
-          <div className="w-72 h-full overflow-y-auto border-r border-gray-200 flex-shrink-0 bg-slate-50 overflow-x-hidden transition-all duration-200">
+          <div className="w-72 h-full overflow-y-auto border-r border-slate-200/80 flex-shrink-0 bg-slate-50 dark:bg-slate-950 dark:border-slate-800/60 overflow-x-hidden transition-colors duration-200">
             <SidebarNavegacion
               activeWorkspace={activeWorkspace}
               onSelectNotebook={(notebookId) => {
@@ -275,7 +275,7 @@ function WorkspaceShell() {
           activeView !== "papelera" &&
           activeView !== "configuracion" && (
             <div
-              className={`flex h-full max-h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-200 ${
+              className={`flex h-full max-h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-200 dark:border-slate-800/60 dark:bg-slate-900/80 ${
                 activeView === "plantillas" ? "w-[360px]" : "w-80"
               }`}
             >
@@ -313,7 +313,7 @@ function WorkspaceShell() {
           )}
 
         <div
-          className={`flex-1 h-full min-w-0 flex flex-col bg-white overflow-hidden transition-all duration-200 ${
+          className={`flex-1 h-full min-w-0 flex flex-col bg-white overflow-hidden transition-all duration-200 dark:bg-slate-950 ${
             isFocusMode ? "max-w-none" : ""
           }`}
         >

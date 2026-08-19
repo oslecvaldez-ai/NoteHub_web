@@ -1,4 +1,6 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --color-primary: #2563eb;
@@ -20,11 +22,19 @@
   --color-destructive: #f87171;
   --color-text-primary: #f9fafb;
   --color-text-secondary: #cbd5e1;
-  --color-background-modal: #111827;
+  --color-background-modal: #020617;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
   min-width: 320px;
   background-color: var(--color-background-modal);
   color: var(--color-text-primary);

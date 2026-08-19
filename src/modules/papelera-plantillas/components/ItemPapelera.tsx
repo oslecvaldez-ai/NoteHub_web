@@ -56,7 +56,7 @@ export const ItemPapelera: React.FC<ItemPapeleraProps> = ({
     <>
       <div
         onContextMenu={handleContextMenu}
-        className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-red-200 hover:bg-red-50/20 dark:border-slate-800 dark:bg-slate-900/60 dark:hover:border-red-950 dark:hover:bg-red-950/10 border-l-4 border-l-red-500"
+        className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 text-slate-900 shadow-sm transition hover:border-red-200 hover:bg-red-50/20 dark:border-slate-800/60 dark:bg-slate-900/40 dark:text-slate-100 dark:hover:border-red-950 dark:hover:bg-red-950/10 border-l-4 border-l-red-500"
       >
         <div className="flex flex-col gap-1.5">
           <div className="flex items-start justify-between gap-2">

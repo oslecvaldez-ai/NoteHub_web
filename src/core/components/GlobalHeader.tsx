@@ -55,7 +55,7 @@ export function GlobalHeader({
     };
   }, [searchQuery]);
   return (
-    <header className="flex h-14 w-full items-center justify-between gap-4 bg-white/85 dark:bg-slate-950/85 backdrop-blur-md border-b border-slate-200/70 dark:border-slate-800/70 px-4">
+    <header className="flex h-14 w-full items-center justify-between gap-4 border-b border-slate-200/70 bg-white/80 px-4 backdrop-blur-md transition-colors duration-200 dark:border-slate-800/60 dark:bg-slate-950/80">
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -81,7 +81,7 @@ export function GlobalHeader({
             </button>
           ) : (
             <div className="transition-all duration-200 ease-out w-64 md:w-80">
-              <div className="flex items-center gap-3 rounded-full bg-white px-3 py-2 text-slate-700 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 rounded-full border border-slate-100 bg-white px-3 py-2 text-slate-700 shadow-sm dark:border-slate-800/60 dark:bg-slate-900 dark:text-slate-200">
                 <Search className="h-4 w-4 text-slate-400" />
                 <input
                   ref={inputRef}
@@ -91,7 +91,7 @@ export function GlobalHeader({
                   }
                   placeholder="Buscar"
                   autoFocus
-                  className="w-full bg-transparent border-0 text-sm outline-none placeholder:text-slate-400"
+                  className="w-full border-0 bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
                 />
                 <button
                   type="button"
@@ -100,7 +100,7 @@ export function GlobalHeader({
                     onSearch("");
                     setSearchOpen(false);
                   }}
-                  className="h-8 w-8 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
                 >
                   ×
                 </button>
@@ -125,7 +125,7 @@ export function GlobalHeader({
           aria-label="Guardar nota"
           title="Guardar cambios"
           onClick={onSaveNote}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition hover:bg-slate-200 dark:border-slate-800/60 dark:bg-slate-800/80 dark:hover:bg-slate-700"
         >
           <Save size={18} style={{ color: accentColor }} />
         </button>
@@ -133,7 +133,7 @@ export function GlobalHeader({
           type="button"
           aria-label="Ajustes"
           onClick={onSettings}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition hover:bg-slate-200 dark:border-slate-800/60 dark:bg-slate-800/80 dark:hover:bg-slate-700"
         >
           <Settings size={18} style={{ color: accentColor }} />
         </button>

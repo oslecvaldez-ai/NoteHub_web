@@ -33,12 +33,16 @@ export function NotaListItem({
 
   return (
     <article
-      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-[22px] p-4 box-border w-full min-w-0 overflow-hidden transition ${
+      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-[22px] p-4 box-border w-full min-w-0 overflow-hidden transition-all duration-200 ${
         isActive || isSelected
-          ? "border-2 bg-white shadow-sm dark:bg-slate-900"
-          : "border border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60"
+          ? "border-2 rounded-2xl bg-white shadow-sm dark:bg-slate-800/80"
+          : "border border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-800/40 dark:bg-transparent dark:hover:bg-slate-800/40 dark:hover:border-slate-700/60"
       }`}
-      style={isActive || isSelected ? { borderColor: accentColor } : undefined}
+      style={
+        isActive || isSelected
+          ? { backgroundColor: `${accentColor}15`, borderColor: accentColor }
+          : undefined
+      }
       onClick={() => onSelect(note)}
       onContextMenu={(event) => {
         event.preventDefault();

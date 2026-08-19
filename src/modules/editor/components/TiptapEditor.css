@@ -119,6 +119,16 @@
   padding: 1.5rem 2rem 6rem 2rem !important;
 }
 
+.dark .tiptap-editor,
+.dark .ProseMirror {
+  color: #f1f5f9 !important;
+}
+
+.dark .tiptap-editor p,
+.dark .ProseMirror p {
+  color: #f1f5f9 !important;
+}
+
 /* Estilos para la línea horizontal separadora (definido arriba) */
 
 /* Soporte para modo oscuro */

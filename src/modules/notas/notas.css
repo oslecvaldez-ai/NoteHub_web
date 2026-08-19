@@ -1,7 +1,7 @@
 .notas-sidebar {
-  background: #fcfcfd;
+  background: transparent !important;
   border-right: 1px solid rgba(15, 23, 42, 0.08);
-  color: var(--text-primary, #1c1c1e);
+  color: inherit !important;
   display: flex;
   flex-direction: column;
   gap: 20px;

@@ -26,7 +26,7 @@ export function SeccionTemas() {
             key={id}
             type="button"
             onClick={() => void setMode(id)}
-            className={`flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition ${mode === id ? "border-purple-500 bg-purple-50/50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300" : "border-slate-200/80 bg-white text-slate-600 hover:border-purple-300 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400"}`}
+            className={`flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition ${mode === id ? "border-purple-500 bg-purple-50/50 text-purple-700 dark:bg-slate-900/60 dark:text-purple-300" : "border-slate-200 bg-white text-slate-600 hover:border-purple-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"}`}
           >
             <Icon size={24} />
             <span className="text-sm font-bold">{label}</span>

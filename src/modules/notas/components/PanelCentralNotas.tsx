@@ -284,22 +284,22 @@ export function PanelCentralNotas({
   }, [notebookId, notebooks]);
 
   return (
-    <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col box-border border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
-      <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 dark:border-slate-800 dark:bg-slate-900 box-border">
+    <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col box-border border-r border-slate-200/80 bg-white/50 transition-colors duration-200 dark:border-slate-800/60 dark:bg-[#0f172a]">
+      <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-transparent px-4 dark:border-slate-800/60 box-border">
         <h2 className="truncate pr-2 text-sm font-bold text-slate-800 dark:text-slate-100">
           {activeNotebookName}
         </h2>
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-200"
             aria-label="Ordenar"
           >
             <ArrowUpDown size={16} />
           </button>
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-200"
             aria-label="Más opciones"
           >
             <MoreVertical size={16} />
@@ -309,7 +309,7 @@ export function PanelCentralNotas({
 
       {/* Barra de búsqueda contenida */}
       <div className="w-full px-3 pt-3 pb-1 box-border">
-        <div className="flex w-full items-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-3 py-2 text-xs shadow-none dark:border-slate-800 dark:bg-slate-900 box-border focus-within:border-purple-400">
+        <div className="flex w-full items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50 px-3 py-2 text-xs shadow-none transition-colors dark:border-slate-800/60 dark:bg-slate-800/40 box-border focus-within:border-purple-400">
           <LucideSearch className="h-4 w-4 shrink-0 text-slate-400" />
           <input
             type="text"

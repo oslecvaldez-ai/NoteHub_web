@@ -40,7 +40,7 @@ export function EditorHeader({
     : "Añadir a Acceso rápido";
 
   return (
-    <div className="mx-4 mt-3 mb-1 px-4 py-2.5 flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/90">
+    <div className="mx-4 mt-3 mb-1 px-4 py-2.5 flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-900/90">
       {/* Left: metadata */}
       <div className="flex items-center gap-3">
         <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 border border-slate-200 dark:bg-slate-950 dark:border-slate-800">
@@ -67,7 +67,7 @@ export function EditorHeader({
           type="button"
           onClick={onPin}
           title={pinTitle}
-          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200"
         >
           <Pin
             className="h-4 w-4"
@@ -80,7 +80,7 @@ export function EditorHeader({
           type="button"
           onClick={onStar}
           title={quickAccessTitle}
-          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200"
         >
           <Star
             className="h-4 w-4"
@@ -95,7 +95,7 @@ export function EditorHeader({
           type="button"
           onClick={onMenu}
           title="Más opciones"
-          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200"
         >
           <MoreHorizontal className="h-4 w-4" />
         </button>
@@ -103,7 +103,7 @@ export function EditorHeader({
           type="button"
           onClick={onExternal}
           title="Exportar"
-          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          className="rounded-xl h-8 w-8 inline-flex items-center justify-center border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200"
         >
           <ExternalLink className="h-4 w-4" />
         </button>
@@ -112,7 +112,7 @@ export function EditorHeader({
           onClick={onToggleFocusMode}
           title="Modo foco"
           style={{ color: accentColor, borderColor: accentColor }}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border bg-white transition hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-xl border bg-white transition hover:bg-slate-50 dark:bg-slate-900/80 dark:hover:bg-slate-800/80"
         >
           <Maximize2 className="h-4 w-4" />
         </button>

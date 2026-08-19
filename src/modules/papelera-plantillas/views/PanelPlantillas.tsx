@@ -64,8 +64,8 @@ export function PanelPlantillas({
   };
 
   return (
-    <div className="flex h-full flex-col bg-slate-50/50 dark:bg-slate-950/40">
-      <div className="border-b border-slate-200/80 bg-white px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+    <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="border-b border-slate-200/80 bg-white px-5 py-4 dark:border-slate-800/60 dark:bg-slate-950">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
@@ -104,7 +104,7 @@ export function PanelPlantillas({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Buscar plantillas..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-400 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:focus:border-slate-600"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-slate-600"
           />
         </div>
       </div>

@@ -314,6 +314,7 @@ FILE: src/modules/notas/components/MenuContextual.tsx
 import { useEffect, type ReactElement } from "react";
 import { createPortal } from "react-dom";
 import { X } from "../../../core/components/Iconos";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface ContextMenuItem {
   id: string;
@@ -349,6 +350,7 @@ export function MenuContextual({
   items,
   onClose,
 }: MenuContextualProps): ReactElement | null {
+  const { accentColor } = useTheme();
   useEffect(() => {
     if (!isOpen) return undefined;
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -371,10 +373,13 @@ export function MenuContextual({
       <button
         aria-label="Cerrar menú"
         className="notas-context-close"
-        onClick={onClose}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
         type="button"
       >
-        <X size={14} />
+        <X size={14} style={{ color: accentColor }} />
       </button>
       {items.map((item) => (
         <button
@@ -408,6 +413,7 @@ FILE: src/modules/notas/components/NotaListItem.tsx
 import type { MouseEvent } from "react";
 import { Pin } from "lucide-react";
 import { Check } from "../../../core/components/Iconos";
+import { useTheme } from "../../../core/theme/useTheme";
 import type { Note } from "../notesApi";
 import {
   extractImage,
@@ -433,16 +439,22 @@ export function NotaListItem({
   onSelect,
   onContextMenu,
 }: NotaListItemProps) {
+  const { accentColor } = useTheme();
   const image = extractImage(note.content);
   const excerpt = extraerExtracto(note.content);
 
   return (
     <article
-      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-2xl border p-3.5 transition ${
+      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-[22px] p-4 box-border w-full min-w-0 overflow-hidden transition ${
         isActive || isSelected
-          ? "border-purple-300 bg-purple-50/60 shadow-sm dark:border-purple-800 dark:bg-purple-950/40"
-          : "border-slate-200/70 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800/80 dark:bg-slate-900/60 dark:hover:border-slate-700"
+          ? "border-2 rounded-2xl bg-white shadow-sm dark:bg-slate-900/80"
+          : "border border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-800/60 dark:bg-slate-900/40 dark:hover:bg-slate-800/60"
       }`}
+      style={
+        isActive || isSelected
+          ? { backgroundColor: `${accentColor}15`, borderColor: accentColor }
+          : undefined
+      }
       onClick={() => onSelect(note)}
       onContextMenu={(event) => {
         event.preventDefault();
@@ -458,29 +470,41 @@ export function NotaListItem({
         </span>
       )}
 
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="flex-1 truncate text-xs font-bold text-slate-800 dark:text-slate-100">
+      {/* Cabecera del Título con truncado garantizado */}
+      <div className="flex items-start justify-between gap-2 w-full min-w-0 overflow-hidden">
+        <h3
+          className="flex-1 min-w-0 text-xs font-bold text-slate-900 dark:text-slate-100 leading-snug break-all"
+          style={{
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={getNoteTitle(note)}
+        >
           {getNoteTitle(note) || "Sin título"}
         </h3>
+
         {note.is_pinned === 1 && (
           <Pin
             aria-label="Nota fijada"
-            className="h-3 w-3 shrink-0 fill-current text-purple-600 dark:text-purple-400"
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 fill-current"
+            style={{ color: accentColor }}
           />
         )}
       </div>
 
-      <p className="line-clamp-2 text-[11px] font-normal leading-relaxed text-slate-400 dark:text-slate-500">
+      {/* Extracto en 1 sola línea con elipsis limpia */}
+      <p className="w-full min-w-0 text-[11px] font-normal leading-relaxed text-slate-400 dark:text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap">
         {excerpt || "Sin contenido adicional"}
       </p>
 
-      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-slate-400 dark:text-slate-500">
-        <span>{formatNoteDate(note.updated_at)}</span>
-        {note.notebook_id && (
-          <span className="max-w-[100px] truncate rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">
-            {note.notebook_id}
-          </span>
-        )}
+      {/* Fecha */}
+      <div className="mt-1 w-full min-w-0">
+        <span className="block text-[10px] text-slate-400 dark:text-slate-500">
+          {formatNoteDate(note.updated_at)}
+        </span>
       </div>
 
       {image && (
@@ -767,18 +791,27 @@ import {
   type MouseEvent,
   type ReactElement,
 } from "react";
-import { ArrowUpDown, MoreVertical, Star, StarOff } from "lucide-react";
+import {
+  ArrowUpDown,
+  MoreVertical,
+  Pin,
+  Star,
+  StarOff,
+  Search as LucideSearch,
+} from "lucide-react";
 import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
 import { useNotifications } from "../../../core/components/useNotifications";
 import { MenuContextual, type ContextMenuItem } from "./MenuContextual";
 import { NotaListItem } from "./NotaListItem";
 import { SeleccionCuadernoModal } from "./SeleccionCuadernoModal";
 import { notesApi, type Notebook, type Note } from "../notesApi";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface PanelCentralNotasProps {
   workspaceId: number | null;
   notebookId: number | null;
   searchQuery: string;
+  onSearch?: (query: string) => void;
   activeNoteId?: number | null;
   onCreateNoteReady?: (createNote: () => void) => void;
   onReloadReady?: (reload: () => void) => void;
@@ -795,6 +828,7 @@ export function PanelCentralNotas({
   workspaceId,
   notebookId,
   searchQuery,
+  onSearch,
   activeNoteId,
   onCreateNoteReady,
   onReloadReady,
@@ -809,6 +843,7 @@ export function PanelCentralNotas({
   const [deleteTarget, setDeleteTarget] = useState<Note | null>(null);
   const [moveNote, setMoveNote] = useState<Note | null>(null);
   const { notify: showNotification } = useNotifications();
+  const { accentColor } = useTheme();
 
   const loadNotes = useCallback(async (): Promise<void> => {
     if (workspaceId === null) return;
@@ -917,6 +952,16 @@ export function PanelCentralNotas({
       {
         id: "pin",
         label: note.is_pinned === 1 ? "Desanclar" : "Anclar",
+        icon: (
+          <Pin
+            className="h-4 w-4"
+            style={
+              note.is_pinned === 1
+                ? { color: accentColor, fill: accentColor }
+                : { color: accentColor }
+            }
+          />
+        ),
         onSelect: () =>
           void runNoteAction(
             () => notesApi.notes.togglePin(note.id),
@@ -927,9 +972,12 @@ export function PanelCentralNotas({
         id: "quick",
         label: isQuickAccess ? "Quitar de Acceso rápido" : "Acceso rápido",
         icon: isQuickAccess ? (
-          <StarOff className="h-4 w-4 text-amber-500" />
+          <StarOff className="h-4 w-4" style={{ color: accentColor }} />
         ) : (
-          <Star className="h-4 w-4 text-amber-500 fill-amber-500/80" />
+          <Star
+            className="h-4 w-4"
+            style={{ color: accentColor, fill: accentColor }}
+          />
         ),
         onSelect: () => {
           void (async () => {
@@ -1021,22 +1069,22 @@ export function PanelCentralNotas({
   }, [notebookId, notebooks]);
 
   return (
-    <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-950/40">
-      <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 dark:border-slate-800 dark:bg-slate-900">
+    <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col box-border border-r border-slate-200/80 bg-slate-50/50 dark:border-slate-800/60 dark:bg-slate-900/80">
+      <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 dark:border-slate-800/60 dark:bg-slate-900 box-border">
         <h2 className="truncate pr-2 text-sm font-bold text-slate-800 dark:text-slate-100">
           {activeNotebookName}
         </h2>
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-200"
             aria-label="Ordenar"
           >
             <ArrowUpDown size={16} />
           </button>
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-200"
             aria-label="Más opciones"
           >
             <MoreVertical size={16} />
@@ -1044,35 +1092,55 @@ export function PanelCentralNotas({
         </div>
       </header>
 
-      <div
-        className="flex-1 min-h-0 h-full w-full overflow-y-auto overflow-x-hidden p-3 space-y-2.5 scrollbar-thin"
-        style={{ overflowY: "auto", overflowX: "hidden" }}
-      >
-        {workspaceId === null ? (
+      {/* Barra de búsqueda contenida */}
+      <div className="w-full px-3 pt-3 pb-1 box-border">
+        <div className="flex w-full items-center gap-2 rounded-2xl border border-slate-200/80 bg-white px-3 py-2 text-xs shadow-none dark:border-slate-800/60 dark:bg-slate-800/80 box-border focus-within:border-purple-400">
+          <LucideSearch className="h-4 w-4 shrink-0 text-slate-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearch?.(e.target.value)}
+            placeholder="Buscar en notas o #etiq"
+            className="w-full min-w-0 bg-transparent text-xs text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100"
+          />
+        </div>
+      </div>
+
+      {/* Lista con margen simétrico y sin desborde */}
+      <div className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden px-3 py-3 space-y-3 box-border">
+        {workspaceId === null && (
           <div className="p-6 text-center text-slate-400">
             <p className="text-sm font-semibold">Selecciona un espacio</p>
           </div>
-        ) : isLoading ? (
+        )}
+
+        {workspaceId !== null && isLoading && (
           <p className="p-6 text-center text-xs text-slate-400">
             Cargando notas...
           </p>
-        ) : notes.length === 0 ? (
+        )}
+
+        {workspaceId !== null && !isLoading && notes.length === 0 && (
           <div className="p-6 text-center text-slate-400">
             <p className="text-sm font-semibold">No hay notas todavía</p>
           </div>
-        ) : (
-          notes.map((note) => (
-            <div key={note.id} className="w-full shrink-0">
-              <NotaListItem
-                isSelected={selectedIds.includes(note.id)}
-                isActive={note.id === activeNoteId}
-                isSelectionMode={selectionMode}
-                note={note}
-                onContextMenu={handleContextMenu}
-                onSelect={selectNote}
-              />
-            </div>
-          ))
+        )}
+
+        {workspaceId !== null && !isLoading && notes.length > 0 && (
+          <>
+            {notes.map((note) => (
+              <div key={note.id} className="w-full min-w-0 box-border">
+                <NotaListItem
+                  isSelected={selectedIds.includes(note.id)}
+                  isActive={note.id === activeNoteId}
+                  isSelectionMode={selectionMode}
+                  note={note}
+                  onContextMenu={handleContextMenu}
+                  onSelect={selectNote}
+                />
+              </div>
+            ))}
+          </>
         )}
       </div>
 
@@ -1312,6 +1380,7 @@ import { SelectorEspacios } from "../../espacios/components/SelectorEspacios";
 import { workspacesApi, type Workspace } from "../../espacios/workspacesApi";
 import { ArbolCuadernos } from "./ArbolCuadernos";
 import { type Note } from "../notesApi";
+import { useTheme } from "../../../core/theme/useTheme";
 import "../notas.css";
 
 export interface SidebarNavegacionProps {
@@ -1326,6 +1395,8 @@ export interface SidebarNavegacionProps {
   onSelectTrash?: () => void;
   onSelectTemplates?: () => void;
   onSelectBackups?: () => void;
+  onSelectSettings?: () => void;
+  isSettingsActive?: boolean;
 }
 
 export function SidebarNavegacion({
@@ -1340,7 +1411,10 @@ export function SidebarNavegacion({
   onSelectTrash,
   onSelectTemplates,
   onSelectBackups,
+  onSelectSettings,
+  isSettingsActive = false,
 }: SidebarNavegacionProps): ReactElement {
+  const { accentColor } = useTheme();
   const [resolvedWorkspace, setResolvedWorkspace] = useState<Workspace | null>(
     activeWorkspace,
   );
@@ -1465,7 +1539,10 @@ export function SidebarNavegacion({
                         : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-900/80"
                     }`}
                   >
-                    <Star className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500/80 group-hover:scale-110 transition-transform" />
+                    <Star
+                      className="h-3 w-3 shrink-0 fill-current transition-transform group-hover:scale-110"
+                      style={{ color: accentColor, fill: accentColor }}
+                    />
                     <span className="truncate flex-1">
                       {note.title || "Sin título"}
                     </span>
@@ -1486,7 +1563,10 @@ export function SidebarNavegacion({
             <span>Papelera</span>
           </span>
           {trashCount > 0 && (
-            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-100 px-1.5 text-[11px] font-bold text-red-600 dark:bg-red-950 dark:text-red-400">
+            <span
+              style={{ color: accentColor }}
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold dark:bg-slate-800/60"
+            >
               {trashCount}
             </span>
           )}
@@ -1501,7 +1581,10 @@ export function SidebarNavegacion({
             <span>Plantillas</span>
           </span>
           {templatesCount > 0 && (
-            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-purple-100 px-1.5 text-[11px] font-bold text-purple-600 dark:bg-purple-950 dark:text-purple-400">
+            <span
+              style={{ color: accentColor }}
+              className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold dark:bg-slate-800/60"
+            >
               {templatesCount}
             </span>
           )}
@@ -1516,7 +1599,11 @@ export function SidebarNavegacion({
             <span>Respaldos</span>
           </span>
         </button>
-        <button type="button">
+        <button
+          type="button"
+          className={isSettingsActive ? "is-active" : undefined}
+          onClick={() => onSelectSettings?.()}
+        >
           <Settings size={17} /> Ajustes
         </button>
       </nav>
@@ -1564,6 +1651,12 @@ FILE: src/modules/notas/notas.css
   overflow-y: auto;
   padding: 20px 18px;
   width: 280px;
+}
+
+.dark .notas-sidebar {
+  background: #121417;
+  border-right-color: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
 }
 
 .sidebar-header {
@@ -1772,6 +1865,14 @@ FILE: src/modules/notas/notas.css
     transparent
   );
   color: var(--text-primary, #1c1c1e);
+}
+.dark .notas-sidebar-nav button {
+  color: #94a3b8;
+}
+.dark .notas-sidebar-nav button:hover,
+.dark .notas-sidebar-nav button.is-active {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e2e8f0;
 }
 .notas-sidebar-section-heading {
   align-items: center;
@@ -2058,6 +2159,11 @@ FILE: src/modules/notas/notas.css
   position: fixed;
   z-index: 1200;
 }
+.dark .notas-context-menu {
+  background: #181a1f;
+  border-color: rgba(148, 163, 184, 0.16);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
 .notas-context-menu button {
   background: transparent;
   border: 0;
@@ -2076,11 +2182,28 @@ FILE: src/modules/notas/notas.css
     transparent
   );
 }
+.dark .notas-context-menu button:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #e2e8f0;
+}
 .notas-context-menu button.is-destructive {
   color: #dc2626;
 }
 .notas-context-close {
-  display: none;
+  align-items: center;
+  color: var(--text-secondary, #8e8e93);
+  display: inline-flex !important;
+  justify-content: center;
+  margin: 0 0 4px auto;
+  padding: 4px !important;
+  text-align: center !important;
+}
+.notas-context-close:hover {
+  background: color-mix(
+    in srgb,
+    var(--color-primary, #0077d6) 12%,
+    transparent
+  );
 }
 .notas-modal-overlay {
   align-items: center;
@@ -2324,30 +2447,6 @@ FILE: src/modules/notas/notas.css
 
 
 ========================================
-FILE: src/modules/notas/noteUtils.ts
-========================================
-import type { Note } from './notesApi'
-
-export function extraerExtracto(content: string): string {
-  return content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 150)
-}
-
-export function extractImage(content: string): string | null {
-  return content.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? null
-}
-
-export function formatNoteDate(value: string): string {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' }).format(date)
-}
-
-export function getNoteTitle(note: Note): string {
-  return note.title || 'Sin título'
-}
-
-
-========================================
 FILE: src/modules/notas/notesApi.ts
 ========================================
 export interface Notebook {
@@ -2490,5 +2589,29 @@ export const notesApi = {
       getApi()?.notes?.delete(id),
   },
 };
+
+
+========================================
+FILE: src/modules/notas/noteUtils.ts
+========================================
+import type { Note } from './notesApi'
+
+export function extraerExtracto(content: string): string {
+  return content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 150)
+}
+
+export function extractImage(content: string): string | null {
+  return content.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? null
+}
+
+export function formatNoteDate(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short' }).format(date)
+}
+
+export function getNoteTitle(note: Note): string {
+  return note.title || 'Sin título'
+}
 
 

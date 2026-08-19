@@ -82,7 +82,7 @@ export const PanelRespaldos: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 bg-white p-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div>
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
           <Archive className="w-6 h-6" style={{ color: accentColor }} />
@@ -95,7 +95,7 @@ export const PanelRespaldos: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Crear Respaldo */}
-        <div className="p-5 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 flex flex-col justify-between space-y-4">
+        <div className="flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/50">
           <div>
             <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-semibold mb-1">
               <Download className="w-5 h-5" style={{ color: accentColor }} />
@@ -122,7 +122,7 @@ export const PanelRespaldos: React.FC = () => {
         </div>
 
         {/* Restaurar Respaldo */}
-        <div className="p-5 border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900 flex flex-col justify-between space-y-4">
+        <div className="flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/50">
           <div>
             <div className="flex items-center gap-2 text-zinc-900 dark:text-zinc-100 font-semibold mb-1">
               <Upload className="w-5 h-5" style={{ color: accentColor }} />
@@ -149,7 +149,7 @@ export const PanelRespaldos: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl flex items-start gap-3">
+      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
         <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
         <div className="text-xs text-amber-800 dark:text-amber-300 space-y-1">
           <p className="font-semibold">Información Importante</p>
