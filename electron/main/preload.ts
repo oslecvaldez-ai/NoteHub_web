@@ -1,8 +1,146 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-console.log("--- PRELOAD CARGADO CORRECTAMENTE ---");
+type NotebookInput = {
+  name?: string;
+  parentNotebookId?: number | null;
+  iconType?: string | null;
+  iconColor?: string | null;
+  isLocked?: boolean | number | null;
+  password?: string | null;
+  passwordHash?: string | null;
+};
 
-const electronApi = {
+type NoteInput = {
+  title?: string;
+  content?: string;
+  notebookId?: number | null;
+};
+
+type TemplateInput = {
+  workspaceId: number;
+  name: string;
+  content: string;
+};
+
+type ElectronApi = {
+  db: {
+    query: <T = Record<string, unknown>>(
+      sql: string,
+      params?: unknown[],
+    ) => Promise<T[]>;
+    exec: (
+      sql: string,
+      params?: unknown[],
+    ) => Promise<{ changes: number; lastInsertRowid: number | bigint }>;
+    getSetting: (key: string) => Promise<string | null>;
+    setSetting: (key: string, value: string) => Promise<string>;
+  };
+  backup: {
+    create: () => Promise<unknown>;
+    restore: () => Promise<unknown>;
+  };
+  settings: {
+    getAll: () => Promise<Record<string, string>>;
+    get: (key: string) => Promise<string | null>;
+    set: (key: string, value: string) => Promise<string>;
+  };
+  files: {
+    copyImage: (sourcePath?: string | null) => Promise<string>;
+    saveImage: (
+      sourcePath?:
+        | string
+        | { name: string; mimeType: string; data: Uint8Array }
+        | null,
+    ) => Promise<string>;
+  };
+  editor: {
+    saveContent: (
+      noteId: number,
+      content: string,
+      notebookId?: number | null,
+    ) => Promise<unknown>;
+  };
+  export: {
+    toTXT: (title: string, content: string) => Promise<string | null>;
+    toMD: (title: string, content: string) => Promise<string | null>;
+    toHTML: (title: string, content: string) => Promise<string | null>;
+    toPDF: (title: string, content: string) => Promise<string | null>;
+    toNoteHub: (note: unknown) => Promise<string | null>;
+    fromNoteHub: () => Promise<unknown | null>;
+  };
+  workspaces: {
+    getAll: () => Promise<unknown[]>;
+    create: (name: string) => Promise<unknown>;
+    update: (id: number, name: string) => Promise<unknown>;
+    delete: (id: number, mode?: "all" | "migrate") => Promise<unknown>;
+    moveElement: (
+      type: "note" | "notebook",
+      elementId: number,
+      targetWorkspaceId: number,
+    ) => Promise<unknown>;
+  };
+  notebooks: {
+    getAll: (workspaceId: number) => Promise<unknown[]>;
+    create: (workspaceId: number, input: NotebookInput) => Promise<unknown>;
+    update: (id: number, input: NotebookInput) => Promise<unknown>;
+    delete: (id: number) => Promise<unknown>;
+    getCustomCovers: () => Promise<string[]>;
+    saveCustomCover: (fileName: string) => Promise<string[]>;
+  };
+  tags: {
+    getAllForWorkspace: (workspaceId: number) => Promise<unknown[]>;
+    getForNote: (noteId: number) => Promise<unknown[]>;
+    setForNote: (noteId: number, tagIds: number[]) => Promise<unknown[]>;
+    create: (workspaceId: number, name: string) => Promise<unknown>;
+  };
+  notes: {
+    getById: (id: number) => Promise<unknown>;
+    getByWorkspace: (
+      workspaceId: number,
+      notebookId?: number | null,
+    ) => Promise<unknown[]>;
+    getQuickAccess: (workspaceId: number) => Promise<unknown[]>;
+    search: (
+      workspaceId: number,
+      search: string,
+      notebookId?: number | null,
+    ) => Promise<unknown[]>;
+    create: (workspaceId: number, input: NoteInput) => Promise<unknown>;
+    duplicate: (id: number) => Promise<unknown>;
+    togglePin: (id: number) => Promise<unknown>;
+    toggleQuickAccess: (id: number, nextStatus?: number) => Promise<unknown>;
+    move: (id: number, notebookId: number | null) => Promise<unknown>;
+    delete: (id: number) => Promise<unknown>;
+  };
+  trash: {
+    getAll: (workspaceId: number) => Promise<unknown[]>;
+    restore: (noteId: number) => Promise<{ success: boolean }>;
+    deletePermanent: (noteId: number) => Promise<{ success: boolean }>;
+    empty: (
+      workspaceId: number,
+    ) => Promise<{ success: boolean; count: number }>;
+    getCount: (workspaceId: number) => Promise<number>;
+  };
+  templates: {
+    getAll: (workspaceId: number) => Promise<unknown[]>;
+    getById: (templateId: number) => Promise<unknown>;
+    getByWorkspace: (workspaceId: number) => Promise<unknown[]>;
+    create: (input: TemplateInput) => Promise<unknown>;
+    update: (input: {
+      id: number;
+      name: string;
+      content: string;
+    }) => Promise<{ success: boolean }>;
+    delete: (templateId: number) => Promise<{ success: boolean }>;
+    createNoteFromTemplate: (input: {
+      templateId: number;
+      workspaceId: number;
+      notebookId?: number | null;
+    }) => Promise<unknown>;
+  };
+};
+
+const electronApi: ElectronApi = {
   db: {
     query: (sql: string, params: unknown[] = []) =>
       ipcRenderer.invoke("db:query", sql, params),
@@ -56,7 +194,8 @@ const electronApi = {
     create: (name: string) => ipcRenderer.invoke("workspaces:create", name),
     update: (id: number, name: string) =>
       ipcRenderer.invoke("workspaces:update", id, name),
-    delete: (id: number) => ipcRenderer.invoke("workspaces:delete", id),
+    delete: (id: number, mode: "all" | "migrate" = "migrate") =>
+      ipcRenderer.invoke("workspaces:delete", id, mode),
     moveElement: (
       type: "note" | "notebook",
       elementId: number,
@@ -77,6 +216,9 @@ const electronApi = {
     update: (id: number, input: unknown) =>
       ipcRenderer.invoke("notebooks:update", id, input),
     delete: (id: number) => ipcRenderer.invoke("notebooks:delete", id),
+    getCustomCovers: () => ipcRenderer.invoke("notebooks:get-custom-covers"),
+    saveCustomCover: (fileName: string) =>
+      ipcRenderer.invoke("notebooks:save-custom-cover", fileName),
   },
   tags: {
     getAllForWorkspace: (workspaceId: number) =>

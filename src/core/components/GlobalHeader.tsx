@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Save, Search, Settings, PanelLeft, PencilLine } from "lucide-react";
+import { Save, Search, Settings, PanelLeft, FileText } from "lucide-react";
 import { useTheme } from "../theme/useTheme";
 
 interface GlobalHeaderProps {
@@ -114,11 +114,10 @@ export function GlobalHeader({
         <button
           type="button"
           onClick={onCreateNote}
-          style={{ backgroundColor: accentColor }}
-          className="flex items-center gap-2 rounded-2xl px-3.5 py-1.5 font-medium text-white shadow-sm transition hover:opacity-90"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-red-700 active:scale-95"
         >
-          <PencilLine className="h-4 w-4" />
-          <span>Nueva Nota</span>
+          <FileText className="h-4 w-4 text-white" />
+          <span>✏️ Escribir</span>
         </button>
         <button
           type="button"

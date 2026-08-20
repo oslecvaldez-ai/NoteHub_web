@@ -1,5 +1,6 @@
 import { type ReactElement } from "react";
 import { Play, Sparkles } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
 import type { Plantilla } from "../components/ItemPlantilla";
 
 interface VistaPreviaPlantillaProps {
@@ -11,6 +12,8 @@ export function VistaPreviaPlantilla({
   plantilla,
   onUseTemplate,
 }: VistaPreviaPlantillaProps): ReactElement {
+  const { accentColor } = useTheme();
+
   if (!plantilla) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 bg-white p-8 text-center dark:bg-slate-950">
@@ -32,7 +35,10 @@ export function VistaPreviaPlantilla({
     <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="flex items-center justify-between border-b border-slate-100 px-8 py-5 dark:border-slate-800/60">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">
+          <span
+            style={{ color: accentColor }}
+            className="text-[10px] font-bold uppercase tracking-wider"
+          >
             Vista Previa de Plantilla
           </span>
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
@@ -43,7 +49,8 @@ export function VistaPreviaPlantilla({
         <button
           type="button"
           onClick={() => onUseTemplate(plantilla)}
-          className="flex items-center gap-2 rounded-2xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-purple-500/25 transition hover:bg-purple-700 active:scale-95"
+          style={{ backgroundColor: accentColor }}
+          className="flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:opacity-90 active:scale-95"
         >
           <Play className="h-4 w-4 fill-white" />
           <span>Usar plantilla</span>

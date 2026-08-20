@@ -65,9 +65,9 @@ export function registerNotesIpc(): void {
     return getDatabase()
       .prepare(
         `SELECT id, workspace_id, notebook_id, title, content, is_pinned, is_quick_access, is_deleted, pinned_at, created_at, updated_at
-				 FROM notes
-				 WHERE workspace_id = ? AND (is_quick_access = 1 OR is_pinned = 1) AND is_deleted = 0
-				 ORDER BY updated_at DESC`,
+       FROM notes
+       WHERE workspace_id = ? AND is_quick_access = 1 AND is_deleted = 0
+       ORDER BY updated_at DESC`,
       )
       .all(workspaceId) as Note[];
   });
@@ -119,10 +119,11 @@ export function registerNotesIpc(): void {
     const nextPinned = note.is_pinned === 1 ? 0 : 1;
     getDatabase()
       .prepare(
-        `UPDATE notes SET is_pinned = ?, is_quick_access = ?, pinned_at = CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE NULL END, updated_at = CURRENT_TIMESTAMP
-				 WHERE id = ?`,
+        `UPDATE notes 
+       SET is_pinned = ?, pinned_at = CASE WHEN ? = 1 THEN CURRENT_TIMESTAMP ELSE NULL END, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
       )
-      .run(nextPinned, nextPinned, nextPinned, id);
+      .run(nextPinned, nextPinned, id);
     return getNote(id);
   });
 

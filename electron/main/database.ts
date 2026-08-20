@@ -218,7 +218,6 @@ export function getDatabase(): Database.Database {
       fs.mkdirSync(dbDir, { recursive: true });
     }
     database = new Database(databasePath);
-    console.log("Base de datos conectada correctamente en:", databasePath);
     createSchema(database);
     seedDatabase(database);
   }

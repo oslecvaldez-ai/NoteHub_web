@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactElement } from "react";
 import { createPortal } from "react-dom";
+import { useTheme } from "../../../core/theme/useTheme";
 import type { Notebook } from "../notesApi";
 
 export interface SeleccionCuadernoModalProps {
@@ -37,6 +38,7 @@ export function SeleccionCuadernoModal({
   onSelect,
 }: SeleccionCuadernoModalProps): ReactElement | null {
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const { accentColor } = useTheme();
   if (!isOpen) return null;
 
   const root = getModalRoot();
@@ -84,11 +86,15 @@ export function SeleccionCuadernoModal({
             <button
               type="button"
               onClick={() => onSelect(notebook.id)}
-              className={`group flex w-full items-center justify-between rounded-2xl border p-3 text-left transition ${
+              className="group flex w-full items-center justify-between rounded-2xl border p-3 text-left transition border-slate-200/70 bg-slate-50/50 hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+              style={
                 isSelected
-                  ? "border-purple-300 bg-purple-50/70 dark:border-purple-800 dark:bg-purple-950/40"
-                  : "border-slate-200/70 bg-slate-50/50 hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
-              }`}
+                  ? {
+                      borderColor: accentColor,
+                      backgroundColor: `${accentColor}12`,
+                    }
+                  : undefined
+              }
             >
               <span className="flex min-w-0 items-center gap-3">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
@@ -100,7 +106,7 @@ export function SeleccionCuadernoModal({
               </span>
 
               {isSelected && (
-                <Check className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                <Check className="h-4 w-4" style={{ color: accentColor }} />
               )}
             </button>
           </div>
@@ -147,11 +153,15 @@ export function SeleccionCuadernoModal({
           <button
             type="button"
             onClick={() => onSelect(null)}
-            className={`group flex w-full items-center justify-between rounded-2xl border p-3 text-left transition ${
+            className="group flex w-full items-center justify-between rounded-2xl border p-3 text-left transition border-slate-200/70 bg-slate-50/50 hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
+            style={
               currentNotebookId === null
-                ? "border-purple-300 bg-purple-50/70 dark:border-purple-800 dark:bg-purple-950/40"
-                : "border-slate-200/70 bg-slate-50/50 hover:bg-slate-100/60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
-            }`}
+                ? {
+                    borderColor: accentColor,
+                    backgroundColor: `${accentColor}12`,
+                  }
+                : undefined
+            }
           >
             <span className="flex items-center gap-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -163,7 +173,7 @@ export function SeleccionCuadernoModal({
             </span>
 
             {currentNotebookId === null && (
-              <Check className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              <Check className="h-4 w-4" style={{ color: accentColor }} />
             )}
           </button>
 

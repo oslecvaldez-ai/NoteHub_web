@@ -31,7 +31,6 @@ function createWindow(): void {
   ];
   const preloadPath =
     possiblePaths.find((p) => fs.existsSync(p)) || possiblePaths[0];
-  console.log("👉 Archivo preload inyectado desde:", preloadPath);
   // Resolve public/asset path depending on packaging state so icon path works in dev and production
   const publicPath = app.isPackaged
     ? path.join(currentDirectory, "..", "dist")

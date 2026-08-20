@@ -52,6 +52,8 @@ export interface ElectronApi {
     create: (workspaceId: number, input: unknown) => Promise<unknown>;
     update: (id: number, input: unknown) => Promise<unknown>;
     delete: (id: number) => Promise<unknown>;
+    getCustomCovers: () => Promise<string[]>;
+    saveCustomCover: (fileName: string) => Promise<string[]>;
   };
   tags: {
     getAllForWorkspace: (workspaceId: number) => Promise<unknown[]>;

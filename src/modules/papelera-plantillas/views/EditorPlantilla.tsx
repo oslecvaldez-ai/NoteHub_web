@@ -1,5 +1,6 @@
-import { useRef, useState, type ReactElement } from "react";
+import { useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { Save, X } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
 import { EditorToolbar } from "../../editor/components/EditorToolbar";
 import {
   TiptapEditor,
@@ -20,6 +21,7 @@ export function EditorPlantilla({
   onSave,
   onCancel,
 }: EditorPlantillaProps): ReactElement {
+  const { accentColor } = useTheme();
   const [name, setName] = useState(plantilla?.name ?? "");
   const [content, setContent] = useState(plantilla?.content ?? "");
   const [saving, setSaving] = useState(false);
@@ -126,7 +128,8 @@ export function EditorPlantilla({
               if (error) setError("");
             }}
             placeholder="Nombre de la plantilla..."
-            className="w-full text-lg font-extrabold text-slate-900 placeholder-slate-300 outline-none dark:bg-transparent dark:text-slate-100 dark:placeholder-slate-600"
+            style={{ "--tw-ring-color": accentColor } as CSSProperties}
+            className="w-full text-lg font-extrabold text-slate-900 placeholder-slate-300 outline-none focus:ring-1 dark:bg-transparent dark:text-slate-100 dark:placeholder-slate-600"
             autoFocus
           />
           {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
@@ -147,7 +150,8 @@ export function EditorPlantilla({
             onClick={() => {
               void handleSave();
             }}
-            className="flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-purple-700 disabled:opacity-50"
+            style={{ backgroundColor: accentColor }}
+            className="flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-95 disabled:opacity-50"
           >
             <Save className="h-4 w-4" />
             <span>{saving ? "Guardando..." : "Guardar"}</span>

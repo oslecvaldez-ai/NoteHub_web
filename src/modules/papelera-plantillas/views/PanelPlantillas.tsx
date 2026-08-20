@@ -98,13 +98,17 @@ export function PanelPlantillas({
         </div>
 
         <div className="relative mt-3">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+          <Search
+            className="absolute left-3 top-2.5 h-3.5 w-3.5"
+            style={{ color: accentColor }}
+          />
           <input
             type="text"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Buscar plantillas..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-slate-600"
+            style={{ "--tw-ring-color": accentColor } as React.CSSProperties}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-400 focus:ring-1 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-slate-600"
           />
         </div>
       </div>

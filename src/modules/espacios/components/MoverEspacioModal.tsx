@@ -2,6 +2,7 @@ import { useState, type ReactElement } from "react";
 import { createPortal } from "react-dom";
 import { Check, FolderInput, Layers, X } from "lucide-react";
 import { useNotifications } from "../../../core/components/useNotifications";
+import { useTheme } from "../../../core/theme/useTheme";
 import {
   workspacesApi,
   type Workspace,
@@ -43,6 +44,7 @@ export function MoverEspacioModal({
   );
   const [isMoving, setIsMoving] = useState(false);
   const { notify: showNotification } = useNotifications();
+  const { accentColor } = useTheme();
 
   if (!isOpen) return null;
   const modalRoot = getModalRoot();
@@ -65,6 +67,7 @@ export function MoverEspacioModal({
       );
       showNotification("Elemento movido correctamente", "success");
       onMoved?.(targetWorkspaceId);
+      window.dispatchEvent(new CustomEvent("notes:updated"));
       onClose();
     } catch (error) {
       showNotification(
@@ -86,7 +89,13 @@ export function MoverEspacioModal({
       <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-2xl transition-all dark:border-slate-800 dark:bg-slate-950">
         <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-2xl"
+              style={{
+                backgroundColor: `${accentColor}18`,
+                color: accentColor,
+              }}
+            >
               <FolderInput className="h-5 w-5" />
             </div>
             <div>
@@ -128,9 +137,17 @@ export function MoverEspacioModal({
                 onClick={() => setTargetWorkspaceId(space.id)}
                 className={`group flex w-full items-center justify-between rounded-2xl border p-3 text-left transition ${
                   isSelected
-                    ? "border-purple-500 bg-purple-50/50 dark:border-purple-600 dark:bg-purple-950/30"
+                    ? "bg-white/80 dark:bg-slate-900/80"
                     : "border-slate-200/70 bg-slate-50/50 hover:bg-slate-100/60 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:bg-slate-800/60"
                 }`}
+                style={
+                  isSelected
+                    ? {
+                        borderColor: accentColor,
+                        backgroundColor: `${accentColor}12`,
+                      }
+                    : undefined
+                }
               >
                 <span className="flex items-center gap-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100/80 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
@@ -150,7 +167,7 @@ export function MoverEspacioModal({
                 </span>
 
                 {isSelected && (
-                  <Check className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                  <Check className="h-4 w-4" style={{ color: accentColor }} />
                 )}
               </button>
             );
@@ -170,7 +187,8 @@ export function MoverEspacioModal({
             type="button"
             onClick={() => void handleMove()}
             disabled={!canMove}
-            className="rounded-2xl bg-purple-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-purple-500/20 transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-2xl px-5 py-2 text-xs font-bold text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ backgroundColor: accentColor }}
           >
             {isMoving ? "Moviendo..." : "Mover"}
           </button>

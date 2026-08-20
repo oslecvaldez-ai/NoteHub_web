@@ -9,6 +9,7 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface OpcionesEditorModalProps {
   onClose: () => void;
@@ -31,6 +32,7 @@ export function OpcionesEditorModal({
   onImportNoteHub,
   isProcessing,
 }: OpcionesEditorModalProps) {
+  const { accentColor } = useTheme();
   const stopPropagation: MouseEventHandler<HTMLDivElement> = (event) =>
     event.stopPropagation();
 
@@ -47,7 +49,13 @@ export function OpcionesEditorModal({
       >
         <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-2xl"
+              style={{
+                backgroundColor: `${accentColor}18`,
+                color: accentColor,
+              }}
+            >
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
@@ -80,7 +88,8 @@ export function OpcionesEditorModal({
                 type="button"
                 disabled={isProcessing}
                 onClick={onExportToPDF}
-                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:border-red-200 hover:bg-red-50/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-red-900/50 dark:hover:bg-red-950/20"
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50"
+                style={{ borderColor: `${accentColor}40` }}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100/80 text-red-600 transition group-hover:scale-105 dark:bg-red-950/60 dark:text-red-400">
                   <FileDown className="h-4 w-4" />
@@ -99,7 +108,11 @@ export function OpcionesEditorModal({
                 type="button"
                 disabled={isProcessing}
                 onClick={onExportToNoteHub}
-                className="group flex items-center gap-3 rounded-2xl border border-purple-200/80 bg-purple-50/30 p-3 text-left transition hover:border-purple-300 hover:bg-purple-50/70 disabled:cursor-not-allowed disabled:opacity-60 dark:border-purple-900/40 dark:bg-purple-950/20 dark:hover:border-purple-700/60 dark:hover:bg-purple-950/40"
+                className="group flex items-center gap-3 rounded-2xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
+                style={{
+                  borderColor: `${accentColor}60`,
+                  backgroundColor: `${accentColor}12`,
+                }}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 transition group-hover:scale-105 dark:bg-purple-900/50 dark:text-purple-300">
                   <Package className="h-4 w-4" />
@@ -118,7 +131,8 @@ export function OpcionesEditorModal({
                 type="button"
                 disabled={isProcessing}
                 onClick={onExportToMD}
-                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:border-blue-200 hover:bg-blue-50/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-blue-900/50 dark:hover:bg-blue-950/20"
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50"
+                style={{ borderColor: `${accentColor}40` }}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100/80 text-blue-600 transition group-hover:scale-105 dark:bg-blue-950/60 dark:text-blue-400">
                   <FileType className="h-4 w-4" />
@@ -137,7 +151,8 @@ export function OpcionesEditorModal({
                 type="button"
                 disabled={isProcessing}
                 onClick={onExportToHTML}
-                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition hover:border-emerald-200 hover:bg-emerald-50/40 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-emerald-900/50 dark:hover:bg-emerald-950/20"
+                className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900/50"
+                style={{ borderColor: `${accentColor}40` }}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100/80 text-emerald-600 transition group-hover:scale-105 dark:bg-emerald-950/60 dark:text-emerald-400">
                   <Code2 className="h-4 w-4" />
@@ -182,14 +197,28 @@ export function OpcionesEditorModal({
               type="button"
               disabled={isProcessing}
               onClick={onImportNoteHub}
-              className="group flex w-full items-center justify-between rounded-2xl border border-dashed border-purple-300 bg-purple-50/20 p-3.5 text-left transition hover:border-purple-500 hover:bg-purple-50/50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-purple-800/60 dark:bg-purple-950/10 dark:hover:border-purple-600 dark:hover:bg-purple-950/30"
+              className="group flex w-full items-center justify-between rounded-2xl border border-dashed bg-purple-50/20 p-3.5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 dark:bg-purple-950/10"
+              style={{
+                borderColor: `${accentColor}40`,
+                backgroundColor: `${accentColor}08`,
+              }}
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500 text-white shadow-md shadow-purple-500/20 transition group-hover:scale-105">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl shadow-md transition group-hover:scale-105"
+                  style={{
+                    backgroundColor: `${accentColor}18`,
+                    color: accentColor,
+                    boxShadow: `0 6px 18px ${accentColor}25`,
+                  }}
+                >
                   <UploadCloud className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-purple-950 dark:text-purple-100">
+                  <p
+                    className="text-xs font-bold"
+                    style={{ color: accentColor }}
+                  >
                     Importar archivo .NoteHub
                   </p>
                   <p className="text-[11px] text-purple-700/70 dark:text-purple-300/70">
@@ -197,7 +226,10 @@ export function OpcionesEditorModal({
                   </p>
                 </div>
               </div>
-              <span className="rounded-lg bg-purple-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:bg-purple-900/60 dark:text-purple-200">
+              <span
+                className="rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white"
+                style={{ backgroundColor: accentColor }}
+              >
                 Cargar
               </span>
             </button>

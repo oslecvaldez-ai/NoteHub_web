@@ -1,40 +1,24 @@
-import { useEffect, useState } from "react";
 import { Type } from "lucide-react";
-import { db } from "../../../core/ipc";
+import { useTheme } from "../../../core/theme/useTheme";
+import { useEditorSettings } from "../../../core/editor-settings/useEditorSettings";
 
 export function SeccionEditor() {
-  const [fontFamily, setFontFamily] = useState("System");
-  const [fontSize, setFontSize] = useState(16);
-  const [lineSpacing, setLineSpacing] = useState(1.5);
-  const [paragraphSpacing, setParagraphSpacing] = useState(12);
-
-  useEffect(() => {
-    async function loadSettings() {
-      const [ff, fs, ls, ps] = await Promise.all([
-        db.getSetting("font_family"),
-        db.getSetting("font_size"),
-        db.getSetting("line_spacing"),
-        db.getSetting("paragraph_spacing"),
-      ]);
-      if (ff) setFontFamily(ff);
-      if (fs) setFontSize(Number(fs));
-      if (ls) setLineSpacing(Number(ls));
-      if (ps) setParagraphSpacing(Number(ps));
-    }
-    void loadSettings();
-  }, []);
-
-  const saveSetting = (key: string, value: number | string) =>
-    void db.setSetting(key, String(value));
-  const update = (
-    key: string,
-    setter: (value: number) => void,
-    value: string,
-  ) => {
-    const nextValue = Number(value);
-    setter(nextValue);
-    saveSetting(key, nextValue);
-  };
+  const { accentColor } = useTheme();
+  const {
+    fontFamily,
+    fontSize,
+    lineHeight,
+    paragraphSpacing,
+    setFontFamily,
+    setFontSize,
+    setLineHeight,
+    setParagraphSpacing,
+  } = useEditorSettings();
+  const fontOptions = [
+    { id: "system" as const, label: "System" },
+    { id: "serif" as const, label: "Serif" },
+    { id: "monospace" as const, label: "Monospace" },
+  ];
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -52,17 +36,21 @@ export function SeccionEditor() {
             Fuente Base
           </label>
           <div className="flex gap-3">
-            {["System", "Serif", "Monospace"].map((font) => (
+            {fontOptions.map((font) => (
               <button
-                key={font}
+                key={font.id}
                 type="button"
                 onClick={() => {
-                  setFontFamily(font);
-                  saveSetting("font_family", font);
+                  setFontFamily(font.id);
                 }}
-                className={`flex-1 rounded-xl border p-2.5 text-sm font-semibold transition ${fontFamily === font ? "border-purple-500 bg-purple-50 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" : "border-slate-200/80 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"}`}
+                style={
+                  fontFamily === font.id
+                    ? { borderColor: accentColor, color: accentColor }
+                    : undefined
+                }
+                className={`flex-1 rounded-xl border p-2.5 text-sm font-semibold transition ${fontFamily === font.id ? "bg-slate-50 dark:bg-slate-800/60" : "border-slate-200/80 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"}`}
               >
-                {font}
+                {font.label}
               </button>
             ))}
           </div>
@@ -81,13 +69,13 @@ export function SeccionEditor() {
             ],
             [
               "Espaciado lineal",
-              lineSpacing.toFixed(1),
+              lineHeight.toFixed(1),
               "line_spacing",
               1,
               2.5,
               0.1,
-              lineSpacing,
-              setLineSpacing,
+              lineHeight,
+              setLineHeight,
             ],
             [
               "Espaciado de párrafo",
@@ -112,13 +100,11 @@ export function SeccionEditor() {
                 step={Number(step)}
                 value={Number(value)}
                 onChange={(event) =>
-                  update(
-                    String(key),
-                    setter as (value: number) => void,
-                    event.target.value,
+                  (setter as (value: number) => void)(
+                    Number(event.target.value),
                   )
                 }
-                className="h-1.5 w-full accent-purple-600"
+                style={{ accentColor }}
               />
             </div>
           ))}
@@ -132,9 +118,14 @@ export function SeccionEditor() {
           </div>
           <div
             style={{
-              fontFamily: fontFamily === "System" ? "inherit" : fontFamily,
+              fontFamily:
+                fontFamily === "system"
+                  ? "inherit"
+                  : fontFamily === "serif"
+                    ? "serif"
+                    : "monospace",
               fontSize: `${fontSize}px`,
-              lineHeight: lineSpacing,
+              lineHeight,
             }}
             className="text-slate-800 dark:text-slate-200"
           >

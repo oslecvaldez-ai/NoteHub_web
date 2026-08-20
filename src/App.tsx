@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileText } from "lucide-react";
 import { AppWrapper } from "./core";
 import { GlobalHeader } from "./core/components/GlobalHeader";
@@ -11,6 +11,7 @@ import {
   SidebarNavegacion,
   notesApi,
   type Note,
+  type Notebook,
 } from "./modules/notas";
 import {
   EditorPlantilla,
@@ -38,8 +39,10 @@ function WorkspaceShell() {
     null,
   );
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [quickAccessNotes, setQuickAccessNotes] = useState<Note[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCentralPanelCollapsed, setIsCentralPanelCollapsed] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Plantilla | null>(
     null,
   );
@@ -145,11 +148,6 @@ function WorkspaceShell() {
         const defaultWorkspace =
           spaces.find((space) => space.is_default === 1) ?? spaces[0];
         if (defaultWorkspace) {
-          console.log(
-            "Espacio activo inicial cargado:",
-            defaultWorkspace.id,
-            defaultWorkspace.name,
-          );
           setActiveWorkspace((current) => current ?? defaultWorkspace);
         }
       } catch (error) {
@@ -167,11 +165,24 @@ function WorkspaceShell() {
   }, [activeWorkspace]);
 
   const handleWorkspaceChange = useCallback((workspace: Workspace): void => {
-    console.log("Cambio de espacio activo:", workspace.id, workspace.name);
     setActiveWorkspace(workspace);
     setSelectedNotebookId(null);
     setSelectedNote(null);
   }, []);
+
+  useEffect(() => {
+    if (!activeWorkspace) {
+      setNotebooks([]);
+      return;
+    }
+
+    void notesApi.notebooks
+      .getAll(activeWorkspace.id)
+      .then(setNotebooks)
+      .catch(() => {
+        setNotebooks([]);
+      });
+  }, [activeWorkspace]);
 
   useEffect(() => {
     void refreshQuickAccessNotes();
@@ -198,6 +209,22 @@ function WorkspaceShell() {
     setSelectedNote(note);
     setActiveView("notas");
   }, []);
+
+  const selectedNotebookName = useMemo(() => {
+    if (selectedNote?.notebook_id) {
+      return (
+        notebooks.find((notebook) => notebook.id === selectedNote.notebook_id)
+          ?.name ?? null
+      );
+    }
+    if (selectedNotebookId) {
+      return (
+        notebooks.find((notebook) => notebook.id === selectedNotebookId)
+          ?.name ?? null
+      );
+    }
+    return null;
+  }, [notebooks, selectedNote, selectedNotebookId]);
 
   const handleSelectAllNotes = useCallback(() => {
     setSelectedNote(null);
@@ -276,7 +303,11 @@ function WorkspaceShell() {
           activeView !== "configuracion" && (
             <div
               className={`flex h-full max-h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-gray-200 bg-white transition-all duration-200 dark:border-slate-800/60 dark:bg-slate-900/80 ${
-                activeView === "plantillas" ? "w-[360px]" : "w-80"
+                isCentralPanelCollapsed
+                  ? "hidden"
+                  : activeView === "plantillas"
+                    ? "w-[360px]"
+                    : "w-80"
               }`}
             >
               {activeView === "plantillas" ? (
@@ -307,6 +338,13 @@ function WorkspaceShell() {
                   onReloadReady={handleReloadReady}
                   onNoteSelect={handleNoteSelect}
                   activeNoteId={selectedNote?.id ?? null}
+                  isNoteListCollapsed={isCentralPanelCollapsed}
+                  onToggleCollapse={() =>
+                    setIsCentralPanelCollapsed((current) => !current)
+                  }
+                  onToggleNoteList={() =>
+                    setIsCentralPanelCollapsed((current) => !current)
+                  }
                 />
               )}
             </div>
@@ -369,6 +407,7 @@ function WorkspaceShell() {
               ref={panelEditorRef}
               noteId={selectedNote.id}
               notebookId={selectedNote.notebook_id}
+              notebookName={selectedNotebookName}
               workspaceId={
                 selectedNote.workspace_id ?? activeWorkspace?.id ?? null
               }
@@ -377,6 +416,10 @@ function WorkspaceShell() {
               isPinned={selectedNote.is_pinned === 1}
               isQuickAccess={selectedNote.is_quick_access === 1}
               isFocusMode={isFocusMode}
+              isNoteListCollapsed={isCentralPanelCollapsed}
+              onToggleNoteList={() =>
+                setIsCentralPanelCollapsed((current) => !current)
+              }
               onNotesChanged={reloadAction}
               onToggleFocusMode={handleToggleFocusMode}
             />

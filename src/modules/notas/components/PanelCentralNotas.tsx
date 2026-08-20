@@ -8,7 +8,6 @@ import {
 } from "react";
 import {
   ArrowUpDown,
-  MoreVertical,
   Pin,
   Star,
   StarOff,
@@ -22,6 +21,14 @@ import { SeleccionCuadernoModal } from "./SeleccionCuadernoModal";
 import { notesApi, type Notebook, type Note } from "../notesApi";
 import { useTheme } from "../../../core/theme/useTheme";
 
+export type SortOption =
+  | "updated_desc"
+  | "updated_asc"
+  | "title_asc"
+  | "title_desc"
+  | "created_desc"
+  | "created_asc";
+
 export interface PanelCentralNotasProps {
   workspaceId: number | null;
   notebookId: number | null;
@@ -31,6 +38,9 @@ export interface PanelCentralNotasProps {
   onCreateNoteReady?: (createNote: () => void) => void;
   onReloadReady?: (reload: () => void) => void;
   onNoteSelect?: (note: Note) => void;
+  isNoteListCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  onToggleNoteList?: () => void;
 }
 
 interface MenuState {
@@ -51,6 +61,8 @@ export function PanelCentralNotas({
 }: PanelCentralNotasProps): ReactElement {
   const [notes, setNotes] = useState<Note[]>([]);
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+  const [sortBy, setSortBy] = useState<SortOption>("updated_desc");
+  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -283,27 +295,100 @@ export function PanelCentralNotas({
         : "Todas las notas";
   }, [notebookId, notebooks]);
 
+  const sortedNotes = useMemo(() => {
+    return [...notes].sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return b.is_pinned - a.is_pinned;
+      switch (sortBy) {
+        case "updated_asc":
+          return (
+            new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
+          );
+        case "title_asc":
+          return (a.title || "").localeCompare(b.title || "", undefined, {
+            sensitivity: "base",
+          });
+        case "title_desc":
+          return (b.title || "").localeCompare(a.title || "", undefined, {
+            sensitivity: "base",
+          });
+        case "created_desc":
+          return (
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+        case "created_asc":
+          return (
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+        case "updated_desc":
+        default:
+          return (
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
+      }
+    });
+  }, [notes, sortBy]);
+
+  const sortOptions: Array<{ value: SortOption; label: string }> = [
+    { value: "updated_desc", label: "Fecha de modificación (Más reciente)" },
+    { value: "updated_asc", label: "Fecha de modificación (Más antigua)" },
+    { value: "title_asc", label: "Título (A - Z)" },
+    { value: "title_desc", label: "Título (Z - A)" },
+    { value: "created_desc", label: "Fecha de creación (Más reciente)" },
+    { value: "created_asc", label: "Fecha de creación (Más antigua)" },
+  ];
+
   return (
     <section className="flex h-full max-h-full min-h-0 w-80 shrink-0 flex-col box-border border-r border-slate-200/80 bg-white/50 transition-colors duration-200 dark:border-slate-800/60 dark:bg-[#0f172a]">
       <header className="z-10 flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-transparent px-4 dark:border-slate-800/60 box-border">
         <h2 className="truncate pr-2 text-sm font-bold text-slate-800 dark:text-slate-100">
           {activeNotebookName}
         </h2>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="relative flex shrink-0 items-center gap-1">
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-200"
-            aria-label="Ordenar"
+            onClick={() => setIsSortMenuOpen((prev) => !prev)}
+            title="Ordenar notas"
+            style={{
+              borderColor: isSortMenuOpen ? accentColor : undefined,
+              boxShadow: isSortMenuOpen
+                ? `0 0 0 1px ${accentColor}`
+                : undefined,
+            }}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white transition hover:bg-slate-50 dark:border-slate-800/60 dark:bg-slate-900/80 dark:hover:bg-slate-800/80"
           >
-            <ArrowUpDown size={16} />
+            <ArrowUpDown
+              className="h-4 w-4 transition-colors"
+              color={accentColor}
+              style={{ color: accentColor }}
+            />
           </button>
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-200"
-            aria-label="Más opciones"
-          >
-            <MoreVertical size={16} />
-          </button>
+          {isSortMenuOpen && (
+            <div className="absolute right-0 top-10 z-20 w-64 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+              {sortOptions.map((option) => {
+                const isSelected = sortBy === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      setSortBy(option.value);
+                      setIsSortMenuOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs transition"
+                    style={{
+                      backgroundColor: isSelected
+                        ? `${accentColor}18`
+                        : undefined,
+                      color: isSelected ? accentColor : undefined,
+                    }}
+                  >
+                    <span>{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </header>
 
@@ -335,15 +420,15 @@ export function PanelCentralNotas({
           </p>
         )}
 
-        {workspaceId !== null && !isLoading && notes.length === 0 && (
+        {workspaceId !== null && !isLoading && sortedNotes.length === 0 && (
           <div className="p-6 text-center text-slate-400">
             <p className="text-sm font-semibold">No hay notas todavía</p>
           </div>
         )}
 
-        {workspaceId !== null && !isLoading && notes.length > 0 && (
+        {workspaceId !== null && !isLoading && sortedNotes.length > 0 && (
           <>
-            {notes.map((note) => (
+            {sortedNotes.map((note) => (
               <div key={note.id} className="w-full min-w-0 box-border">
                 <NotaListItem
                   isSelected={selectedIds.includes(note.id)}

@@ -66,11 +66,6 @@ export function SidebarNavegacion({
         if (!active) return;
         const defaultWorkspace =
           spaces.find((space) => space.is_default === 1) ?? spaces[0] ?? null;
-        console.log(
-          "SidebarNavegacion usa espacio:",
-          defaultWorkspace?.id,
-          defaultWorkspace?.name,
-        );
         setResolvedWorkspace(defaultWorkspace);
       } catch (error) {
         console.error(

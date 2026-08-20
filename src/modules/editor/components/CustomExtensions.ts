@@ -3,7 +3,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 
 export interface CustomQuoteOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, string | number | boolean | null | undefined>;
 }
 
 declare module "@tiptap/core" {
@@ -193,15 +193,20 @@ export const TextTransform = Extension.create({
   },
 
   addCommands() {
+    type TextTransformChain = {
+      setMark: (
+        name: string,
+        attrs: Record<string, string | null>,
+      ) => { run: () => unknown };
+    };
+
     return {
       setTextTransform:
         (transform: TransformType) =>
-        ({ chain }: { chain: any }) => {
-          return chain()
-            .setMark("textStyle", { textTransform: transform })
-            .run();
+        ({ chain }: { chain: TextTransformChain }) => {
+          return chain.setMark("textStyle", { textTransform: transform }).run();
         },
-    } as any;
+    };
   },
 });
 

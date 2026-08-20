@@ -18,14 +18,24 @@ import { useNotifications } from "../../../core/components/useNotifications";
 import { MenuContextual, type ContextMenuItem } from "./MenuContextual";
 import { NuevoCuadernoModal } from "./NuevoCuadernoModal";
 import { notesApi, type Notebook } from "../notesApi";
+import { useTheme } from "../../../core/theme/useTheme";
+import { useSettings } from "../../../core/settings/useSettings";
 
 function resolveNotebookCoverUrl(
   value: string | null | undefined,
 ): string | null {
   if (!value) return null;
-  if (/^(data:|https?:|blob:|file:)/i.test(value)) return value;
-  if (/\.(png|jpe?g|webp|gif)$/i.test(value)) {
-    return `notehub://${value}`;
+  if (["folder", "book", "sparkles", "star"].includes(value)) {
+    return null;
+  }
+  if (/^(data:|https?:|blob:|file:)/i.test(value)) {
+    return value;
+  }
+  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(value)) {
+    const clean = value
+      .replace(/^notehub:\/\/images\//, "")
+      .replace(/^notehub:\/\//, "");
+    return `notehub://images/${clean}`;
   }
   return null;
 }
@@ -74,7 +84,17 @@ export const ArbolCuadernos = forwardRef<
     }>({ open: false, parentId: null, notebook: null });
     const [menu, setMenu] = useState<MenuState | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Notebook | null>(null);
+    const { collapseNotebooksByDefault } = useSettings();
+    const [isNotebooksOpen, setIsNotebooksOpen] = useState(
+      !collapseNotebooksByDefault,
+    );
+    const { accentColor } = useTheme();
     const { notify: showNotification } = useNotifications();
+    const totalCuadernos = notebooks.length;
+
+    useEffect(() => {
+      setIsNotebooksOpen(!collapseNotebooksByDefault);
+    }, [collapseNotebooksByDefault]);
 
     const loadNotebooks = useCallback(async (): Promise<void> => {
       if (workspaceId === null) return;
@@ -256,23 +276,67 @@ export const ArbolCuadernos = forwardRef<
       <section className="arbol-cuadernos">
         {showSectionHeader && (
           <div className="notas-sidebar-section-heading text-slate-500 dark:text-slate-500">
-            <span>Cuadernos</span>
             <button
-              aria-label="Nuevo cuaderno"
-              onClick={() => openNew(null)}
               type="button"
+              aria-expanded={isNotebooksOpen}
+              aria-label={
+                isNotebooksOpen ? "Ocultar cuadernos" : "Mostrar cuadernos"
+              }
+              className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-800 dark:hover:text-slate-200"
+              onClick={() => setIsNotebooksOpen((current) => !current)}
             >
-              <Plus size={16} />
+              {isNotebooksOpen ? (
+                <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5 transition-transform duration-200" />
+              )}
+              <span>Cuadernos</span>
             </button>
+            <div className="flex items-center gap-2">
+              {!isNotebooksOpen && totalCuadernos > 0 && (
+                <span
+                  style={{ color: accentColor }}
+                  className="text-xs font-bold"
+                >
+                  {totalCuadernos}
+                </span>
+              )}
+              <button
+                aria-label="Nuevo cuaderno"
+                onClick={() => openNew(null)}
+                type="button"
+                style={{ color: accentColor }}
+                onMouseEnter={(event) => {
+                  event.currentTarget.style.backgroundColor = accentColor;
+                  event.currentTarget.style.color = "#ffffff";
+                }}
+                onMouseLeave={(event) => {
+                  event.currentTarget.style.backgroundColor = "transparent";
+                  event.currentTarget.style.color = accentColor;
+                }}
+                className="h-6 w-6 rounded-lg transition-all duration-150 active:scale-90"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
           </div>
         )}
-        {workspaceId === null ? (
-          <p className="notas-sidebar-empty">Selecciona un espacio</p>
-        ) : tree.length === 0 ? (
-          <p className="notas-sidebar-empty">Aún no hay cuadernos</p>
-        ) : (
-          tree.map((node) => renderNode(node))
-        )}
+        <div
+          className="overflow-hidden transition-[max-height,opacity] duration-200 ease-out"
+          style={{
+            maxHeight: isNotebooksOpen ? "2000px" : "0px",
+            opacity: isNotebooksOpen ? 1 : 0,
+          }}
+          aria-hidden={!isNotebooksOpen}
+        >
+          {workspaceId === null ? (
+            <p className="notas-sidebar-empty">Selecciona un espacio</p>
+          ) : tree.length === 0 ? (
+            <p className="notas-sidebar-empty">Aún no hay cuadernos</p>
+          ) : (
+            tree.map((node) => renderNode(node))
+          )}
+        </div>
         {menu && (
           <MenuContextual
             isOpen

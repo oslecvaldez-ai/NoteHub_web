@@ -30,12 +30,15 @@ export interface PanelEditorHandle {
 export interface PanelEditorProps {
   noteId?: number | null;
   notebookId?: number | null;
+  notebookName?: string | null;
   workspaceId?: number | null;
   noteTitle?: string;
   initialHTML?: string;
   isPinned?: boolean;
   isQuickAccess?: boolean;
   isFocusMode?: boolean;
+  isNoteListCollapsed?: boolean;
+  onToggleNoteList?: () => void;
   onNotesChanged?: () => void;
   onToggleFocusMode?: () => void;
 }
@@ -69,12 +72,15 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
     {
       noteId = null,
       notebookId = null,
+      notebookName = null,
       workspaceId = null,
       noteTitle = "Nota",
       initialHTML = "",
       isPinned: initialPinned = false,
       isQuickAccess: initialQuickAccess = false,
       isFocusMode = false,
+      isNoteListCollapsed = false,
+      onToggleNoteList,
       onNotesChanged,
       onToggleFocusMode,
     },
@@ -394,16 +400,12 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
     }, [isQuickAccess, noteId, notify, onNotesChanged]);
 
     const handleShare = useCallback(() => {
-      console.log("Compartir nota");
-    }, []);
+      notify("Compartir nota aún no disponible", "info");
+    }, [notify]);
 
     const handleHistory = useCallback(() => {
-      console.log("Abrir historial");
-    }, []);
-
-    const handleExternal = useCallback(() => {
-      console.log("Abrir externamente");
-    }, []);
+      notify("Historial no disponible en esta vista", "info");
+    }, [notify]);
 
     const handleMenu = useCallback(() => {
       setQuickMenuOpen(true);
@@ -531,6 +533,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
             noteId,
             targetWorkspaceId,
           );
+          window.dispatchEvent(new CustomEvent("notes:updated"));
           onNotesChanged?.();
           notify("Nota movida al espacio seleccionado", "success");
         } catch (error) {
@@ -546,6 +549,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
         if (!noteId) return;
         try {
           await window.electron?.notes?.move(noteId, targetNotebookId);
+          window.dispatchEvent(new CustomEvent("notes:updated"));
           onNotesChanged?.();
           notify("Nota movida al cuaderno seleccionado", "success");
         } catch (error) {
@@ -740,9 +744,11 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
             onStar={handleStar}
             onShare={handleShare}
             onHistory={handleHistory}
-            onExternal={handleExternal}
+            onExternal={handleOpenExport}
             onMenu={handleMenu}
             onToggleFocusMode={handleToggleFocusMode}
+            onToggleNoteList={onToggleNoteList}
+            isNoteListCollapsed={isNoteListCollapsed}
             isPinned={isPinned}
             isQuickAccess={isQuickAccess}
           />
@@ -780,7 +786,7 @@ export const PanelEditor = forwardRef<PanelEditorHandle, PanelEditorProps>(
                 📄
               </span>
               <span className="text-xs font-medium">
-                {notebookId ? `Cuaderno ${notebookId}` : "Sin cuaderno"}
+                {notebookName || (notebookId ? `Cuaderno` : "Sin cuaderno")}
               </span>
             </div>
           </footer>

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Plus, Tag, X } from "lucide-react";
 import { useNotifications } from "../../../core/components/useNotifications";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface NoteTag {
   id: number;
@@ -42,6 +43,7 @@ export function TagsModal({
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { notify } = useNotifications();
+  const { accentColor } = useTheme();
 
   const refreshTags = async (): Promise<void> => {
     if (!workspaceId || !noteId) return;
@@ -87,6 +89,7 @@ export function TagsModal({
     setIsSaving(true);
     try {
       await window.electron?.tags?.setForNote(noteId, selectedTagIds);
+      window.dispatchEvent(new CustomEvent("notes:updated"));
       notify("Etiquetas actualizadas correctamente", "success");
       onSaved?.();
       onClose();
@@ -133,7 +136,10 @@ export function TagsModal({
         </button>
 
         <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
+          >
             <Tag className="h-5 w-5" />
           </div>
           <div>
@@ -156,7 +162,8 @@ export function TagsModal({
           <button
             type="button"
             onClick={() => void handleCreateTag()}
-            className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-500"
+            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-white"
+            style={{ backgroundColor: accentColor }}
           >
             <Plus className="h-3.5 w-3.5" />
             Añadir
@@ -186,20 +193,26 @@ export function TagsModal({
                         : [...current, tag.id],
                     )
                   }
-                  className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left transition ${
+                  className="flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left transition"
+                  style={
                     selected
-                      ? "border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-200"
-                      : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-                  }`}
+                      ? {
+                          borderColor: accentColor,
+                          backgroundColor: `${accentColor}12`,
+                        }
+                      : undefined
+                  }
                 >
                   <span className="flex items-center gap-2 text-sm font-medium">
                     <span
                       className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: tag.color_hex || "#8B5CF6" }}
+                      style={{ backgroundColor: tag.color_hex || accentColor }}
                     />
                     #{tag.name}
                   </span>
-                  {selected && <Check className="h-4 w-4" />}
+                  {selected && (
+                    <Check className="h-4 w-4" style={{ color: accentColor }} />
+                  )}
                 </button>
               );
             })
@@ -218,7 +231,8 @@ export function TagsModal({
             type="button"
             onClick={() => void handleSave()}
             disabled={isSaving}
-            className="rounded-xl bg-purple-600 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-xl px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ backgroundColor: accentColor }}
           >
             {isSaving ? "Guardando..." : "Guardar"}
           </button>

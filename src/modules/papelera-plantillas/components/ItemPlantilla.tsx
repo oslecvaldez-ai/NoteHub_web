@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from "react";
 import { ChevronRight, Edit2, LayoutTemplate, Trash2 } from "lucide-react";
 import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
+import { useTheme } from "../../../core/theme/useTheme";
 
 export interface Plantilla {
   id: number;
@@ -36,6 +37,7 @@ export function ItemPlantilla({
   onEdit,
   onDelete,
 }: ItemPlantillaProps): ReactElement {
+  const { accentColor } = useTheme();
   const [contextMenu, setContextMenu] = useState<{
     x: number;
     y: number;
@@ -52,18 +54,33 @@ export function ItemPlantilla({
       <div
         onClick={() => onSelect(plantilla)}
         onContextMenu={handleContextMenu}
-        className={`group relative flex cursor-pointer items-center justify-between rounded-2xl border p-3.5 transition ${
-          isSelected
-            ? "border-purple-300 bg-purple-50/70 shadow-sm dark:border-purple-800 dark:bg-purple-950/40"
-            : "border-slate-200 bg-slate-50 hover:border-purple-200 hover:bg-purple-50/20 dark:border-slate-800 dark:bg-slate-900/40 dark:hover:border-purple-900/50"
-        }`}
+        onMouseEnter={(event) => {
+          event.currentTarget.style.borderColor = accentColor;
+        }}
+        onMouseLeave={(event) => {
+          event.currentTarget.style.borderColor = isSelected ? accentColor : "";
+        }}
+        style={
+          {
+            "--accent-color": accentColor,
+            borderColor: isSelected ? accentColor : undefined,
+            boxShadow: isSelected ? `0 0 0 1px ${accentColor}` : undefined,
+          } as React.CSSProperties
+        }
+        className="group relative flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-3.5 transition hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-900/80"
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-300">
-            <LayoutTemplate className="h-5 w-5" />
+          <div
+            style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition"
+          >
+            <LayoutTemplate className="h-5 w-5" color={accentColor} />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="truncate text-sm font-bold text-slate-800 transition-colors group-hover:text-purple-600 dark:text-slate-100 dark:group-hover:text-purple-400">
+            <h4
+              className="truncate text-sm font-bold text-slate-800 transition-colors dark:text-slate-100"
+              style={{ color: isSelected ? accentColor : undefined }}
+            >
               {plantilla.name}
             </h4>
             <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
@@ -79,10 +96,11 @@ export function ItemPlantilla({
               event.stopPropagation();
               onEdit(plantilla);
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            style={{ color: accentColor }}
+            className="flex h-7 w-7 items-center justify-center rounded-lg opacity-0 transition group-hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-800"
             title="Editar plantilla"
           >
-            <Edit2 className="h-3.5 w-3.5" />
+            <Edit2 className="h-3.5 w-3.5" color={accentColor} />
           </button>
           <button
             type="button"
@@ -95,7 +113,10 @@ export function ItemPlantilla({
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
-          <ChevronRight className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-400 dark:text-slate-700" />
+          <ChevronRight
+            className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[var(--accent-color)] dark:text-slate-700"
+            style={{ color: isSelected ? accentColor : undefined }}
+          />
         </div>
       </div>
 

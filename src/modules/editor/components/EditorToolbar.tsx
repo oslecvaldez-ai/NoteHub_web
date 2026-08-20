@@ -628,10 +628,17 @@ export function EditorToolbar({
                     editor?.runEditorCommand((ed) => {
                       const { selection } = ed.state;
                       const colorHex = item.color;
+                      const isInsideTable =
+                        ed.isActive("tableCell") || ed.isActive("tableHeader");
                       const isInsideCallout = ed.isActive("customQuote");
                       const accentColor =
                         BG_TO_BORDER_MAP[colorHex.toUpperCase()] || "#6200ee";
-                      if (isInsideCallout && selection.empty) {
+                      if (isInsideTable) {
+                        ed.chain()
+                          .focus(undefined, { scrollIntoView: false })
+                          .setCellAttribute("backgroundColor", colorHex)
+                          .run();
+                      } else if (isInsideCallout && selection.empty) {
                         ed.chain()
                           .focus(undefined, { scrollIntoView: false })
                           .updateAttributes("customQuote", {
@@ -669,7 +676,14 @@ export function EditorToolbar({
                 onClick={() => {
                   editor?.runEditorCommand((ed) => {
                     const { selection } = ed.state;
-                    if (ed.isActive("customQuote") && selection.empty) {
+                    const isInsideTable =
+                      ed.isActive("tableCell") || ed.isActive("tableHeader");
+                    if (isInsideTable) {
+                      ed.chain()
+                        .focus(undefined, { scrollIntoView: false })
+                        .setCellAttribute("backgroundColor", null)
+                        .run();
+                    } else if (ed.isActive("customQuote") && selection.empty) {
                       ed.chain()
                         .focus(undefined, { scrollIntoView: false })
                         .updateAttributes("customQuote", {

@@ -26,9 +26,79 @@ import {
 } from "./CustomExtensions";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import { useEditorSettings } from "../../../core/editor-settings/useEditorSettings";
+import { TableControls } from "./TableControls";
+import { ImageFloatingControls } from "./ImageFloatingControls";
 
 // keep CustomExtensions imports that remain
 import "./TiptapEditor.css";
+
+const CustomImage = ImageExtension.extend({
+  name: "image",
+  inline: true,
+  group: "inline",
+  draggable: true,
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: "40%",
+        parseHTML: (element: HTMLElement) => element.style.width || "40%",
+        renderHTML: (attributes: { width?: string }) => ({
+          style: `width: ${attributes.width || "40%"}; max-width: 100%; height: auto;`,
+        }),
+      },
+      alignment: {
+        default: "left",
+        parseHTML: (element: HTMLElement) => element.dataset.align || "left",
+        renderHTML: (attributes: { alignment?: string }) => ({
+          "data-align": attributes.alignment || "left",
+        }),
+      },
+      wrap: {
+        default: "inline",
+        parseHTML: (element: HTMLElement) => element.dataset.wrap || "inline",
+        renderHTML: (attributes: { wrap?: string }) => ({
+          "data-wrap": attributes.wrap || "inline",
+        }),
+      },
+    };
+  },
+});
+
+const CustomTableCell = TableCell.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      backgroundColor: {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          element.style.backgroundColor || null,
+        renderHTML: (attributes: { backgroundColor?: string | null }) => {
+          if (!attributes.backgroundColor) return {};
+          return { style: `background-color: ${attributes.backgroundColor}` };
+        },
+      },
+    };
+  },
+});
+
+const CustomTableHeader = TableHeader.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      backgroundColor: {
+        default: null,
+        parseHTML: (element: HTMLElement) =>
+          element.style.backgroundColor || null,
+        renderHTML: (attributes: { backgroundColor?: string | null }) => {
+          if (!attributes.backgroundColor) return {};
+          return { style: `background-color: ${attributes.backgroundColor}` };
+        },
+      },
+    };
+  },
+});
 
 export interface TiptapEditorHandle {
   setContentHTML: (html: string) => void;
@@ -96,6 +166,12 @@ function TiptapEditorComponent(
   ref: React.ForwardedRef<TiptapEditorHandle>,
 ) {
   const [isEmpty, setIsEmpty] = useState(true);
+  const { fontFamily, fontSize, lineHeight, paragraphSpacing } =
+    useEditorSettings();
+  const fontFamilyClass =
+    { system: "font-sans", serif: "font-serif", monospace: "font-mono" }[
+      fontFamily
+    ] || "font-sans";
 
   const editor = useEditor({
     editable,
@@ -148,18 +224,18 @@ function TiptapEditorComponent(
       ListItem,
       Underline,
       Strike,
-      ImageExtension,
+      CustomImage,
       Subscript,
       Superscript,
       Table.configure({
         resizable: true,
         HTMLAttributes: {
-          class: "editor-table",
+          class: "tiptap-table",
         },
       }),
       TableRow,
-      TableHeader,
-      TableCell,
+      CustomTableHeader,
+      CustomTableCell,
       Color,
       TextStyle,
       Highlight.configure({ multicolor: true }),
@@ -216,6 +292,52 @@ function TiptapEditorComponent(
     }
   }, [editor, searchQuery]);
 
+  useEffect(() => {
+    if (!editor) return;
+
+    const handleEditorKeyboardShortcuts = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      const isModifierPressed = event.ctrlKey || event.metaKey;
+      const isAltShift = event.altKey && event.shiftKey;
+
+      if (!editor.isFocused) return;
+
+      if (
+        (isAltShift && (key === "d" || key === "t")) ||
+        (isModifierPressed && event.shiftKey && (key === "d" || key === "t"))
+      ) {
+        event.preventDefault();
+
+        if (key === "d") {
+          editor.commands.insertContent(
+            new Date().toLocaleDateString("es-ES", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            }),
+          );
+        }
+
+        if (key === "t") {
+          editor.commands.insertContent(
+            new Date().toLocaleTimeString("es-ES", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          );
+        }
+      }
+    };
+
+    editor.view.dom.addEventListener("keydown", handleEditorKeyboardShortcuts);
+    return () => {
+      editor.view.dom.removeEventListener(
+        "keydown",
+        handleEditorKeyboardShortcuts,
+      );
+    };
+  }, [editor]);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -267,7 +389,20 @@ function TiptapEditorComponent(
         </div>
       )}
 
-      <EditorContent editor={editor} className="w-full flex-1 h-full" />
+      <div
+        className={`tiptap-container prose dark:prose-invert max-w-none flex-1 min-h-0 ${fontFamilyClass}`}
+        style={
+          {
+            fontSize: `${fontSize}px`,
+            lineHeight,
+            "--paragraph-spacing": `${paragraphSpacing}px`,
+          } as React.CSSProperties
+        }
+      >
+        <TableControls editor={editor} />
+        <ImageFloatingControls editor={editor} />
+        <EditorContent editor={editor} className="w-full h-full" />
+      </div>
     </div>
   );
 }
