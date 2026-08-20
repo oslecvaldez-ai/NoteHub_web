@@ -76,6 +76,11 @@ export function SelectorEspacios({
 
         if (spacesFromDb.length > 0) {
           const defaultSpace =
+            spacesFromDb.find(
+              (space) =>
+                space.id ===
+                Number(localStorage.getItem("notehub_active_workspace_id")),
+            ) ??
             spacesFromDb.find((space) => space.is_default === 1) ??
             spacesFromDb[0];
           setInternalSelectedId((prev) => prev ?? defaultSpace.id);

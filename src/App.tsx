@@ -29,6 +29,10 @@ import { VistaConfiguracion } from "./modules/configuracion";
 import { useTheme } from "./core/theme/useTheme";
 
 function WorkspaceShell() {
+  const savedWorkspaceId =
+    typeof localStorage !== "undefined"
+      ? Number(localStorage.getItem("notehub_active_workspace_id")) || null
+      : null;
   const { accentColor } = useTheme();
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
   const [isFocusMode, setIsFocusMode] = useState(false);
@@ -53,6 +57,7 @@ function WorkspaceShell() {
   const [activeView, setActiveView] = useState<
     "notas" | "papelera" | "plantillas" | "respaldos" | "configuracion"
   >("notas");
+  const restoredNoteRef = useRef(false);
 
   const toggleSidebar = useCallback(() => {
     setIsSidebarVisible((prev) => !prev);
@@ -85,6 +90,7 @@ function WorkspaceShell() {
 
       setSelectedNotebookId(createdNote.notebook_id ?? selectedNotebookId);
       setSelectedNote(createdNote);
+      localStorage.setItem("notehub_active_note_id", String(createdNote.id));
       setActiveView("notas");
       setSearchQuery("");
       window.dispatchEvent(new CustomEvent("notes:updated"));
@@ -146,7 +152,9 @@ function WorkspaceShell() {
         }
 
         const defaultWorkspace =
-          spaces.find((space) => space.is_default === 1) ?? spaces[0];
+          spaces.find((space) => space.id === savedWorkspaceId) ??
+          spaces.find((space) => space.is_default === 1) ??
+          spaces[0];
         if (defaultWorkspace) {
           setActiveWorkspace((current) => current ?? defaultWorkspace);
         }
@@ -162,13 +170,35 @@ function WorkspaceShell() {
     return () => {
       active = false;
     };
-  }, [activeWorkspace]);
+  }, [activeWorkspace, savedWorkspaceId]);
 
-  const handleWorkspaceChange = useCallback((workspace: Workspace): void => {
-    setActiveWorkspace(workspace);
-    setSelectedNotebookId(null);
-    setSelectedNote(null);
-  }, []);
+  const handleWorkspaceChange = useCallback(
+    (workspace: Workspace): void => {
+      const workspaceChanged = activeWorkspace?.id !== workspace.id;
+      setActiveWorkspace(workspace);
+      localStorage.setItem("notehub_active_workspace_id", String(workspace.id));
+      if (workspaceChanged) {
+        setSelectedNotebookId(null);
+        setSelectedNote(null);
+        localStorage.removeItem("notehub_active_note_id");
+      }
+    },
+    [activeWorkspace?.id],
+  );
+
+  useEffect(() => {
+    if (!activeWorkspace || restoredNoteRef.current) return;
+    restoredNoteRef.current = true;
+    const savedNoteId = Number(localStorage.getItem("notehub_active_note_id"));
+    if (!savedNoteId) return;
+
+    void notesApi.notes.getById(savedNoteId).then((note) => {
+      if (note && note.workspace_id === activeWorkspace.id) {
+        setSelectedNote(note);
+        setSelectedNotebookId(note.notebook_id);
+      }
+    });
+  }, [activeWorkspace]);
 
   useEffect(() => {
     if (!activeWorkspace) {
@@ -191,6 +221,7 @@ function WorkspaceShell() {
   useEffect(() => {
     if (activeView === "papelera" || activeView === "configuracion") {
       setSelectedNote(null);
+      localStorage.removeItem("notehub_active_note_id");
     }
   }, [activeView]);
 
@@ -207,6 +238,7 @@ function WorkspaceShell() {
 
   const handleNoteSelect = useCallback((note: Note): void => {
     setSelectedNote(note);
+    localStorage.setItem("notehub_active_note_id", String(note.id));
     setActiveView("notas");
   }, []);
 
@@ -229,6 +261,7 @@ function WorkspaceShell() {
   const handleSelectAllNotes = useCallback(() => {
     setSelectedNote(null);
     setSelectedNotebookId(null);
+    localStorage.removeItem("notehub_active_note_id");
     setSearchQuery("");
     reloadAction();
   }, [reloadAction]);
@@ -239,6 +272,7 @@ function WorkspaceShell() {
       if (!note) return;
       setSelectedNotebookId(note.notebook_id);
       setSelectedNote(note);
+      localStorage.setItem("notehub_active_note_id", String(note.id));
       await refreshQuickAccessNotes();
     },
     [refreshQuickAccessNotes],
@@ -278,6 +312,7 @@ function WorkspaceShell() {
               onSelectNotebook={(notebookId) => {
                 setSelectedNotebookId(notebookId);
                 setSelectedNote(null);
+                localStorage.removeItem("notehub_active_note_id");
                 setActiveView("notas");
               }}
               onWorkspaceChange={handleWorkspaceChange}
@@ -394,6 +429,10 @@ function WorkspaceShell() {
                     };
                     setSelectedNote(createdNote as Note);
                     setSelectedNotebookId(createdNote.notebook_id ?? null);
+                    localStorage.setItem(
+                      "notehub_active_note_id",
+                      String(createdNote.id),
+                    );
                     setActiveView("notas");
                     window.dispatchEvent(new CustomEvent("notes:updated"));
                   }
