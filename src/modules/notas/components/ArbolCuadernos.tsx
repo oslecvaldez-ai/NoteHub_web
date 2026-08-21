@@ -7,7 +7,8 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { BookOpen, Folder as FolderIcon, Sparkles, Star } from "lucide-react";
+import * as Icons from "lucide-react";
+import { Folder as FolderIcon, type LucideIcon } from "lucide-react";
 import {
   ChevronDown,
   ChevronRight,
@@ -38,6 +39,13 @@ function resolveNotebookCoverUrl(
     return `notehub://images/${clean}`;
   }
   return null;
+}
+
+function resolveNotebookIcon(value: string | null | undefined): LucideIcon {
+  if (!value) return FolderIcon;
+  const iconName = value[0].toUpperCase() + value.slice(1);
+  const lucideIcons = Icons as unknown as Record<string, LucideIcon>;
+  return lucideIcons[iconName] ?? FolderIcon;
 }
 
 export interface ArbolCuadernosHandle {
@@ -242,6 +250,7 @@ export const ArbolCuadernos = forwardRef<
               {(() => {
                 const coverUrl = resolveNotebookCoverUrl(node.icon_type);
                 const isLocalCover = Boolean(coverUrl);
+                const IconComponent = resolveNotebookIcon(node.icon_type);
                 if (isLocalCover && coverUrl) {
                   return (
                     <img
@@ -251,16 +260,13 @@ export const ArbolCuadernos = forwardRef<
                     />
                   );
                 }
-                switch (node.icon_type) {
-                  case "book":
-                    return <BookOpen aria-hidden="true" size={17} />;
-                  case "sparkles":
-                    return <Sparkles aria-hidden="true" size={17} />;
-                  case "star":
-                    return <Star aria-hidden="true" size={17} />;
-                  default:
-                    return <FolderIcon aria-hidden="true" size={17} />;
-                }
+                return (
+                  <IconComponent
+                    aria-hidden="true"
+                    color={node.icon_color ?? undefined}
+                    size={17}
+                  />
+                );
               })()}
               <span>{node.name}</span>
               <small>{node.note_count}</small>

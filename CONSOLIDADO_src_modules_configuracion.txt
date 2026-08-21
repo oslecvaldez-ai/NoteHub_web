@@ -1,0 +1,533 @@
+========================================
+FILE: src/modules/configuracion/components/MenuAjustes.tsx
+========================================
+import { Archive, Palette, Settings, Type } from "lucide-react";
+import type { ElementType } from "react";
+import type { ConfigTab } from "../views/VistaConfiguracion";
+
+interface MenuAjustesProps {
+  activeTab: ConfigTab;
+  onSelectTab: (tab: ConfigTab) => void;
+}
+
+export function MenuAjustes({ activeTab, onSelectTab }: MenuAjustesProps) {
+  const menuItems: {
+    id: ConfigTab;
+    label: string;
+    icon: ElementType;
+    colorClass: string;
+  }[] = [
+    {
+      id: "themes",
+      label: "Temas",
+      icon: Palette,
+      colorClass:
+        "text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/50",
+    },
+    {
+      id: "spaces",
+      label: "Espacios",
+      icon: Archive,
+      colorClass:
+        "text-emerald-600 dark:text-emerald-400 bg-emerald-100/80 dark:bg-emerald-950/60",
+    },
+    {
+      id: "general",
+      label: "General",
+      icon: Settings,
+      colorClass:
+        "text-blue-600 dark:text-blue-400 bg-blue-100/80 dark:bg-blue-950/60",
+    },
+    {
+      id: "editor",
+      label: "Editor",
+      icon: Type,
+      colorClass:
+        "text-red-600 dark:text-red-400 bg-red-100/80 dark:bg-red-950/60",
+    },
+  ];
+
+  return (
+    <nav className="flex flex-col gap-1.5">
+      {menuItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = activeTab === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onSelectTab(item.id)}
+            className={`group flex items-center gap-3 rounded-2xl p-2.5 text-left transition ${isActive ? "bg-slate-100 dark:bg-slate-800/80" : "hover:bg-slate-50 dark:hover:bg-slate-800/40"}`}
+          >
+            <span
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition group-hover:scale-105 ${item.colorClass}`}
+            >
+              <Icon size={16} />
+            </span>
+            <span
+              className={`text-sm font-semibold ${isActive ? "text-slate-900 dark:text-slate-100" : "text-slate-600 dark:text-slate-400"}`}
+            >
+              {item.label}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+
+========================================
+FILE: src/modules/configuracion/index.ts
+========================================
+export * from "./views/VistaConfiguracion";
+
+
+========================================
+FILE: src/modules/configuracion/sections/SeccionEditor.tsx
+========================================
+import { Type } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
+import { useEditorSettings } from "../../../core/editor-settings/useEditorSettings";
+
+export function SeccionEditor() {
+  const { accentColor } = useTheme();
+  const {
+    fontFamily,
+    fontSize,
+    lineHeight,
+    paragraphSpacing,
+    setFontFamily,
+    setFontSize,
+    setLineHeight,
+    setParagraphSpacing,
+  } = useEditorSettings();
+  const fontOptions = [
+    { id: "system" as const, label: "System" },
+    { id: "serif" as const, label: "Serif" },
+    { id: "monospace" as const, label: "Monospace" },
+  ];
+
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="mb-6 border-b border-slate-200/80 pb-4 dark:border-slate-800">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          Editor y Tipografía
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Ajusta la experiencia de lectura y escritura.
+        </p>
+      </div>
+      <div className="space-y-6">
+        <div>
+          <label className="mb-2 block text-sm font-bold text-slate-800 dark:text-slate-200">
+            Fuente Base
+          </label>
+          <div className="flex gap-3">
+            {fontOptions.map((font) => (
+              <button
+                key={font.id}
+                type="button"
+                onClick={() => {
+                  setFontFamily(font.id);
+                }}
+                style={
+                  fontFamily === font.id
+                    ? { borderColor: accentColor, color: accentColor }
+                    : undefined
+                }
+                className={`flex-1 rounded-xl border p-2.5 text-sm font-semibold transition ${fontFamily === font.id ? "bg-slate-50 dark:bg-slate-800/60" : "border-slate-200/80 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"}`}
+              >
+                {font.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/50">
+          {[
+            [
+              "Tamaño de fuente",
+              `${fontSize}px`,
+              "font_size",
+              12,
+              24,
+              1,
+              fontSize,
+              setFontSize,
+            ],
+            [
+              "Espaciado lineal",
+              lineHeight.toFixed(1),
+              "line_spacing",
+              1,
+              2.5,
+              0.1,
+              lineHeight,
+              setLineHeight,
+            ],
+            [
+              "Espaciado de párrafo",
+              `${paragraphSpacing}px`,
+              "paragraph_spacing",
+              0,
+              32,
+              1,
+              paragraphSpacing,
+              setParagraphSpacing,
+            ],
+          ].map(([label, display, key, min, max, step, value, setter]) => (
+            <div key={String(key)}>
+              <div className="mb-2 flex justify-between text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <span>{String(label)}</span>
+                <span>{String(display)}</span>
+              </div>
+              <input
+                type="range"
+                min={Number(min)}
+                max={Number(max)}
+                step={Number(step)}
+                value={Number(value)}
+                onChange={(event) =>
+                  (setter as (value: number) => void)(
+                    Number(event.target.value),
+                  )
+                }
+                style={{ accentColor }}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-900">
+          <div className="mb-4 flex items-center gap-2 border-b border-slate-200 pb-2 dark:border-slate-800">
+            <Type size={16} className="text-slate-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Vista Previa
+            </span>
+          </div>
+          <div
+            style={{
+              fontFamily:
+                fontFamily === "system"
+                  ? "inherit"
+                  : fontFamily === "serif"
+                    ? "serif"
+                    : "monospace",
+              fontSize: `${fontSize}px`,
+              lineHeight,
+            }}
+            className="text-slate-800 dark:text-slate-200"
+          >
+            <p style={{ marginBottom: `${paragraphSpacing}px` }}>
+              El diseño no es solo cómo se ve y se siente. El diseño es cómo
+              funciona.
+            </p>
+            <p>
+              NoteHub te permite capturar tus ideas con claridad y sin
+              distracciones, adaptándose completamente a tus preferencias de
+              lectura.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FILE: src/modules/configuracion/sections/SeccionEspacios.tsx
+========================================
+import { useEffect, useState } from "react";
+import { Archive, Trash2 } from "lucide-react";
+import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
+import { useNotifications } from "../../../core/components/useNotifications";
+import { workspacesApi, type Workspace } from "../../espacios/workspacesApi";
+
+export function SeccionEspacios() {
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [targetWorkspace, setTargetWorkspace] = useState<Workspace | null>(
+    null,
+  );
+  const { notify } = useNotifications();
+
+  const loadWorkspaces = async () => {
+    const list = await workspacesApi.getAll();
+    setWorkspaces(list);
+  };
+  useEffect(() => {
+    let active = true;
+    workspacesApi
+      .getAll()
+      .then((list) => {
+        if (active) setWorkspaces(list);
+      })
+      .catch(() => notify("No se pudieron cargar los espacios", "error"));
+    return () => {
+      active = false;
+    };
+  }, [notify]);
+
+  const handleDelete = async () => {
+    if (!targetWorkspace) return;
+    try {
+      await workspacesApi.delete(targetWorkspace.id);
+      notify(
+        "Espacio eliminado. Su contenido fue movido al espacio por defecto.",
+        "success",
+      );
+      await loadWorkspaces();
+    } catch {
+      notify("Error al eliminar el espacio", "error");
+    }
+    setTargetWorkspace(null);
+  };
+
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="mb-6 border-b border-slate-200/80 pb-4 dark:border-slate-800">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          Gestión de Espacios
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Administra tus entornos de trabajo aislados.
+        </p>
+      </div>
+      <div className="space-y-3">
+        {workspaces.map((workspace) => (
+          <div
+            key={workspace.id}
+            className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/50"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <Archive size={18} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {workspace.name}
+                </h4>
+                {workspace.is_default === 1 && (
+                  <span className="mt-1 inline-block rounded-md bg-blue-100/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
+                    Por defecto
+                  </span>
+                )}
+              </div>
+            </div>
+            {workspace.is_default === 0 && (
+              <button
+                type="button"
+                aria-label={`Eliminar espacio ${workspace.name}`}
+                title="Eliminar y mover notas al espacio por defecto"
+                onClick={() => setTargetWorkspace(workspace)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/40 dark:hover:text-red-400"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <ConfirmacionEliminacionModal
+        isOpen={Boolean(targetWorkspace)}
+        title="Eliminar espacio y mover contenido"
+        message={`¿Seguro que deseas mover todo el contenido de «${targetWorkspace?.name ?? ""}» al espacio por defecto y eliminarlo?`}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => setTargetWorkspace(null)}
+      />
+    </div>
+  );
+}
+
+
+========================================
+FILE: src/modules/configuracion/sections/SeccionGeneral.tsx
+========================================
+import { Info } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
+import { useSettings } from "../../../core/settings/useSettings";
+
+export function SeccionGeneral() {
+  const { accentColor } = useTheme();
+  const { collapseNotebooksByDefault, toggleCollapseNotebooksByDefault } =
+    useSettings();
+
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="mb-6 border-b border-slate-200/80 pb-4 dark:border-slate-800">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          General
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Información de la aplicación y sistema.
+        </p>
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/50">
+        {[
+          ["Idioma", "Español"],
+          ["Versión", "1.0.0 (Escritorio)"],
+        ].map(([label, value], index) => (
+          <div
+            key={label}
+            className={`flex items-center justify-between p-4 ${index === 0 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <Info size={18} />
+              </div>
+              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                {label}
+              </span>
+            </div>
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              {value}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 transition dark:border-slate-800/60 dark:bg-slate-900/80">
+        <div className="space-y-0.5">
+          <label
+            className="cursor-pointer text-sm font-semibold text-slate-800 dark:text-slate-100"
+            htmlFor="toggle-collapse-notebooks"
+          >
+            Colapsar lista de cuadernos por defecto
+          </label>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Al iniciar la aplicación, la sección de cuadernos aparecerá cerrada.
+          </p>
+        </div>
+        <button
+          id="toggle-collapse-notebooks"
+          type="button"
+          role="switch"
+          aria-checked={collapseNotebooksByDefault}
+          onClick={() =>
+            toggleCollapseNotebooksByDefault(!collapseNotebooksByDefault)
+          }
+          style={{
+            backgroundColor: collapseNotebooksByDefault
+              ? accentColor
+              : undefined,
+          }}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${!collapseNotebooksByDefault ? "bg-slate-200 dark:bg-slate-700" : ""}`}
+        >
+          <span
+            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${collapseNotebooksByDefault ? "translate-x-5" : "translate-x-0"}`}
+          />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FILE: src/modules/configuracion/sections/SeccionTemas.tsx
+========================================
+import { Check, Moon, Sun } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
+
+const accentColors = ["#8B5CF6", "#2563EB", "#059669", "#DC2626", "#D97706"];
+
+export function SeccionTemas() {
+  const { mode, setMode, accentColor, setAccentColor } = useTheme();
+  const modes = [
+    { id: "light" as const, label: "Claro", icon: Sun },
+    { id: "dark" as const, label: "Oscuro", icon: Moon },
+  ];
+
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="mb-6 border-b border-slate-200/80 pb-4 dark:border-slate-800">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+          Apariencia
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Personaliza el aspecto visual de NoteHub.
+        </p>
+      </div>
+      <div className="mb-8 grid grid-cols-2 gap-4">
+        {modes.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => void setMode(id)}
+            className={`flex flex-col items-center justify-center gap-3 rounded-2xl border p-6 transition ${mode === id ? "border-purple-500 bg-purple-50/50 text-purple-700 dark:bg-slate-900/60 dark:text-purple-300" : "border-slate-200 bg-white text-slate-600 hover:border-purple-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"}`}
+          >
+            <Icon size={24} />
+            <span className="text-sm font-bold">{label}</span>
+          </button>
+        ))}
+      </div>
+      <h4 className="mb-4 text-sm font-bold text-slate-800 dark:text-slate-200">
+        Color de Acento
+      </h4>
+      <div className="flex flex-wrap gap-3">
+        {accentColors.map((color) => (
+          <button
+            key={color}
+            type="button"
+            aria-label={`Seleccionar color ${color}`}
+            onClick={() => void setAccentColor(color)}
+            style={{ backgroundColor: color }}
+            className="flex h-10 w-10 items-center justify-center rounded-full shadow-sm transition hover:scale-110"
+          >
+            {accentColor === color && (
+              <Check size={18} className="text-white" />
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FILE: src/modules/configuracion/views/VistaConfiguracion.tsx
+========================================
+import { useState } from "react";
+import { MenuAjustes } from "../components/MenuAjustes";
+import { SeccionEditor } from "../sections/SeccionEditor";
+import { SeccionEspacios } from "../sections/SeccionEspacios";
+import { SeccionGeneral } from "../sections/SeccionGeneral";
+import { SeccionTemas } from "../sections/SeccionTemas";
+
+export type ConfigTab = "themes" | "spaces" | "general" | "editor";
+
+export function VistaConfiguracion() {
+  const [activeTab, setActiveTab] = useState<ConfigTab>("themes");
+
+  const renderSection = () => {
+    switch (activeTab) {
+      case "spaces":
+        return <SeccionEspacios />;
+      case "general":
+        return <SeccionGeneral />;
+      case "editor":
+        return <SeccionEditor />;
+      case "themes":
+        return <SeccionTemas />;
+    }
+  };
+
+  return (
+    <div className="flex h-full w-full bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <aside className="w-64 shrink-0 border-r border-slate-200/80 bg-slate-50 dark:border-slate-800/60 dark:bg-slate-950">
+        <div className="flex h-14 items-center border-b border-slate-100 px-4 dark:border-slate-800/80">
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+            Ajustes
+          </h2>
+        </div>
+        <div className="p-3">
+          <MenuAjustes activeTab={activeTab} onSelectTab={setActiveTab} />
+        </div>
+      </aside>
+      <main className="flex-1 overflow-y-auto bg-slate-50 p-8 dark:bg-slate-950">
+        <div className="mx-auto max-w-2xl">{renderSection()}</div>
+      </main>
+    </div>
+  );
+}
+
+

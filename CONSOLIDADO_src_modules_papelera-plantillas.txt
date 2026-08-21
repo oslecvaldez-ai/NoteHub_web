@@ -1,0 +1,965 @@
+========================================
+FILE: src/modules/papelera-plantillas/components/ItemPapelera.tsx
+========================================
+import React, { useState } from "react";
+import { BookOpen, RotateCcw, Trash2 } from "lucide-react";
+
+export interface NotaPapelera {
+  id: number;
+  title: string;
+  content: string;
+  updated_at: string;
+  notebookName?: string | null;
+  workspace_id: number;
+}
+
+interface ItemPapeleraProps {
+  nota: NotaPapelera;
+  onRestore: (noteId: number) => void;
+  onDeletePermanent: (nota: NotaPapelera) => void;
+}
+
+function stripHtml(text: string): string {
+  return text
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatDate(value: string): string {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return value;
+
+  return new Date(parsed).toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export const ItemPapelera: React.FC<ItemPapeleraProps> = ({
+  nota,
+  onRestore,
+  onDeletePermanent,
+}) => {
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const extracto = stripHtml(nota.content).slice(0, 75);
+
+  const handleContextMenu = (event: React.MouseEvent): void => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY });
+  };
+
+  return (
+    <>
+      <div
+        onContextMenu={handleContextMenu}
+        className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 text-slate-900 shadow-sm transition hover:border-red-200 hover:bg-red-50/20 dark:border-slate-800/60 dark:bg-slate-900/40 dark:text-slate-100 dark:hover:border-red-950 dark:hover:bg-red-950/10 border-l-4 border-l-red-500"
+      >
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-start justify-between gap-2">
+            <h4 className="truncate text-sm font-bold text-slate-800 dark:text-slate-100">
+              {nota.title || "Sin título"}
+            </h4>
+            <span className="shrink-0 text-[11px] text-slate-400 dark:text-slate-500">
+              {formatDate(nota.updated_at)}
+            </span>
+          </div>
+
+          <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
+            {extracto || "Sin contenido"}
+          </p>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-800/80">
+          {nota.notebookName ? (
+            <div className="flex items-center gap-1.5 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <BookOpen className="h-3 w-3" />
+              <span className="max-w-[120px] truncate">
+                {nota.notebookName}
+              </span>
+            </div>
+          ) : (
+            <div />
+          )}
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => onRestore(nota.id)}
+              className="flex items-center gap-1 rounded-xl bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-400 dark:hover:bg-emerald-900/50"
+              title="Restaurar nota"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Restaurar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onDeletePermanent(nota)}
+              className="flex items-center gap-1 rounded-xl bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-100 dark:bg-red-950/50 dark:text-red-400 dark:hover:bg-red-900/50"
+              title="Eliminar permanentemente"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Eliminar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {contextMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-50"
+            onClick={() => setContextMenu(null)}
+          />
+          <div
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            className="fixed z-50 w-48 rounded-2xl border border-slate-200/90 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                onRestore(nota.id);
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-600 dark:text-slate-200 dark:hover:bg-emerald-950/40"
+            >
+              <RotateCcw className="h-4 w-4 text-emerald-500" />
+              <span>Restaurar nota</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onDeletePermanent(nota);
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+            >
+              <Trash2 className="h-4 w-4 text-red-500" />
+              <span>Eliminar permanentemente</span>
+            </button>
+          </div>
+        </>
+      )}
+    </>
+  );
+};
+
+
+========================================
+FILE: src/modules/papelera-plantillas/components/ItemPlantilla.tsx
+========================================
+import { useState, type ReactElement } from "react";
+import { ChevronRight, Edit2, LayoutTemplate, Trash2 } from "lucide-react";
+import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
+import { useTheme } from "../../../core/theme/useTheme";
+
+export interface Plantilla {
+  id: number;
+  name: string;
+  content: string;
+  created_at: string;
+  workspace_id: number;
+}
+
+interface ItemPlantillaProps {
+  plantilla: Plantilla;
+  isSelected?: boolean;
+  onSelect: (plantilla: Plantilla) => void;
+  onEdit: (plantilla: Plantilla) => void;
+  onDelete: (plantillaId: number) => void;
+}
+
+function formatDate(value: string): string {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) return value;
+
+  return new Date(parsed).toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function ItemPlantilla({
+  plantilla,
+  isSelected = false,
+  onSelect,
+  onEdit,
+  onDelete,
+}: ItemPlantillaProps): ReactElement {
+  const { accentColor } = useTheme();
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  const handleContextMenu = (event: React.MouseEvent): void => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY });
+  };
+
+  return (
+    <>
+      <div
+        onClick={() => onSelect(plantilla)}
+        onContextMenu={handleContextMenu}
+        onMouseEnter={(event) => {
+          event.currentTarget.style.borderColor = accentColor;
+        }}
+        onMouseLeave={(event) => {
+          event.currentTarget.style.borderColor = isSelected ? accentColor : "";
+        }}
+        style={
+          {
+            "--accent-color": accentColor,
+            borderColor: isSelected ? accentColor : undefined,
+            boxShadow: isSelected ? `0 0 0 1px ${accentColor}` : undefined,
+          } as React.CSSProperties
+        }
+        className="group relative flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-3.5 transition hover:bg-white hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-900/80"
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div
+            style={{ backgroundColor: `${accentColor}18`, color: accentColor }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition"
+          >
+            <LayoutTemplate className="h-5 w-5" color={accentColor} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4
+              className="truncate text-sm font-bold text-slate-800 transition-colors dark:text-slate-100"
+              style={{ color: isSelected ? accentColor : undefined }}
+            >
+              {plantilla.name}
+            </h4>
+            <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+              {formatDate(plantilla.created_at)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEdit(plantilla);
+            }}
+            style={{ color: accentColor }}
+            className="flex h-7 w-7 items-center justify-center rounded-lg opacity-0 transition group-hover:opacity-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+            title="Editar plantilla"
+          >
+            <Edit2 className="h-3.5 w-3.5" color={accentColor} />
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowConfirmDelete(true);
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+            title="Eliminar plantilla"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          <ChevronRight
+            className="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[var(--accent-color)] dark:text-slate-700"
+            style={{ color: isSelected ? accentColor : undefined }}
+          />
+        </div>
+      </div>
+
+      {contextMenu && (
+        <>
+          <div
+            className="fixed inset-0 z-50"
+            onClick={() => setContextMenu(null)}
+          />
+          <div
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            className="fixed z-50 w-44 rounded-2xl border border-slate-200/90 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                onEdit(plantilla);
+                setContextMenu(null);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-purple-50 hover:text-purple-600 dark:text-slate-200 dark:hover:bg-purple-950/40"
+            >
+              <Edit2 className="h-4 w-4 text-purple-500" />
+              <span>Editar plantilla</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setContextMenu(null);
+                setShowConfirmDelete(true);
+              }}
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+            >
+              <Trash2 className="h-4 w-4 text-red-500" />
+              <span>Eliminar</span>
+            </button>
+          </div>
+        </>
+      )}
+
+      <ConfirmacionEliminacionModal
+        isOpen={showConfirmDelete}
+        title="Eliminar plantilla"
+        message={`¿Deseas eliminar la plantilla \"${plantilla.name}\"? Esta acción no se puede deshacer.`}
+        onCancel={() => setShowConfirmDelete(false)}
+        onConfirm={() => {
+          setShowConfirmDelete(false);
+          onDelete(plantilla.id);
+        }}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+      />
+    </>
+  );
+}
+
+
+========================================
+FILE: src/modules/papelera-plantillas/index.ts
+========================================
+export * from "./components/ItemPapelera";
+export * from "./components/ItemPlantilla";
+export * from "./views/PanelPapelera";
+export * from "./views/PanelPlantillas";
+export * from "./views/VistaPreviaPlantilla";
+export * from "./views/EditorPlantilla";
+
+
+========================================
+FILE: src/modules/papelera-plantillas/views/EditorPlantilla.tsx
+========================================
+import { useRef, useState, type CSSProperties, type ReactElement } from "react";
+import { Save, X } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
+import { EditorToolbar } from "../../editor/components/EditorToolbar";
+import {
+  TiptapEditor,
+  type TiptapEditorHandle,
+} from "../../editor/components/TiptapEditor";
+import type { Plantilla } from "../components/ItemPlantilla";
+
+interface EditorPlantillaProps {
+  plantilla?: Plantilla | null;
+  workspaceId: number;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+export function EditorPlantilla({
+  plantilla,
+  workspaceId,
+  onSave,
+  onCancel,
+}: EditorPlantillaProps): ReactElement {
+  const { accentColor } = useTheme();
+  const [name, setName] = useState(plantilla?.name ?? "");
+  const [content, setContent] = useState(plantilla?.content ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const editorRef = useRef<TiptapEditorHandle | null>(null);
+
+  const insertDate = (format?: "datetime" | "date" | "time"): void => {
+    const now = new Date();
+    let value = "";
+
+    const resolvedFormat = format ?? "datetime";
+
+    if (resolvedFormat === "date") {
+      value = now.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } else if (resolvedFormat === "time") {
+      value = now.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else {
+      value = `${now.toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })} ${now.toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    }
+
+    editorRef.current?.runEditorCommand((ed) => {
+      ed.chain()
+        .focus(undefined, { scrollIntoView: false })
+        .insertContent(value)
+        .run();
+    });
+  };
+
+  const insertTable = (rows = 3, cols = 3): void => {
+    editorRef.current?.runEditorCommand((ed) => {
+      const tableHtml = Array.from({ length: rows }, (_, rowIndex) => {
+        const cells = Array.from({ length: cols }, (_, colIndex) => {
+          const cellTag = rowIndex === 0 ? "th" : "td";
+          return `<${cellTag}>${colIndex + 1}</${cellTag}>`;
+        }).join("");
+        return `<tr>${cells}</tr>`;
+      }).join("");
+
+      ed.chain()
+        .focus(undefined, { scrollIntoView: false })
+        .insertContent(`<table><tbody>${tableHtml}</tbody></table><p></p>`)
+        .run();
+    });
+  };
+
+  const handleSave = async (): Promise<void> => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError("El nombre de la plantilla es obligatorio");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+
+      if (plantilla) {
+        await window.electron?.templates?.update({
+          id: plantilla.id,
+          name: trimmedName,
+          content,
+        });
+      } else {
+        await window.electron?.templates?.create({
+          name: trimmedName,
+          content,
+          workspaceId,
+        });
+      }
+
+      window.dispatchEvent(new CustomEvent("templates:updated"));
+      onSave();
+    } catch (err) {
+      console.error("Error al guardar plantilla:", err);
+      setError("No se pudo guardar la plantilla");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex h-full flex-col bg-white dark:bg-slate-950">
+      <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 dark:border-slate-800">
+        <div className="max-w-lg flex-1">
+          <input
+            type="text"
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value);
+              if (error) setError("");
+            }}
+            placeholder="Nombre de la plantilla..."
+            style={{ "--tw-ring-color": accentColor } as CSSProperties}
+            className="w-full text-lg font-extrabold text-slate-900 placeholder-slate-300 outline-none focus:ring-1 dark:bg-transparent dark:text-slate-100 dark:placeholder-slate-600"
+            autoFocus
+          />
+          {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3.5 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-900"
+          >
+            <X className="h-4 w-4" />
+            <span>Cancelar</span>
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => {
+              void handleSave();
+            }}
+            style={{ backgroundColor: accentColor }}
+            className="flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-95 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            <span>{saving ? "Guardando..." : "Guardar"}</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          <TiptapEditor
+            ref={editorRef}
+            initialHTML={content}
+            editable
+            onUpdate={(html) => setContent(html)}
+          />
+        </div>
+
+        <div className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+          <EditorToolbar
+            editor={editorRef.current}
+            onInsertTable={insertTable}
+            onInsertImage={() => {
+              editorRef.current?.runEditorCommand((ed) => {
+                ed.chain()
+                  .focus(undefined, { scrollIntoView: false })
+                  .insertContent("<p>Imagen</p>")
+                  .run();
+              });
+            }}
+            onInsertDate={insertDate}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FILE: src/modules/papelera-plantillas/views/PanelPapelera.tsx
+========================================
+import { useEffect, useMemo, useState, type ReactElement } from "react";
+import { AlertCircle, RefreshCw, Search, Trash2 } from "lucide-react";
+import { ConfirmacionEliminacionModal } from "../../../core/components/ConfirmacionEliminacionModal";
+import { useTheme } from "../../../core/theme/useTheme";
+import { ItemPapelera, type NotaPapelera } from "../components/ItemPapelera";
+
+interface PanelPapeleraProps {
+  workspaceId: number;
+  onNotesMutated?: () => void;
+}
+
+export function PanelPapelera({
+  workspaceId,
+  onNotesMutated,
+}: PanelPapeleraProps): ReactElement {
+  const { accentColor } = useTheme();
+  const [notas, setNotas] = useState<NotaPapelera[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [notaToDelete, setNotaToDelete] = useState<NotaPapelera | null>(null);
+  const [showEmptyModal, setShowEmptyModal] = useState(false);
+
+  const loadNotas = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const data = await window.electron?.trash?.getAll(workspaceId);
+      setNotas((data as NotaPapelera[]) ?? []);
+    } catch (error) {
+      console.error("Error al cargar papelera:", error);
+      setNotas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadNotas();
+  }, [workspaceId]);
+
+  const filteredNotas = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return notas;
+
+    return notas.filter(
+      (nota) =>
+        nota.title.toLowerCase().includes(query) ||
+        nota.content.toLowerCase().includes(query),
+    );
+  }, [notas, search]);
+
+  const handleRestore = async (noteId: number): Promise<void> => {
+    try {
+      await window.electron?.trash?.restore(noteId);
+      await loadNotas();
+      onNotesMutated?.();
+      window.dispatchEvent(new CustomEvent("notes:updated"));
+      window.dispatchEvent(new CustomEvent("trash:updated"));
+    } catch (error) {
+      console.error("Error al restaurar nota:", error);
+    }
+  };
+
+  const handleConfirmDeletePermanent = async (): Promise<void> => {
+    if (!notaToDelete) return;
+
+    try {
+      await window.electron?.trash?.deletePermanent(notaToDelete.id);
+      setNotaToDelete(null);
+      await loadNotas();
+      onNotesMutated?.();
+      window.dispatchEvent(new CustomEvent("notes:updated"));
+      window.dispatchEvent(new CustomEvent("trash:updated"));
+    } catch (error) {
+      console.error("Error al eliminar nota permanentemente:", error);
+    }
+  };
+
+  const handleConfirmEmptyTrash = async (): Promise<void> => {
+    try {
+      await window.electron?.trash?.empty(workspaceId);
+      setShowEmptyModal(false);
+      await loadNotas();
+      onNotesMutated?.();
+      window.dispatchEvent(new CustomEvent("notes:updated"));
+      window.dispatchEvent(new CustomEvent("trash:updated"));
+    } catch (error) {
+      console.error("Error al vaciar papelera:", error);
+    }
+  };
+
+  return (
+    <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="border-b border-slate-200/80 bg-white px-5 py-4 dark:border-slate-800/60 dark:bg-slate-950">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+              <Trash2 className="h-5 w-5" style={{ color: accentColor }} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                Papelera
+              </h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                {notas.length === 1
+                  ? "1 nota eliminada"
+                  : `${notas.length} notas eliminadas`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            disabled={notas.length === 0}
+            onClick={() => setShowEmptyModal(true)}
+            style={{ borderColor: accentColor, color: accentColor }}
+            className="flex items-center gap-1.5 rounded-xl border bg-slate-50 px-3 py-1.5 text-xs font-semibold transition hover:bg-slate-100 disabled:pointer-events-none disabled:opacity-40 dark:bg-slate-900 dark:hover:bg-slate-800"
+          >
+            <Trash2 className="h-3.5 w-3.5" style={{ color: accentColor }} />
+            <span>Vaciar Papelera</span>
+          </button>
+        </div>
+
+        <div className="relative mt-3">
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar en papelera..."
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-slate-600"
+          />
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+        {loading ? (
+          <div className="flex h-48 flex-col items-center justify-center gap-2 text-xs text-slate-400">
+            <RefreshCw className="h-5 w-5 animate-spin" />
+            <span>Cargando notas eliminadas...</span>
+          </div>
+        ) : filteredNotas.length === 0 ? (
+          <div className="flex h-64 flex-col items-center justify-center gap-2.5 text-center text-slate-400 dark:text-slate-500">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900">
+              <Trash2 className="h-6 w-6" style={{ color: accentColor }} />
+            </div>
+            <p className="text-sm font-semibold">La papelera está vacía</p>
+            <p className="max-w-[200px] text-xs text-slate-400">
+              Las notas que elimines aparecerán aquí para recuperarlas cuando lo
+              necesites.
+            </p>
+          </div>
+        ) : (
+          filteredNotas.map((nota) => (
+            <ItemPapelera
+              key={nota.id}
+              nota={nota}
+              onRestore={handleRestore}
+              onDeletePermanent={(entry) => setNotaToDelete(entry)}
+            />
+          ))
+        )}
+      </div>
+
+      <ConfirmacionEliminacionModal
+        isOpen={notaToDelete !== null}
+        title="Eliminar permanentemente"
+        message={`¿Estás seguro de que deseas eliminar permanentemente la nota \"${notaToDelete?.title ?? "Sin título"}\"? Esta acción no se puede deshacer.`}
+        onCancel={() => setNotaToDelete(null)}
+        onConfirm={handleConfirmDeletePermanent}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+      />
+
+      <ConfirmacionEliminacionModal
+        isOpen={showEmptyModal}
+        title="Vaciar papelera"
+        message="Esta acción es irreversible. Se eliminarán permanentemente todas las notas de la papelera."
+        onCancel={() => setShowEmptyModal(false)}
+        onConfirm={handleConfirmEmptyTrash}
+        confirmLabel="Vaciar"
+        cancelLabel="Cancelar"
+      />
+
+      <div className="pointer-events-none fixed bottom-4 right-4 z-10 flex items-center gap-2 rounded-full bg-red-900/80 px-3 py-1.5 text-[11px] font-medium text-white opacity-0 data-[visible='true']:opacity-100">
+        <AlertCircle className="h-3.5 w-3.5" />
+        <span>Acción irreversible</span>
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FILE: src/modules/papelera-plantillas/views/PanelPlantillas.tsx
+========================================
+import { useEffect, useMemo, useState, type ReactElement } from "react";
+import { LayoutTemplate, Plus, RefreshCw, Search } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
+import { ItemPlantilla, type Plantilla } from "../components/ItemPlantilla";
+
+interface PanelPlantillasProps {
+  workspaceId: number;
+  selectedTemplateId?: number | null;
+  onSelectTemplate: (plantilla: Plantilla) => void;
+  onCreateNewTemplate: () => void;
+  onEditTemplate: (plantilla: Plantilla) => void;
+  refreshTrigger?: number;
+}
+
+export function PanelPlantillas({
+  workspaceId,
+  selectedTemplateId,
+  onSelectTemplate,
+  onCreateNewTemplate,
+  onEditTemplate,
+  refreshTrigger,
+}: PanelPlantillasProps): ReactElement {
+  const { accentColor } = useTheme();
+  const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const loadPlantillas = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      const data = await window.electron?.templates?.getAll(workspaceId);
+      setPlantillas((data as Plantilla[]) ?? []);
+    } catch (error) {
+      console.error("Error al cargar plantillas:", error);
+      setPlantillas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPlantillas();
+  }, [workspaceId, refreshTrigger]);
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return plantillas;
+
+    return plantillas.filter(
+      (template) =>
+        template.name.toLowerCase().includes(query) ||
+        template.content.toLowerCase().includes(query),
+    );
+  }, [plantillas, search]);
+
+  const handleDeleteTemplate = async (templateId: number): Promise<void> => {
+    try {
+      await window.electron?.templates?.delete(templateId);
+      window.dispatchEvent(new CustomEvent("templates:updated"));
+      await loadPlantillas();
+    } catch (error) {
+      console.error("Error al eliminar plantilla:", error);
+    }
+  };
+
+  return (
+    <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="border-b border-slate-200/80 bg-white px-5 py-4 dark:border-slate-800/60 dark:bg-slate-950">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800">
+              <LayoutTemplate
+                className="h-5 w-5"
+                style={{ color: accentColor }}
+              />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
+                Plantillas
+              </h2>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                {plantillas.length === 1
+                  ? "1 plantilla"
+                  : `${plantillas.length} plantillas`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onCreateNewTemplate}
+            style={{ backgroundColor: accentColor }}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 active:scale-95"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Nueva Plantilla</span>
+          </button>
+        </div>
+
+        <div className="relative mt-3">
+          <Search
+            className="absolute left-3 top-2.5 h-3.5 w-3.5"
+            style={{ color: accentColor }}
+          />
+          <input
+            type="text"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar plantillas..."
+            style={{ "--tw-ring-color": accentColor } as React.CSSProperties}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-slate-400 focus:ring-1 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-slate-600"
+          />
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-2.5 scrollbar-thin">
+        {loading ? (
+          <div className="flex h-48 flex-col items-center justify-center gap-2 text-xs text-slate-400">
+            <RefreshCw className="h-5 w-5 animate-spin" />
+            <span>Cargando plantillas...</span>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex h-64 flex-col items-center justify-center gap-2.5 text-center text-slate-400 dark:text-slate-500">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-900">
+              <LayoutTemplate className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+            </div>
+            <p className="text-sm font-semibold">
+              No hay plantillas disponibles
+            </p>
+            <p className="max-w-[220px] text-xs text-slate-400">
+              Crea estructuras reutilizables para tus notas con el botón
+              superior.
+            </p>
+          </div>
+        ) : (
+          filtered.map((item) => (
+            <ItemPlantilla
+              key={item.id}
+              plantilla={item}
+              isSelected={selectedTemplateId === item.id}
+              onDelete={handleDeleteTemplate}
+              onEdit={onEditTemplate}
+              onSelect={onSelectTemplate}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+========================================
+FILE: src/modules/papelera-plantillas/views/VistaPreviaPlantilla.tsx
+========================================
+import { type ReactElement } from "react";
+import { Play, Sparkles } from "lucide-react";
+import { useTheme } from "../../../core/theme/useTheme";
+import type { Plantilla } from "../components/ItemPlantilla";
+
+interface VistaPreviaPlantillaProps {
+  plantilla: Plantilla | null;
+  onUseTemplate: (plantilla: Plantilla) => void;
+}
+
+export function VistaPreviaPlantilla({
+  plantilla,
+  onUseTemplate,
+}: VistaPreviaPlantillaProps): ReactElement {
+  const { accentColor } = useTheme();
+
+  if (!plantilla) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 bg-white p-8 text-center dark:bg-slate-950">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-purple-50 text-purple-400 dark:bg-purple-950/30 dark:text-purple-500">
+          <Sparkles className="h-8 w-8" />
+        </div>
+        <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
+          Selecciona una plantilla
+        </h3>
+        <p className="max-w-xs text-xs text-slate-400 dark:text-slate-500">
+          Haz clic en una plantilla de la lista central para visualizar su
+          estructura o crear una nueva nota con ella.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="flex items-center justify-between border-b border-slate-100 px-8 py-5 dark:border-slate-800/60">
+        <div>
+          <span
+            style={{ color: accentColor }}
+            className="text-[10px] font-bold uppercase tracking-wider"
+          >
+            Vista Previa de Plantilla
+          </span>
+          <h1 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
+            {plantilla.name}
+          </h1>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onUseTemplate(plantilla)}
+          style={{ backgroundColor: accentColor }}
+          className="flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:opacity-90 active:scale-95"
+        >
+          <Play className="h-4 w-4 fill-white" />
+          <span>Usar plantilla</span>
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-8 scrollbar-thin">
+        <div className="prose prose-slate max-w-none rounded-3xl border border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-900/30 dark:prose-invert">
+          <div
+            dangerouslySetInnerHTML={{
+              __html:
+                plantilla.content ||
+                '<p class="text-slate-400 italic">Plantilla sin contenido...</p>',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+

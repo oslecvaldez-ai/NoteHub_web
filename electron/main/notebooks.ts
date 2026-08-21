@@ -162,7 +162,7 @@ export function registerNotebooksIpc(): void {
 					 LEFT JOIN notes ON notes.notebook_id = notebooks.id AND notes.is_deleted = 0
 					 WHERE notebooks.workspace_id = ?
 					 GROUP BY notebooks.id
-					 ORDER BY notebooks.parent_notebook_id IS NOT NULL, notebooks.name COLLATE NOCASE ASC`,
+             ORDER BY notebooks.id ASC`,
         )
         .all(workspaceId) as Notebook[];
     } catch (error) {

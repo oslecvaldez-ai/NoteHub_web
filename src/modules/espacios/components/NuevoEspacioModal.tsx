@@ -13,6 +13,7 @@ import { workspacesApi, type Workspace } from "../workspacesApi";
 import { notesApi } from "../../notas/notesApi";
 import {
   PRESETS_ESPACIOS,
+  type PresetCuaderno,
   type PresetEspacio,
 } from "../../../data/presetsEspacios";
 
@@ -31,6 +32,39 @@ function getModalRoot(): HTMLElement | null {
     document.body.appendChild(root);
   }
   return root;
+}
+
+async function createNotebookTree(
+  workspaceId: number,
+  presetNotebook: PresetCuaderno,
+  parentNotebookId: number | null = null,
+): Promise<void> {
+  const notebook = await notesApi.notebooks.create(workspaceId, {
+    name: presetNotebook.name,
+    parentNotebookId,
+    iconType: presetNotebook.cover ?? "folder",
+    iconColor: presetNotebook.color ?? null,
+  });
+  if (!notebook) {
+    throw new Error(`No se pudo crear el cuaderno ${presetNotebook.name}`);
+  }
+
+  // Se añade fallback seguro (?? []) por si el cuaderno es solo contenedor y no tiene notas directas
+  for (const presetNote of presetNotebook.notes ?? []) {
+    const note = await notesApi.notes.create(workspaceId, {
+      notebookId: notebook.id,
+      title: presetNote.title,
+      content: presetNote.content,
+    });
+    if (!note) {
+      throw new Error(`No se pudo crear la nota ${presetNote.title}`);
+    }
+  }
+
+  // Recorrer subcuadernos recursivamente pasando el ID recién creado como parentNotebookId
+  for (const subNotebook of presetNotebook.subNotebooks ?? []) {
+    await createNotebookTree(workspaceId, subNotebook, notebook.id);
+  }
 }
 
 export function NuevoEspacioModal({
@@ -77,26 +111,7 @@ export function NuevoEspacioModal({
       if (!workspace) throw new Error("No se pudo crear el espacio");
 
       for (const presetNotebook of selectedPreset.notebooks) {
-        const notebook = await notesApi.notebooks.create(workspace.id, {
-          name: presetNotebook.name,
-          iconType: presetNotebook.cover ?? "folder",
-        });
-        if (!notebook) {
-          throw new Error(
-            `No se pudo crear el cuaderno ${presetNotebook.name}`,
-          );
-        }
-
-        for (const presetNote of presetNotebook.notes) {
-          const note = await notesApi.notes.create(workspace.id, {
-            notebookId: notebook.id,
-            title: presetNote.title,
-            content: presetNote.content,
-          });
-          if (!note) {
-            throw new Error(`No se pudo crear la nota ${presetNote.title}`);
-          }
-        }
+        await createNotebookTree(workspace.id, presetNotebook);
       }
       window.dispatchEvent(new CustomEvent("notes:updated"));
       window.dispatchEvent(new CustomEvent("workspaces:updated"));
