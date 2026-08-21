@@ -12,14 +12,19 @@
     "help": "node ./scripts/help.js",
     "tree": "node ./scripts/list-tree.js",
     "tree:file": "node ./scripts/list-tree.js --to-file",
+    "export:all": "node ./scripts/export-module.js .",
     "export:core": "node ./scripts/export-module.js src/core",
+    "export:data": "node ./scripts/export-module.js src/data",
     "export:notas": "node ./scripts/export-module.js src/modules/notas",
     "export:editor": "node ./scripts/export-module.js src/modules/editor",
     "export:espacios": "node ./scripts/export-module.js src/modules/espacios",
     "export:papelera": "node ./scripts/export-module.js src/modules/papelera-plantillas",
     "export:respaldos": "node ./scripts/export-module.js src/modules/respaldos",
     "export:config": "node ./scripts/export-module.js src/modules/configuracion",
-    "export:electron": "node ./scripts/export-module.js electron/main"
+    "export:electron": "node ./scripts/export-module.js electron/main",
+    "export:styles": "node ./scripts/export-styles.js",
+    "export:schema": "node ./scripts/export-schema.js",
+    "export:db": "node ./scripts/export-schema.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

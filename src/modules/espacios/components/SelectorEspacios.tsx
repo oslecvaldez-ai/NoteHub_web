@@ -33,6 +33,9 @@ export function SelectorEspacios({
   );
   const [isOpen, setIsOpen] = useState(false);
   const [modal, setModal] = useState<"new" | "edit" | null>(null);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
+    null,
+  );
   const [noteCounts, setNoteCounts] = useState<Record<number, number>>({});
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { notify: showNotification } = useNotifications();
@@ -208,6 +211,7 @@ export function SelectorEspacios({
                 key={workspace.id}
                 onSelect={handleSelect}
                 onEdit={() => {
+                  setEditingWorkspace(workspace);
                   setIsOpen(false);
                   setModal("edit");
                 }}
@@ -233,6 +237,7 @@ export function SelectorEspacios({
               className="text-slate-600 hover:text-[var(--accent-color)] dark:text-slate-300"
               style={{ "--accent-color": accentColor } as React.CSSProperties}
               onClick={() => {
+                setEditingWorkspace(activeWorkspace);
                 setIsOpen(false);
                 setModal("edit");
               }}
@@ -250,13 +255,16 @@ export function SelectorEspacios({
           onCreated={handleCreated}
         />
       )}
-      {modal === "edit" && activeWorkspace && (
+      {modal === "edit" && editingWorkspace && (
         <EditarEspacioModal
           isOpen
-          onClose={() => setModal(null)}
+          onClose={() => {
+            setModal(null);
+            setEditingWorkspace(null);
+          }}
           onDeleted={handleDeleted}
           onUpdated={handleUpdated}
-          workspace={activeWorkspace}
+          workspace={editingWorkspace}
         />
       )}
     </div>

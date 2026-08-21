@@ -11,11 +11,11 @@ En la arquitectura de Electron, la responsabilidad de este módulo se divide ent
 
 ### Subcomponentes Permitidos (Frontend)
 
-- **`/src/modules/espacios/components/SelectorEspacios.tsx`**: Componente ubicado en la parte superior del Sidebar fijo que muestra el espacio activo y permite cambiar entre ellos (Adaptación de `DrawerContent`[cite: 20]).
-- **`/src/modules/espacios/components/EspacioItem.tsx`**: Componente reutilizable para cada fila de espacio en las listas[cite: 24].
-- **`/src/modules/espacios/components/NuevoEspacioModal.tsx`**: Modal de escritorio para la creación de un espacio[cite: 21].
-- **`/src/modules/espacios/components/EditarEspacioModal.tsx`**: Modal de escritorio para editar nombre o eliminar el espacio actual[cite: 22].
-- **`/src/modules/espacios/components/MoverEspacioModal.tsx`**: Modal para seleccionar un espacio de destino y mover cuadernos o notas[cite: 23].
+- **`/src/modules/espacios/components/SelectorEspacios.tsx`**: Componente ubicado en la parte superior del Sidebar fijo que muestra el espacio activo y permite cambiar entre ellos (Adaptación de `DrawerContent`).
+- **`/src/modules/espacios/components/EspacioItem.tsx`**: Componente reutilizable para cada fila de espacio en las listas.
+- **`/src/modules/espacios/components/NuevoEspacioModal.tsx`**: Modal de escritorio para la creación de un espacio.
+- **`/src/modules/espacios/components/EditarEspacioModal.tsx`**: Modal de escritorio para editar nombre o eliminar el espacio actual.
+- **`/src/modules/espacios/components/MoverEspacioModal.tsx`**: Modal para seleccionar un espacio de destino y mover cuadernos o notas.
 
 ### Dependencias
 
@@ -31,46 +31,46 @@ En la arquitectura de Electron, la responsabilidad de este módulo se divide ent
 
 ### A. Componente `SelectorEspacios` (Panel Lateral Izquierdo)
 
-- Reemplaza el menú hamburguesa móvil[cite: 19]. Se posiciona fijo en la parte superior del panel lateral izquierdo[cite: 17].
-- Muestra el nombre del espacio activo actual[cite: 20].
-- Al hacer clic, despliega una lista (estilo Dropdown o sub-menú) con todos los espacios disponibles renderizando `EspacioItem`[cite: 20].
-- Al final de la lista desplegada, incluye dos opciones fijas: "+ Nuevo Espacio" y "Editar Espacio Actual"[cite: 20].
+- Reemplaza el menú hamburguesa móvil. Se posiciona fijo en la parte superior del panel lateral izquierdo.
+- Muestra el nombre del espacio activo actual.
+- Al hacer clic, despliega una lista (estilo Dropdown o sub-menú) con todos los espacios disponibles renderizando `EspacioItem`.
+- Al final de la lista desplegada, incluye dos opciones fijas: "+ Nuevo Espacio" y "Editar Espacio Actual".
 
 ### B. Componente `EspacioItem`
 
-Reutilización de la estructura visual móvil[cite: 24] adaptada a web (HTML/Tailwind):
+Reutilización de la estructura visual móvil adaptada a web (HTML/Tailwind):
 
-- Ícono `layers` (usando `lucide-react`) a la izquierda[cite: 24].
-- Nombre del espacio[cite: 24].
-- Etiqueta pequeña "Por defecto" si el espacio tiene la propiedad `is_default === 1`[cite: 24].
-- Ícono de "check" si es el espacio activo seleccionado[cite: 24].
+- Ícono `layers` (usando `lucide-react`) a la izquierda.
+- Nombre del espacio.
+- Etiqueta pequeña "Por defecto" si el espacio tiene la propiedad `is_default === 1`.
+- Ícono de "check" si es el espacio activo seleccionado.
 - Hover: Al pasar el cursor, el fondo debe cambiar ligeramente para indicar que es interactivo.
 
 ### C. Componente `NuevoEspacioModal`
 
-- Adaptación de la pantalla completa móvil[cite: 21] a un modal centrado en pantalla (React Portal).
+- Adaptación de la pantalla completa móvil a un modal centrado en pantalla (React Portal).
 - **Contenido:**
-  - Título: "Nuevo espacio"[cite: 21].
-  - Input de texto para el nombre con auto-focus[cite: 21].
-  - Fila informativa: "Bloquear - Próximamente" con un interruptor desactivado[cite: 21].
+  - Título: "Nuevo espacio".
+  - Input de texto para el nombre con auto-focus.
+  - Fila informativa: "Bloquear - Próximamente" con un interruptor desactivado.
 - **Acciones:**
   - Botón "Cancelar".
-  - Botón "Hecho" (deshabilitado si el nombre está vacío o solo tiene espacios en blanco)[cite: 21].
+  - Botón "Hecho" (deshabilitado si el nombre está vacío o solo tiene espacios en blanco).
 
 ### D. Componente `EditarEspacioModal`
 
-- Modal centrado para modificar el espacio[cite: 22].
-- **Contenido:** Igual al de creación, pero con el nombre precargado[cite: 22].
+- Modal centrado para modificar el espacio.
+- **Contenido:** Igual al de creación, pero con el nombre precargado.
 - **Acciones Adicionales:**
-  - Si el espacio editado **no es el espacio por defecto** (`is_default !== 1`), mostrar un botón en rojo "Eliminar" en la parte inferior[cite: 22].
-  - Al presionar "Eliminar", se oculta este modal y se lanza el `ConfirmacionEliminacionModal` global[cite: 22].
+  - Si el espacio editado **no es el espacio por defecto** (`is_default !== 1`), mostrar un botón en rojo "Eliminar" en la parte inferior.
+  - Al presionar "Eliminar", se oculta este modal y se lanza el `ConfirmacionEliminacionModal` global.
 
 ### E. Componente `MoverEspacioModal`
 
-- Adaptación de `MoverEspacioScreen`[cite: 23] a un modal.
-- Muestra una lista desplazable (`overflow-y-auto`) de todos los espacios disponibles[cite: 23].
-- El espacio donde reside el elemento actualmente tiene el indicador de "check"[cite: 23].
-- Botón "Mover" deshabilitado hasta que se seleccione un espacio de destino distinto al actual[cite: 23].
+- Adaptación de `MoverEspacioScreen` a un modal.
+- Muestra una lista desplazable (`overflow-y-auto`) de todos los espacios disponibles.
+- El espacio donde reside el elemento actualmente tiene el indicador de "check".
+- Botón "Mover" deshabilitado hasta que se seleccione un espacio de destino distinto al actual.
 
 ---
 
@@ -80,20 +80,20 @@ Reutilización de la estructura visual móvil[cite: 24] adaptada a web (HTML/Tai
 
 El backend de Node.js expondrá, a través del preload, las funciones para que el frontend ejecute:
 
-1. `window.electron.workspaces.getAll()`: Retorna la lista completa[cite: 20].
-2. `window.electron.workspaces.create(name)`: Inserta en SQLite y retorna el ID[cite: 21].
-3. `window.electron.workspaces.update(id, name)`: Actualiza el registro[cite: 22].
-4. `window.electron.workspaces.delete(id)`: Borra el registro en SQLite[cite: 22].
-5. `window.electron.workspaces.moveElement(type, elementId, targetWorkspaceId)`: Ejecuta el UPDATE correspondiente[cite: 23].
+1. `window.electron.workspaces.getAll()`: Retorna la lista completa.
+2. `window.electron.workspaces.create(name)`: Inserta en SQLite y retorna el ID.
+3. `window.electron.workspaces.update(id, name)`: Actualiza el registro.
+4. `window.electron.workspaces.delete(id)`: Borra el registro en SQLite.
+5. `window.electron.workspaces.moveElement(type, elementId, targetWorkspaceId)`: Ejecuta el UPDATE correspondiente.
 
 ### B. Inicialización y Selección
 
-- Al cargar la lista de espacios, si no hay un ID activo en memoria, el frontend seleccionará por defecto el espacio que tenga `is_default === 1` y lo definirá como activo[cite: 20].
+- Al cargar la lista de espacios, si no hay un ID activo en memoria, el frontend seleccionará por defecto el espacio que tenga `is_default === 1` y lo definirá como activo.
 
 ### C. Eliminación Protegida
 
-- Se debe validar en la interfaz que el espacio `is_default === 1` no ofrezca el botón de eliminar[cite: 22].
-- Mensaje del modal de confirmación al eliminar: *"¿Estás seguro de que deseas eliminar este espacio? Se moverán todas sus notas y cuadernos al espacio por defecto."*[cite: 22].
+- Se debe validar en la interfaz que el espacio `is_default === 1` no ofrezca el botón de eliminar.
+- Mensaje del modal de confirmación al eliminar: _"¿Estás seguro de que deseas eliminar este espacio? Se moverán todas sus notas y cuadernos al espacio por defecto."_.
 
 ---
 
@@ -108,19 +108,19 @@ Para dar por terminado el **E_MOD_02_GESTION_ESPACIOS**, el asistente debe compl
 
 ### Fase 2.2: Componentes UI Base
 
-- [x] Crear el componente `EspacioItem` usando `lucide-react` y Tailwind CSS[cite: 24].
+- [x] Crear el componente `EspacioItem` usando `lucide-react` y Tailwind CSS.
 - [x] Integrar el componente `SelectorEspacios` que controle el estado del espacio activo global.
 
 ### Fase 2.3: Implementación de Modales
 
-- [x] Construir `NuevoEspacioModal` asegurando el comportamiento del botón "Hecho" condicionado[cite: 21].
-- [x] Construir `EditarEspacioModal` con la lógica de carga de datos y botón de eliminación condicional[cite: 22].
-- [x] Construir `MoverEspacioModal` con selección de elementos de lista y validación de destino[cite: 23].
+- [x] Construir `NuevoEspacioModal` asegurando el comportamiento del botón "Hecho" condicionado.
+- [x] Construir `EditarEspacioModal` con la lógica de carga de datos y botón de eliminación condicional.
+- [x] Construir `MoverEspacioModal` con selección de elementos de lista y validación de destino.
 
 ### Fase 2.4: Integración y Retroalimentación
 
 - [x] Conectar la creación, edición, eliminación y movimiento a las funciones IPC correspondientes.
-- [x] Tras cada operación exitosa, disparar el `NotificacionToast` con el mensaje apropiado (ej: "Espacio creado correctamente")[cite: 21, 22, 23].
+- [x] Tras cada operación exitosa, disparar el `NotificacionToast` con el mensaje apropiado (ej: "Espacio creado correctamente").
 - [x] Actualizar automáticamente la lista de espacios en el frontend al terminar cualquier operación CRUD.
 
 ### Criterio de Aceptación Final

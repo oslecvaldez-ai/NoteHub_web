@@ -8,6 +8,11 @@ console.log(`
   npm run tree:file           -> Guarda el árbol en ESTRUCTURA_PROYECTO.txt.
 
 \x1b[33mComandos de Consolidación (Inyección de Contexto DGC):\x1b[0m
+  npm run export:all          -> Empaqueta TODO el proyecto completo.
+  npm run export:schema       -> Empaqueta esquemas SQLite, DDL y persistencia.
+  npm run export:db           -> Alias de export:schema.
+  npm run export:data         -> Empaqueta presets y datos semilla (src/data).
+  npm run export:styles       -> Empaqueta todos los archivos de estilo (CSS/SCSS).
   npm run export:core         -> Empaqueta el núcleo (src/core).
   npm run export:notas        -> Empaqueta el módulo de notas.
   npm run export:editor       -> Empaqueta el módulo del editor.
