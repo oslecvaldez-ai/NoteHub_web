@@ -125,84 +125,104 @@ export function EditarEspacioModal({
 ========================================
 FILE: src/modules/espacios/components/EspacioItem.tsx
 ========================================
-import { useState, type ReactElement } from "react";
-import { Check, Layers, Settings } from "../../../core/components/Iconos";
+import type { ReactElement } from "react";
+import * as Icons from "../../../core/components/Iconos";
+import { Check, Settings, Layers } from "../../../core/components/Iconos";
 import { useTheme } from "../../../core/theme/useTheme";
 import type { Workspace } from "../workspacesApi";
 
 export interface EspacioItemProps {
   workspace: Workspace;
   isActive: boolean;
-  onSelect: (workspace: Workspace) => void;
-  onEdit?: () => void;
   noteCount?: number;
+  onSelect: (workspace: Workspace) => void;
+  onEdit: (workspace: Workspace) => void;
 }
 
 export function EspacioItem({
   workspace,
   isActive,
+  noteCount = 0,
   onSelect,
   onEdit,
-  noteCount = 0,
 }: EspacioItemProps): ReactElement {
-  const [isHovered, setIsHovered] = useState(false);
   const { accentColor } = useTheme();
+
+  // Obtener el icono dinámico o usar Layers por defecto
+  const IconComponent =
+    (workspace.icon && (Icons as Record<string, any>)[workspace.icon]) ||
+    Layers;
 
   return (
     <div
-      className={`group flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm transition ${isActive ? "font-semibold" : "text-slate-700 dark:text-slate-300"}`}
       onClick={() => onSelect(workspace)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        background: isActive || isHovered ? `${accentColor}12` : "transparent",
-      }}
+      title={workspace.name} // Tooltip al pasar el mouse por todo el item
+      className={`group relative flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-all duration-150 ${
+        isActive
+          ? "bg-slate-100/90 dark:bg-slate-800/80 font-medium text-slate-900 dark:text-slate-100"
+          : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
+      }`}
     >
-      <button
-        type="button"
-        aria-current={isActive ? "true" : undefined}
-        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
-        onClick={() => onSelect(workspace)}
-      >
-        <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
-          style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        {/* Contenedor del Icono */}
+        <div
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
+            isActive
+              ? "bg-white shadow-sm dark:bg-slate-700"
+              : "bg-slate-100/70 group-hover:bg-white dark:bg-slate-800 dark:group-hover:bg-slate-700"
+          }`}
+          style={{ color: isActive ? accentColor : undefined }}
         >
-          <Layers aria-hidden="true" size={17} />
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="espacio-item-name truncate">{workspace.name}</span>
-          <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">
-            {noteCount} {noteCount === 1 ? "nota" : "notas"}
+          <IconComponent size={16} />
+        </div>
+
+        {/* Textos del Espacio */}
+        <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+          {/* Fila 1: Nombre con ancho completo para evitar truncado prematuro */}
+          <span
+            className="truncate text-xs font-semibold leading-tight text-slate-800 dark:text-slate-100"
+            title={workspace.name}
+          >
+            {workspace.name}
           </span>
-        </span>
-      </button>
-      <div className="flex items-center gap-1">
-        {workspace.is_default === 1 && (
-          <span className="espacio-item-badge text-[10px] font-medium text-slate-400 dark:text-slate-500">
-            Por defecto
-          </span>
-        )}
+
+          {/* Fila 2: Contador de notas y badge "Por defecto" juntos */}
+          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 font-normal">
+            <span>
+              {noteCount} {noteCount === 1 ? "nota" : "notas"}
+            </span>
+            {workspace.is_default === 1 && (
+              <>
+                <span>•</span>
+                <span className="font-medium text-amber-600/90 dark:text-amber-400/90 text-[10px]">
+                  Por defecto
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Botones de acción / Check */}
+      <div className="flex items-center gap-0.5 shrink-0">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(workspace);
+          }}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-all"
+          title="Editar o eliminar este espacio"
+        >
+          <Settings size={14} />
+        </button>
+
         {isActive && (
           <Check
-            aria-label="Espacio activo"
-            size={17}
+            size={15}
+            className="shrink-0"
             style={{ color: accentColor }}
           />
-        )}
-        {onEdit && (
-          <button
-            type="button"
-            aria-label={`Editar espacio ${workspace.name}`}
-            title="Editar espacio"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit();
-            }}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <Settings size={14} />
-          </button>
         )}
       </div>
     </div>
@@ -463,6 +483,7 @@ async function createNotebookTree(
     name: presetNotebook.name,
     parentNotebookId,
     iconType: presetNotebook.cover ?? "folder",
+    iconColor: presetNotebook.color ?? null,
   });
   if (!notebook) {
     throw new Error(`No se pudo crear el cuaderno ${presetNotebook.name}`);
@@ -645,6 +666,7 @@ export function NuevoEspacioModal({
 FILE: src/modules/espacios/components/SelectorEspacios.tsx
 ========================================
 import { useEffect, useRef, useState, type ReactElement } from "react";
+import * as Icons from "../../../core/components/Iconos";
 import {
   ChevronDown,
   Layers,
@@ -679,6 +701,9 @@ export function SelectorEspacios({
   );
   const [isOpen, setIsOpen] = useState(false);
   const [modal, setModal] = useState<"new" | "edit" | null>(null);
+  const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(
+    null,
+  );
   const [noteCounts, setNoteCounts] = useState<Record<number, number>>({});
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { notify: showNotification } = useNotifications();
@@ -776,6 +801,11 @@ export function SelectorEspacios({
     spaces.find((space) => space.is_default === 1) ??
     spaces[0];
 
+  const ActiveIcon =
+    (activeWorkspace?.icon &&
+      (Icons as Record<string, any>)[activeWorkspace.icon]) ||
+    Layers;
+
   function updateSpaces(nextSpaces: Workspace[]): void {
     setLoadedSpaces(nextSpaces);
     onSpacesChange?.(nextSpaces);
@@ -814,7 +844,7 @@ export function SelectorEspacios({
 
   return (
     <div
-      className="selector-espacios"
+      className="selector-espacios relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -826,7 +856,7 @@ export function SelectorEspacios({
         type="button"
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <Layers
+          <ActiveIcon
             aria-hidden="true"
             className="h-4 w-4 shrink-0"
             size={19}
@@ -842,18 +872,21 @@ export function SelectorEspacios({
           size={17}
         />
       </button>
+
       {isOpen && (
         <div
-          className="selector-espacios-menu mt-2 animate-in rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl backdrop-blur-md duration-150 fade-in zoom-in-95 dark:border-slate-800 dark:bg-slate-900/95"
+          className="selector-espacios-menu absolute top-full left-0 right-0 z-50 mt-1.5 flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 animate-in fade-in zoom-in-95 duration-150"
           role="menu"
         >
-          <div className="selector-espacios-list">
+          {/* Lista con scroll vertical estilizado y sin scroll horizontal */}
+          <div className="custom-scroll max-h-56 overflow-y-auto overflow-x-hidden p-1.5 space-y-0.5">
             {spaces.map((workspace) => (
               <EspacioItem
                 isActive={workspace.id === selectedId}
                 key={workspace.id}
                 onSelect={handleSelect}
                 onEdit={() => {
+                  setEditingWorkspace(workspace);
                   setIsOpen(false);
                   setModal("edit");
                 }}
@@ -862,33 +895,37 @@ export function SelectorEspacios({
               />
             ))}
           </div>
-          <div className="selector-espacios-menu-actions border-t border-slate-100 dark:border-slate-800">
+
+          {/* Acciones fijas abajo */}
+          <div className="border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-1.5 space-y-0.5">
             <button
-              className="text-slate-600 hover:text-[var(--accent-color)] dark:text-slate-300"
-              style={{ "--accent-color": accentColor } as React.CSSProperties}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
               onClick={() => {
                 setIsOpen(false);
                 setModal("new");
               }}
               type="button"
             >
-              <Plus size={17} /> Nuevo espacio
+              <Plus size={15} style={{ color: accentColor }} />
+              Nuevo espacio
             </button>
             <button
               disabled={!activeWorkspace}
-              className="text-slate-600 hover:text-[var(--accent-color)] dark:text-slate-300"
-              style={{ "--accent-color": accentColor } as React.CSSProperties}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-40"
               onClick={() => {
+                setEditingWorkspace(activeWorkspace);
                 setIsOpen(false);
                 setModal("edit");
               }}
               type="button"
             >
-              <Settings size={17} /> Editar espacio actual
+              <Settings size={15} />
+              Editar espacio actual
             </button>
           </div>
         </div>
       )}
+
       {modal === "new" && (
         <NuevoEspacioModal
           isOpen
@@ -896,13 +933,16 @@ export function SelectorEspacios({
           onCreated={handleCreated}
         />
       )}
-      {modal === "edit" && activeWorkspace && (
+      {modal === "edit" && editingWorkspace && (
         <EditarEspacioModal
           isOpen
-          onClose={() => setModal(null)}
+          onClose={() => {
+            setModal(null);
+            setEditingWorkspace(null);
+          }}
           onDeleted={handleDeleted}
           onUpdated={handleUpdated}
-          workspace={activeWorkspace}
+          workspace={editingWorkspace}
         />
       )}
     </div>
@@ -1156,6 +1196,29 @@ FILE: src/modules/espacios/espacios.css
 .espacios-list-item:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+/* Scroll fino para la lista de espacios */
+.selector-espacios-menu .custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+.selector-espacios-menu .custom-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.selector-espacios-menu .custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.selector-espacios-menu .custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+.selector-espacios-menu .custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.6);
 }
 
 
