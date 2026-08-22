@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
+import * as Icons from "../../../core/components/Iconos";
 import {
   ChevronDown,
   Layers,
@@ -133,6 +134,11 @@ export function SelectorEspacios({
     spaces.find((space) => space.is_default === 1) ??
     spaces[0];
 
+  const ActiveIcon =
+    (activeWorkspace?.icon &&
+      (Icons as Record<string, any>)[activeWorkspace.icon]) ||
+    Layers;
+
   function updateSpaces(nextSpaces: Workspace[]): void {
     setLoadedSpaces(nextSpaces);
     onSpacesChange?.(nextSpaces);
@@ -171,7 +177,7 @@ export function SelectorEspacios({
 
   return (
     <div
-      className="selector-espacios"
+      className="selector-espacios relative"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -183,7 +189,7 @@ export function SelectorEspacios({
         type="button"
       >
         <div className="flex min-w-0 items-center gap-2.5">
-          <Layers
+          <ActiveIcon
             aria-hidden="true"
             className="h-4 w-4 shrink-0"
             size={19}
@@ -199,12 +205,14 @@ export function SelectorEspacios({
           size={17}
         />
       </button>
+
       {isOpen && (
         <div
-          className="selector-espacios-menu mt-2 animate-in rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-2xl backdrop-blur-md duration-150 fade-in zoom-in-95 dark:border-slate-800 dark:bg-slate-900/95"
+          className="selector-espacios-menu absolute top-full left-0 right-0 z-50 mt-1.5 flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95 animate-in fade-in zoom-in-95 duration-150"
           role="menu"
         >
-          <div className="selector-espacios-list">
+          {/* Lista con scroll vertical estilizado y sin scroll horizontal */}
+          <div className="custom-scroll max-h-56 overflow-y-auto overflow-x-hidden p-1.5 space-y-0.5">
             {spaces.map((workspace) => (
               <EspacioItem
                 isActive={workspace.id === selectedId}
@@ -220,22 +228,23 @@ export function SelectorEspacios({
               />
             ))}
           </div>
-          <div className="selector-espacios-menu-actions border-t border-slate-100 dark:border-slate-800">
+
+          {/* Acciones fijas abajo */}
+          <div className="border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-1.5 space-y-0.5">
             <button
-              className="text-slate-600 hover:text-[var(--accent-color)] dark:text-slate-300"
-              style={{ "--accent-color": accentColor } as React.CSSProperties}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
               onClick={() => {
                 setIsOpen(false);
                 setModal("new");
               }}
               type="button"
             >
-              <Plus size={17} /> Nuevo espacio
+              <Plus size={15} style={{ color: accentColor }} />
+              Nuevo espacio
             </button>
             <button
               disabled={!activeWorkspace}
-              className="text-slate-600 hover:text-[var(--accent-color)] dark:text-slate-300"
-              style={{ "--accent-color": accentColor } as React.CSSProperties}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors disabled:opacity-40"
               onClick={() => {
                 setEditingWorkspace(activeWorkspace);
                 setIsOpen(false);
@@ -243,11 +252,13 @@ export function SelectorEspacios({
               }}
               type="button"
             >
-              <Settings size={17} /> Editar espacio actual
+              <Settings size={15} />
+              Editar espacio actual
             </button>
           </div>
         </div>
       )}
+
       {modal === "new" && (
         <NuevoEspacioModal
           isOpen

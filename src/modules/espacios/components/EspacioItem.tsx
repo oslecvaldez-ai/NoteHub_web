@@ -1,81 +1,101 @@
-import { useState, type ReactElement } from "react";
-import { Check, Layers, Settings } from "../../../core/components/Iconos";
+import type { ReactElement } from "react";
+import * as Icons from "../../../core/components/Iconos";
+import { Check, Settings, Layers } from "../../../core/components/Iconos";
 import { useTheme } from "../../../core/theme/useTheme";
 import type { Workspace } from "../workspacesApi";
 
 export interface EspacioItemProps {
   workspace: Workspace;
   isActive: boolean;
-  onSelect: (workspace: Workspace) => void;
-  onEdit?: () => void;
   noteCount?: number;
+  onSelect: (workspace: Workspace) => void;
+  onEdit: (workspace: Workspace) => void;
 }
 
 export function EspacioItem({
   workspace,
   isActive,
+  noteCount = 0,
   onSelect,
   onEdit,
-  noteCount = 0,
 }: EspacioItemProps): ReactElement {
-  const [isHovered, setIsHovered] = useState(false);
   const { accentColor } = useTheme();
+
+  // Obtener el icono dinámico o usar Layers por defecto
+  const IconComponent =
+    (workspace.icon && (Icons as Record<string, any>)[workspace.icon]) ||
+    Layers;
 
   return (
     <div
-      className={`group flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm transition ${isActive ? "font-semibold" : "text-slate-700 dark:text-slate-300"}`}
       onClick={() => onSelect(workspace)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        background: isActive || isHovered ? `${accentColor}12` : "transparent",
-      }}
+      title={workspace.name} // Tooltip al pasar el mouse por todo el item
+      className={`group relative flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-all duration-150 ${
+        isActive
+          ? "bg-slate-100/90 dark:bg-slate-800/80 font-medium text-slate-900 dark:text-slate-100"
+          : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-900 dark:hover:text-slate-200"
+      }`}
     >
-      <button
-        type="button"
-        aria-current={isActive ? "true" : undefined}
-        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
-        onClick={() => onSelect(workspace)}
-      >
-        <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
-          style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        {/* Contenedor del Icono */}
+        <div
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
+            isActive
+              ? "bg-white shadow-sm dark:bg-slate-700"
+              : "bg-slate-100/70 group-hover:bg-white dark:bg-slate-800 dark:group-hover:bg-slate-700"
+          }`}
+          style={{ color: isActive ? accentColor : undefined }}
         >
-          <Layers aria-hidden="true" size={17} />
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="espacio-item-name truncate">{workspace.name}</span>
-          <span className="text-[10px] font-normal text-slate-400 dark:text-slate-500">
-            {noteCount} {noteCount === 1 ? "nota" : "notas"}
+          <IconComponent size={16} />
+        </div>
+
+        {/* Textos del Espacio */}
+        <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+          {/* Fila 1: Nombre con ancho completo para evitar truncado prematuro */}
+          <span
+            className="truncate text-xs font-semibold leading-tight text-slate-800 dark:text-slate-100"
+            title={workspace.name}
+          >
+            {workspace.name}
           </span>
-        </span>
-      </button>
-      <div className="flex items-center gap-1">
-        {workspace.is_default === 1 && (
-          <span className="espacio-item-badge text-[10px] font-medium text-slate-400 dark:text-slate-500">
-            Por defecto
-          </span>
-        )}
+
+          {/* Fila 2: Contador de notas y badge "Por defecto" juntos */}
+          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-400 dark:text-slate-500 font-normal">
+            <span>
+              {noteCount} {noteCount === 1 ? "nota" : "notas"}
+            </span>
+            {workspace.is_default === 1 && (
+              <>
+                <span>•</span>
+                <span className="font-medium text-amber-600/90 dark:text-amber-400/90 text-[10px]">
+                  Por defecto
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Botones de acción / Check */}
+      <div className="flex items-center gap-0.5 shrink-0">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(workspace);
+          }}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-all"
+          title="Editar o eliminar este espacio"
+        >
+          <Settings size={14} />
+        </button>
+
         {isActive && (
           <Check
-            aria-label="Espacio activo"
-            size={17}
+            size={15}
+            className="shrink-0"
             style={{ color: accentColor }}
           />
-        )}
-        {onEdit && (
-          <button
-            type="button"
-            aria-label={`Editar espacio ${workspace.name}`}
-            title="Editar espacio"
-            onClick={(event) => {
-              event.stopPropagation();
-              onEdit();
-            }}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-          >
-            <Settings size={14} />
-          </button>
         )}
       </div>
     </div>

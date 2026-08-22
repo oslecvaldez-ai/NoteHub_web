@@ -9,6 +9,7 @@ console.log(`
 
 \x1b[33mComandos de Consolidación (Inyección de Contexto DGC):\x1b[0m
   npm run export:all          -> Empaqueta TODO el proyecto completo.
+  npm run export:bundle       -> Empaqueta un módulo rastreando todas sus dependencias conectadas.
   npm run export:schema       -> Empaqueta esquemas SQLite, DDL y persistencia.
   npm run export:db           -> Alias de export:schema.
   npm run export:data         -> Empaqueta presets y datos semilla (src/data).
@@ -30,4 +31,5 @@ console.log(`
 
 \x1b[32mUso libre:\x1b[0m
   node scripts/export-module.js <ruta_personalizada>
+  node scripts/export-connected.js <ruta_o_archivo>
 `);
